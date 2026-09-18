@@ -1,8 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import {
-  abstractCreateStream,
-  createStreamFactory,
-} from '@fairgarden/docs/abstractCreateStream';
+import { abstractCreateStream, createStreamFactory } from '@fairgarden/docs/abstractCreateStream';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, {
   abstractCreateStream,

@@ -105,7 +105,7 @@
   "bugs": {
     "url": "https://github.com/fairgarden/docs/issues"
   },
-  "homepage": "https://github.com/fairgarden/docs/tree/master/packages/docs",
+  "homepage": "https://github.com/fairgarden/docs/tree/main/packages/docs",
   "scripts": {
     "build": "code-infra build --flat --tsgo --bundle esm",
     "release": "pnpm build && pnpm publish --no-git-checks",

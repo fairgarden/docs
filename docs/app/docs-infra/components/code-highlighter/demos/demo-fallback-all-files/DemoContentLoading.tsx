@@ -4,10 +4,7 @@ import * as React from 'react';
 import type { ContentLoadingProps } from '@fairgarden/docs/CodeHighlighter/types';
 import { useCodeFallback } from '@fairgarden/docs/CodeHighlighter';
 import { hastToJsx } from '@fairgarden/docs/pipeline/hastUtils';
-import {
-  generateFileSlug,
-  getLanguageFromExtension,
-} from '@fairgarden/docs/pipeline/loaderUtils';
+import { generateFileSlug, getLanguageFromExtension } from '@fairgarden/docs/pipeline/loaderUtils';
 import { Tabs } from '@/components/Tabs';
 import { CodeActionsMenu } from '../CodeActionsMenu';
 import { CodeBlockHeader, CodeBlockHeaderLabel } from '../CodeBlockHeader';

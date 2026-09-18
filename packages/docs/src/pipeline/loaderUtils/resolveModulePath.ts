@@ -127,7 +127,7 @@ export interface TypeAwareResolveResult {
  * Resolves a module path by reading directory contents to find matching files.
  * This is more efficient than checking each file individually with stat calls.
  *
- * Given a path like `file:///Code/mui-public/packages/docs/docs/app/components/code-highlighter/demos/code/BasicCode`,
+ * Given a path like `file:///Code/my-project/packages/docs/docs/app/components/code-highlighter/demos/code/BasicCode`,
  * this function will try to find the actual file by checking for:
  * - `BasicCode.ts`, `BasicCode.tsx`, `BasicCode.js`, `BasicCode.jsx`
  * - `BasicCode/index.ts`, `BasicCode/index.tsx`, `BasicCode/index.js`, `BasicCode/index.jsx`

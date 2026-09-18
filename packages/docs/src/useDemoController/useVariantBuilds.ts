@@ -1,10 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import type {
-  ControlledCode,
-  ControlledVariantCode,
-} from '@fairgarden/docs/CodeHighlighter/types';
+import type { ControlledCode, ControlledVariantCode } from '@fairgarden/docs/CodeHighlighter/types';
 import type { BuildScopeOptions, BuiltScope } from './buildScope';
 import type { Transpile } from './transpileSource';
 import type { Scope } from './types';

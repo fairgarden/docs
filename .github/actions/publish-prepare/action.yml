@@ -1,6 +1,6 @@
 name: Publish preparation
 
-description: Common setup steps for publishing MUI packages (after checkout)
+description: Common setup steps for publishing packages (after checkout)
 
 runs:
   using: composite

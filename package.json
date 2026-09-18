@@ -1,27 +1,25 @@
 {
-  "name": "mui-public",
+  "name": "fairgarden-docs",
   "version": "2.0.8",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mui/mui-public.git"
+    "url": "git+https://github.com/fairgarden/docs.git"
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "eslint": "eslint . --cache --report-unused-disable-directives --max-warnings 0",
     "eslint:ci": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "prettier": "pretty-quick --ignore-path .lintignore --branch master",
+    "prettier": "pretty-quick --ignore-path .lintignore --branch main",
     "prettier:all": "prettier --write . --ignore-path .lintignore",
-    "update-netlify-ignore": "pnpm code-infra netlify-ignore @apps/code-infra-dashboard",
+    "prettier:check": "prettier --check . --ignore-path .lintignore",
     "test": "vitest",
-    "test:browser": "pnpm -F \"./docs\" run docs-infra browser --workspace --script test:browser:unconfined --playwright-version 1.60.0 --",
+    "test:browser": "pnpm -F \"./docs\" run docs-infra browser --workspace --script test:browser:unconfined --playwright-version 1.61.1 --",
     "test:browser:unconfined": "vitest --config vitest.config.browser.mts",
     "test:e2e": "pnpm -F \"./docs\" run test:e2e",
     "stylelint": "stylelint --reportInvalidScopeDisables --reportNeedlessDisables \"**/*.?(c|m)[jt]s?(x)\" \"**/*.css\" --ignore-path .lintignore",
     "typescript": "pnpm -r run typescript",
     "release:build": "pnpm -r -F \"./packages/*\" run build",
-    "size:snapshot": "pnpm -F ./test/bundle-size check",
-    "size:why": "pnpm size:snapshot --analyze",
     "clean": "pnpm -r exec rm -rf build",
     "docs:dev": "pnpm -F \"./docs\" run dev",
     "docs:build": "pnpm -F \"./docs\" run build",
@@ -29,17 +27,14 @@
     "docs:infra": "pnpm -F \"./docs\" run docs-infra",
     "docs:validate": "pnpm -F \"./docs\" run docs-infra validate --command 'pnpm docs:validate'",
     "docs:lint": "pnpm -F \"./docs\" run lint",
-    "docs:lib": "pnpm -F \"./packages/docs\" run build",
-    "test:benchmark": "pnpm -F ./test/performance benchmark",
-    "org-versions": "tsx scripts/orgVersions.mts"
+    "docs:lib": "pnpm -F \"./packages/docs\" run build"
   },
   "dependencies": {
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
     "@eslint/compat": "^2.1.0",
-    "@mui/internal-bundle-size-checker": "1.0.9-canary.92",
-    "@mui/internal-code-infra": "0.0.4-canary.119",
     "@fairgarden/docs": "workspace:*",
+    "@mui/internal-code-infra": "0.0.4-canary.119",
     "@next/eslint-plugin-next": "^16.2.6",
     "@octokit/rest": "^22.0.1",
     "@tsconfig/node24": "^24.0.4",
@@ -61,7 +56,6 @@
     "@vitest/coverage-v8": "4.1.9",
     "baseline-browser-mapping": "2.11.23",
     "eslint-plugin-n": "17.24.0",
-    "pkg-pr-new": "0.0.75",
     "playwright": "1.61.1",
     "stylelint": "17.14.0",
     "vitest": "4.1.9"

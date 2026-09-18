@@ -12,8 +12,6 @@
       "docs/*": ["./docs/*"]
     }
   },
-  "references": [
-    { "path": "packages/docs" },
-  ],
+  "references": [{ "path": "packages/docs" }],
   "files": []
 }

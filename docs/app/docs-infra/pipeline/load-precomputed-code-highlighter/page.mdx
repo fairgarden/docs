@@ -70,19 +70,13 @@ const nextConfig = {
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     config.module.rules.push({
       test: /[/\\]demos[/\\][^/\\]+[/\\]index\.ts$/,
-      use: [
-        defaultLoaders.babel,
-        '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
-      ],
+      use: [defaultLoaders.babel, '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter'],
     });
 
     // Add rule for global demo data
     config.module.rules.push({
       test: /[/\\]demo-data[/\\][^/\\]+[/\\]index\.ts$/,
-      use: [
-        defaultLoaders.babel,
-        '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
-      ],
+      use: [defaultLoaders.babel, '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter'],
     });
 
     return config;

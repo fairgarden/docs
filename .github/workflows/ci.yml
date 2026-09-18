@@ -1,53 +1,144 @@
-name: PR Package releases
+name: CI
+
 on:
-  pull_request:
   push:
     branches:
-      - master
-      - next
-      - v*.x
+      - main
+  pull_request:
 
 permissions: {}
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  # Tests dev-only scripts across all supported dev environments
-  test-dev:
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+  static:
+    name: Lint and typecheck
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - run: echo '${{ github.actor }}'
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          # fetch all tags which are required for `pnpm release:changelog`
-          fetch-depth: 0
-      - name: Set up pnpm
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - name: Use Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Install left the working tree dirty?
+        run: git add -A && git diff --exit-code --staged
+      - name: '`pnpm dedupe` was run?'
+        run: pnpm dedupe --check
+      - name: '`pnpm prettier` changes committed?'
+        run: pnpm prettier:check
+      - name: Restore ESLint cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
-          node-version: '22.22.3'
-          cache: 'pnpm' # https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md#caching-packages-dependencies
-      - run: pnpm install
+          path: .eslintcache
+          key: eslint-cache-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: ESLint
+        # Without a warm cache ESLint can go a long time before producing output.
+        timeout-minutes: 15
+        run: pnpm run eslint:ci --cache --cache-strategy content
+      - name: Stylelint
+        run: pnpm stylelint
+      - name: TypeScript
+        run: pnpm typescript
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Run tests
+        run: pnpm test --run
+
+  build:
+    name: Build packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Build packages
+        run: pnpm release:build
+
+  docs:
+    name: Docs build and validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Build @fairgarden/docs
+        run: pnpm docs:lib
+      - name: Validate the documentation files
+        run: pnpm docs:validate
       - name: Cache Next.js build
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
-          path: docs/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('docs/**/*.js', 'docs/**/*.ts', 'docs/**/*.tsx', 'docs/**/*.jsx', 'docs/**/*.json', 'docs/**/*.md', 'docs/**/*.mdx') }}
+          path: docs/export/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('docs/**/*.[jt]s', 'docs/**/*.[jt]sx', 'docs/**/*.json', 'docs/**/*.md', 'docs/**/*.mdx') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
             ${{ runner.os }}-nextjs-
-      - run: pnpm release:build
-      - name: Publish packages
-        if: matrix.os == 'ubuntu-latest'
-        uses: ./.github/actions/ci-publish
-        with:
-          pr-comment: false
       - name: Build docs
         run: pnpm docs:build
       - name: Check for broken links
-        if: matrix.os == 'ubuntu-latest'
         run: pnpm -F "./docs" run link-check
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # The image tag must track the `playwright` / `@playwright/test` versions in
+    # the root package.json, or the bundled browsers won't match the client
+    # driving them. `--ipc=host` keeps Chromium from OOM-ing on shared memory.
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Run browser tests
+        # `:unconfined` skips the container-engine wrapper `pnpm test:browser`
+        # uses locally — we are already inside the Playwright image.
+        run: pnpm test:browser:unconfined
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Build @fairgarden/docs
+        run: pnpm docs:lib
+      - name: Run end-to-end tests
+        # Playwright's `webServer` builds and serves the docs export itself.
+        run: pnpm -F "./docs" run test:e2e:unconfined
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: playwright-report
+          path: docs/playwright-report/
+          retention-days: 7

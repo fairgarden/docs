@@ -2,10 +2,7 @@ import 'server-only';
 
 import * as React from 'react';
 import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
-import type {
-  Code as CodeType,
-  SourceTransformer,
-} from '@fairgarden/docs/CodeHighlighter/types';
+import type { Code as CodeType, SourceTransformer } from '@fairgarden/docs/CodeHighlighter/types';
 import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
 import { createEnhanceCodeEmphasis } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 

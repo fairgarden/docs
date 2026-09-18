@@ -1,6 +1,8 @@
-# MUI Public Repository
+# FairGarden Docs
 
-MUI Public is a monorepo containing public packages and applications for the MUI ecosystem. This repository uses pnpm workspaces and includes various build tools, Babel plugins, bundle analyzers, and web applications built with React/Vite.
+FairGarden Docs is a pnpm-workspace monorepo holding [`@fairgarden/docs`](packages/docs) — build-time optimized documentation infrastructure for React and Next.js sites — and the Next.js site that documents it.
+
+It was hard forked from [mui/mui-public](https://github.com/mui/mui-public); some build tooling still comes from the published `@mui/internal-code-infra` package.
 
 Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.
 
@@ -9,42 +11,42 @@ Always reference these instructions first and fallback to search or bash command
 ## Pull Requests
 
 - **ALWAYS create pull requests as drafts** using `gh pr create --draft`.
+- The default branch is `main`.
 
 ## Working Effectively
 
 ### Bootstrap, Build, and Test the Repository
 
-- **Prerequisites**: Node.js 22.18.0+ required. Install pnpm: `npm install -g pnpm@11.1.2`
+- **Prerequisites**: Node.js 22.18.0+ required. Install pnpm: `npm install -g pnpm@11.9.0`
 - **Install dependencies**: `pnpm install --no-frozen-lockfile` -- takes 15-20 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
-- **Build all packages**: `pnpm release:build` -- takes 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
+- **Build the library**: `pnpm docs:lib` (alias for `pnpm release:build`, which builds everything in `/packages/*`) -- takes 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
 - **Type checking**: `pnpm typescript` -- takes 10-15 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
 - **Linting**: `pnpm eslint` -- takes 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
-- **Formatting**: `pnpm prettier` -- always run before pushing code.
-- **Run tests**: `pnpm test --run` takes 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
+- **Formatting**: `pnpm prettier` -- always run before pushing code. Use `pnpm prettier:check` to check the whole tree without writing.
+- **Run tests**: `pnpm test --run` takes 25-40 seconds for ~4850 tests. **NEVER CANCEL**. Set timeout to 30+ minutes.
 - **Run specific tests**: `pnpm test --run loadServerCodeSource` or `pnpm test --run integration.test.ts` for targeted testing
 - **Run browser tests**: `pnpm test:browser --run` -- requires podman or docker. Starts a containerized Playwright server and runs browser tests against it.
 - **Run browser tests in CI**: In a `mcr.microsoft.com/playwright` container image, run `pnpm test:browser:unconfined` directly — no container engine needed. Only use in a CI environment.
+- **Run end-to-end tests**: `pnpm test:e2e` -- Playwright builds and serves the docs export itself.
 - **ALWAYS use `--run` flag** to avoid watch mode when running tests programmatically
 - **Do NOT use `--`** in test commands (e.g., avoid `pnpm test -- --run`)
 - **Use VS Code Vitest extension** whenever possible for interactive test development and debugging
 
-### Run Applications
+### Run the Documentation Site
 
-- **Code Infra Dashboard** (React/Vite app):
-  - **ALWAYS run the bootstrapping steps first**
-  - Build: `pnpm -F code-infra-dashboard run build` -- takes 5 seconds
-  - Dev server: `pnpm -F code-infra-dashboard run start` -- runs on http://localhost:3000
-  - Production URL: `https://frontend-public.mui.com`
-  - PR preview URLs follow the pattern: `https://code-infra-dashboard-pr-{number}.onrender.com`
+- **ALWAYS run the bootstrapping steps first**, then `pnpm docs:lib` -- the site imports `@fairgarden/docs` from its build output, not its source.
+- Dev server: `pnpm docs:dev` -- runs on http://localhost:3000
+- Build: `pnpm docs:build` -- static export into `docs/export`
+- Serve the built export: `pnpm docs:start` -- runs on http://localhost:3000
+- Regenerate committed `types.md` / `page.mdx` output: `pnpm docs:validate` -- rewrites files in place and reports what changed.
 
 ## Validation
 
 - **ALWAYS manually validate any new code** by running the complete build process after making changes.
 - **ALWAYS run through at least one complete end-to-end scenario** after making changes:
-  1. Install dependencies and build all packages
+  1. Install dependencies and build the library (`pnpm docs:lib`)
   2. Run tests to ensure no regressions
-  3. Test CLI functionality with `pnpm code-infra --help`
-- You can build and run the code-infra-dashboard web application, and interact with it via browser or programmatically.
+  3. Build the docs site (`pnpm docs:build`) and check `pnpm docs:validate` reports no changes
 - **ALWAYS run `pnpm prettier`, `pnpm eslint` and `pnpm typescript` before you are done** or the CI will fail.
 
 ## Common Tasks
@@ -52,8 +54,8 @@ Always reference these instructions first and fallback to search or bash command
 ### pnpm Workspace Commands
 
 - **CRITICAL**: When running pnpm commands for workspace packages, always use the `-F` flag followed by the package name.
-- **Example**: `pnpm -F @mui/internal-bundle-size-checker add micromatch`
-- Private packages without a `name` field in `package.json` must be filtered by their relative path (e.g., `pnpm -F ./test/performance add <dependency>`).
+- **Example**: `pnpm -F @fairgarden/docs add micromatch`
+- Private packages without a `name` field in `package.json` must be filtered by their relative path (e.g., `pnpm -F ./docs add <dependency>`).
 - **Do NOT use `cd` to navigate into package directories** for workspace operations.
 - **Do NOT manually edit package.json files to add/remove dependencies** - always use `pnpm -F <workspace> add <dependency>` or `pnpm -F <workspace> remove <dependency>` to keep the order deterministic.
 - **ALWAYS run `pnpm dedupe`** after installing a dependency.
@@ -62,23 +64,17 @@ Always reference these instructions first and fallback to search or bash command
 
 ```txt
 packages/
-├── babel-plugin-display-name/     # Babel plugin for component display names
-├── babel-plugin-minify-errors/    # Babel plugin for error minification
-├── babel-plugin-resolve-imports/  # Babel plugin for import resolution
-├── bundle-size-checker/           # Bundle size analysis tool
-├── code-infra/                    # Build scripts and configs
-├── docs-infra/                    # Documentation infrastructure
-├── netlify-cache/                 # Netlify caching utilities
-└── test-utils/                    # Testing utilities
+└── docs/                         # @fairgarden/docs — the published library
 
-apps/
-└── code-infra-dashboard/         # React/Vite dashboard app
+docs/                             # Next.js site documenting the library
+└── app/docs-infra/               # the documentation pages themselves
 
-test/
-└── bundle-size/                  # Bundle size test workspace
+renovate/                         # Renovate presets this repo extends locally
 ```
 
 ### Key CLI Commands
+
+The build tooling comes from `@mui/internal-code-infra`:
 
 - `pnpm code-infra --help` -- Show available CLI commands
 - `pnpm code-infra build` -- Build a specific package
@@ -86,11 +82,13 @@ test/
 - `pnpm code-infra publish` -- Publish packages to npm
 - `pnpm code-infra publish-canary` -- Publish canary versions
 
+The library ships its own CLI too, run through `pnpm docs:infra` (see `packages/docs/src/cli`).
+
 ### Build and Release Process
 
 - **Version packages**: All the package versions are auto-managed by canary publishing.
 - **Build packages**: `pnpm release:build` -- builds all packages in `/packages/*`
-- **Bundle size check**: `pnpm size:snapshot`
+- **Publishing**: `.github/workflows/publish.yml` publishes to npm. It runs the canary flow on every push to `main` and on a nightly schedule; the stable flow is `workflow_dispatch` only.
 
 ## Troubleshooting
 
@@ -103,6 +101,16 @@ test/
 # The repository uses React 19 but some dependencies expect React 18
 ```
 
+#### `code-infra` crashes on startup inside `sharp`
+
+The `code-infra` CLI imports `@argos-ci/core` (and therefore `sharp`) at load time, so a
+`sharp` install without its native binary takes down every `code-infra` command, including
+`pnpm docs:lib`. If `pnpm-lock.yaml` has a `sharp` entry whose `optionalDependencies` omit
+the `@img/sharp-<platform>` packages, pnpm will keep reusing that resolution — `pnpm install`
+and `--fix-lockfile` both report "already up to date". Delete both the `packages:` and
+`snapshots:` entries for that `sharp` version from `pnpm-lock.yaml` and reinstall to force a
+fresh resolution.
+
 ## Frequently Referenced Files and Locations
 
 ### Configuration Files
@@ -112,11 +120,14 @@ test/
 - `eslint.config.mjs` -- ESLint configuration
 - `tsconfig.json` -- Root TypeScript configuration
 - `vitest.config.mts` -- Vitest test configuration
+- `vitest.config.browser.mts` -- Browser (Playwright) test configuration
+- `docs/playwright.config.ts` -- End-to-end test configuration
 
 ### Build and CI
 
-- `.github/workflows/ci.yml` -- Main CI workflow
+- `.github/workflows/ci.yml` -- Main CI workflow (lint/typecheck, unit, browser, e2e, docs)
 - `.github/workflows/publish.yml` -- Package publishing workflow
+- `.github/actions/setup/action.yml` -- Shared pnpm + Node + install steps used by CI
 
 ### Development
 
@@ -129,8 +140,9 @@ test/
 - **pnpm release:build**: 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
 - **pnpm typescript**: 10-15 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
 - **pnpm eslint**: 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
-- **pnpm test --run**: 5-10 seconds. **ALWAYS use --run flag to prevent watch mode**. **NEVER CANCEL**. Set timeout to 30+ minutes.
-- **Application builds**: 3-5 seconds each. **NEVER CANCEL**. Set timeout to 15+ minutes.
+- **pnpm test --run**: 25-40 seconds. **ALWAYS use --run flag to prevent watch mode**. **NEVER CANCEL**. Set timeout to 30+ minutes.
+- **pnpm docs:validate**: 20-30 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
+- **pnpm docs:build**: 1-3 minutes. **NEVER CANCEL**. Set timeout to 30+ minutes.
 
 All commands are fast in this repository, but network issues or system load can cause delays. Always wait for completion.
 

@@ -2,11 +2,7 @@
 
 import * as React from 'react';
 import { CodeProvider } from '@fairgarden/docs/CodeProvider';
-import type {
-  Code,
-  LoadCodeMeta,
-  LoadSource,
-} from '@fairgarden/docs/CodeHighlighter/types';
+import type { Code, LoadCodeMeta, LoadSource } from '@fairgarden/docs/CodeHighlighter/types';
 import { parseCreateFactoryCall } from '@fairgarden/docs/pipeline/parseCreateFactoryCall';
 import {
   IGNORE_COMMENT_PREFIXES,

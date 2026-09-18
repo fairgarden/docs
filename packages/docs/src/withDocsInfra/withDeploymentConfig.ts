@@ -15,10 +15,9 @@ const nextMajorVersion = parseInt(pkgJson.version.split('.')[0], 10);
  *
  * A few comments:
  * - process.env.CONTEXT === 'production' means that the branch in Netlify was configured as production.
- *   For example, the `master` branch of the Core team is considered a `production` build on Netlify based
- *   on https://app.netlify.com/sites/material-ui/settings/deploys#branches.
- * - Each team has different site https://app.netlify.com/teams/mui/sites.
- *   The following logic must be compatible with all of them.
+ *   For example, a site's default branch is typically configured as a `production` build under
+ *   the site's "Deploys > Branches and deploy contexts" settings.
+ * - The following logic must be compatible with every site that consumes this config.
  */
 let DEPLOY_ENV = 'development';
 
@@ -31,10 +30,11 @@ if (process.env.CONTEXT === 'production' || process.env.CONTEXT === 'branch-depl
   DEPLOY_ENV = 'production';
 }
 
-// The 'master' and 'next' branches are NEVER a production environment. We use these branches for staging.
+// Default and pre-release branches are NEVER a production environment; they are used for staging.
+const STAGING_BRANCHES = ['main', 'master', 'next'];
 if (
   (process.env.CONTEXT === 'production' || process.env.CONTEXT === 'branch-deploy') &&
-  (process.env.HEAD === 'master' || process.env.HEAD === 'next')
+  STAGING_BRANCHES.includes(process.env.HEAD ?? '')
 ) {
   DEPLOY_ENV = 'staging';
 }

@@ -133,10 +133,7 @@ const parsed = parseCode(code, parseSource);
 Use `sourceEnhancers` to modify HAST nodes after parsing. Enhancers receive the parsed HAST root, any comments extracted from the source (via [`loadServerCodeSource`](../load-server-code-source/page.mdx)), and the file name:
 
 ```ts
-import type {
-  SourceEnhancer,
-  SourceComments,
-} from '@fairgarden/docs/CodeHighlighter/types';
+import type { SourceEnhancer, SourceComments } from '@fairgarden/docs/CodeHighlighter/types';
 
 // SourceComments is Record<number, string[]> - line numbers to comment arrays
 
@@ -422,7 +419,7 @@ attached to. The runtime handles this automatically for the common case:
 
 Wiped-line runs are rendered as `<span class="collapse" data-lines={n}>`
 inside their parent frame. Demos in this repo style the placeholder via
-[`syntax.css`](https://github.com/mui/mui-public/blob/master/docs/app/docs-infra/components/code-highlighter/demos/syntax.css):
+[`syntax.css`](https://github.com/fairgarden/docs/blob/main/docs/app/docs-infra/components/code-highlighter/demos/syntax.css):
 the element animates in at `n * var(--docs-infra-syntax-line-height)` and
 transitions to `height: 0` on first paint, so the collapse reads as
 motion rather than an instant jump. Per-count rules cover `data-lines`
@@ -480,7 +477,7 @@ the keyframe runs:
   position.
 
 The four rules in
-[`syntax.css`](https://github.com/mui/mui-public/blob/master/docs/app/docs-infra/components/code-highlighter/demos/syntax.css)
+[`syntax.css`](https://github.com/fairgarden/docs/blob/main/docs/app/docs-infra/components/code-highlighter/demos/syntax.css)
 (two paused holds + two active keyframes) match the placeholder height
 to the lines being added or removed, so the swap reads as motion
 instead of an instant jump. A subsequent click during the pending
