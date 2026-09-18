@@ -25,7 +25,7 @@ This plugin is typically used in the **second stage** of a markdown-to-HTML proc
 ```typescript
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
-import transformHtmlCodeBlock from '@mui/internal-docs-infra/pipeline/transformHtmlCodeBlock';
+import transformHtmlCodeBlock from '@fairgarden/docs/pipeline/transformHtmlCodeBlock';
 
 const processor = unified().use(rehypeParse).use(transformHtmlCodeBlock).use(rehypeStringify);
 ```
@@ -107,7 +107,7 @@ demos opt out with `initialCollapsed` (meta or `<Demo initialCollapsed />`).
 ```javascript
 // next.config.mjs
 import createMDX from '@next/mdx';
-import { getDocsInfraMdxOptions } from '@mui/internal-docs-infra/withDocsInfra';
+import { getDocsInfraMdxOptions } from '@fairgarden/docs/withDocsInfra';
 
 const withMDX = createMDX({
   options: getDocsInfraMdxOptions({
@@ -335,6 +335,6 @@ pnpm install package
 - [`withDocsInfra`](../with-docs-infra/page.mdx) - Includes this plugin in its default MDX setup
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['precompute', 'code blocks', 'rehype plugin', 'variants', 'data-precompute'],
   });

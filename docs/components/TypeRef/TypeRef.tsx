@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { Popover } from '@base-ui/react/popover';
-import { useType } from '@mui/internal-docs-infra/useType';
-import type { TypeRefProps } from '@mui/internal-docs-infra/useType';
+import { useType } from '@fairgarden/docs/useType';
+import type { TypeRefProps } from '@fairgarden/docs/useType';
 import { TypesTable } from '@/app/docs-infra/hooks/use-types/demos/TypesTable';
 import { PopoverArrow } from '@/components/PopoverArrow/PopoverArrow';
 import { getHrefTargetId, useCurrentTypesTableId } from '@/components/TypesTableContext';

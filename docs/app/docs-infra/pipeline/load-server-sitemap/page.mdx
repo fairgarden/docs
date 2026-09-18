@@ -8,7 +8,7 @@ The `loadServerSitemap` utility parses sitemap index files to load page metadata
 ## Basic Usage
 
 ```ts
-import { loadServerSitemap } from '@mui/internal-docs-infra/pipeline/loadServerSitemap';
+import { loadServerSitemap } from '@fairgarden/docs/pipeline/loadServerSitemap';
 
 // Load sitemap from a sitemap index file
 const sitemap = await loadServerSitemap('file:///app/sitemap/index.ts');
@@ -84,7 +84,7 @@ const sitemap = await loadServerSitemap('file:///path/to/app/sitemap/index.ts');
 Create a custom `loadServerSitemap` function using the factory:
 
 ```ts
-import { createLoadServerSitemap } from '@mui/internal-docs-infra/pipeline/loadServerSitemap';
+import { createLoadServerSitemap } from '@fairgarden/docs/pipeline/loadServerSitemap';
 
 const customLoadSitemap = createLoadServerSitemap({
   // Override the root context for resolving relative paths
@@ -100,7 +100,7 @@ Using with Orama search:
 
 ```ts
 import { create, insertMultiple, search } from '@orama/orama';
-import { loadServerSitemap } from '@mui/internal-docs-infra/pipeline/loadServerSitemap';
+import { loadServerSitemap } from '@fairgarden/docs/pipeline/loadServerSitemap';
 
 // Load the sitemap at runtime
 const sitemap = await loadServerSitemap('file:///app/sitemap/index.ts');

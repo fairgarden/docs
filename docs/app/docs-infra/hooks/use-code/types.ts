@@ -1,4 +1,4 @@
 import { createTypes } from '@/functions/createTypes';
-import { useCode } from '@mui/internal-docs-infra/useCode';
+import { useCode } from '@fairgarden/docs/useCode';
 
 export const TypesUseCode = createTypes(import.meta.url, useCode);

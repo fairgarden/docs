@@ -39,7 +39,7 @@ import 'server-only'; // this should be omitted if using the <CodeProvider> or t
 import {
   createDemoFactory,
   createDemoWithVariantsFactory,
-} from '@mui/internal-docs-infra/abstractCreateDemo';
+} from '@fairgarden/docs/abstractCreateDemo';
 
 import { DemoContent } from './DemoContent';
 import { DemoDataTheme } from '../demo-data/theme';
@@ -76,8 +76,8 @@ Global dependencies allow you to inject shared code (like providers, themes, or 
 
 ```ts
 // docs/src/demo-data/theme/index.ts
-import { createDemoGlobalWithVariants } from '@mui/internal-docs-infra/createDemoData';
-import type { DemoGlobalData } from '@mui/internal-docs-infra/createDemoData/types';
+import { createDemoGlobalWithVariants } from '@fairgarden/docs/createDemoData';
+import type { DemoGlobalData } from '@fairgarden/docs/createDemoData/types';
 import { DemoThemeProvider as CssModules } from './css-modules';
 
 export const DemoDataTheme: DemoGlobalData = createDemoGlobalWithVariants(import.meta.url, {
@@ -99,7 +99,7 @@ export function DemoThemeProvider({ children }: { children: React.ReactNode }) {
 
 import 'server-only'; // this should be omitted if using the <CodeProvider> or the pages router
 
-import { createDemoFactory } from '@mui/internal-docs-infra/abstractCreateDemo';
+import { createDemoFactory } from '@fairgarden/docs/abstractCreateDemo';
 import { Demo as DemoContent } from '../components/Demo/Demo';
 import { DemoDataTheme } from '../demo-data/theme';
 
@@ -119,7 +119,7 @@ To make global demo data work properly, use [`withDocsInfra`](../../pipeline/wit
 
 ```js
 // next.config.js
-import { withDocsInfra } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra } from '@fairgarden/docs/withDocsInfra';
 
 export default withDocsInfra({
   // withDocsInfra automatically includes:

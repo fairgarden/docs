@@ -20,7 +20,7 @@ Use this plugin to enhance markdown code blocks with custom data attributes for 
 ```typescript
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
-import transformMarkdownCode from '@mui/internal-docs-infra/pipeline/transformMarkdownCode';
+import transformMarkdownCode from '@fairgarden/docs/pipeline/transformMarkdownCode';
 
 const processor = unified().use(remarkParse).use(transformMarkdownCode);
 ```
@@ -30,8 +30,8 @@ const processor = unified().use(remarkParse).use(transformMarkdownCode);
 ```javascript
 // next.config.mjs
 import createMDX from '@next/mdx';
-import transformMarkdownCode from '@mui/internal-docs-infra/pipeline/transformMarkdownCode';
-import transformHtmlCodeBlock from '@mui/internal-docs-infra/pipeline/transformHtmlCodeBlock';
+import transformMarkdownCode from '@fairgarden/docs/pipeline/transformMarkdownCode';
+import transformHtmlCodeBlock from '@fairgarden/docs/pipeline/transformHtmlCodeBlock';
 
 const withMDX = createMDX({
   options: {
@@ -655,6 +655,6 @@ import { TypesTransformMarkdownCode } from './types';
 - [`withDocsInfra`](../with-docs-infra/page.mdx) - Includes this plugin in its default MDX setup (and forwards `defaultInlineCodeLanguage`)
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['code blocks', 'variants', 'remark plugin', 'fenced code', 'inline code'],
   });

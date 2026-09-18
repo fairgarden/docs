@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useCoordinated } from '@mui/internal-docs-infra/useCoordinated';
+import { useCoordinated } from '@fairgarden/docs/useCoordinated';
 import styles from './ConditionalShift.module.css';
 
 type Pref = 'brief' | 'normal' | 'verbose';

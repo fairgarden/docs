@@ -1,17 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { CodeProvider } from '@mui/internal-docs-infra/CodeProvider';
+import { CodeProvider } from '@fairgarden/docs/CodeProvider';
 import type {
   Code,
   LoadCodeMeta,
   LoadSource,
   LoadVariantMeta,
-} from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { parseCreateFactoryCall } from '@mui/internal-docs-infra/pipeline/parseCreateFactoryCall';
-import { resolveImportResult } from '@mui/internal-docs-infra/pipeline/loaderUtils';
-import type { DirectoryReader } from '@mui/internal-docs-infra/pipeline/loaderUtils';
-import { createLoadIsomorphicCodeSource } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeSource';
+} from '@fairgarden/docs/CodeHighlighter/types';
+import { parseCreateFactoryCall } from '@fairgarden/docs/pipeline/parseCreateFactoryCall';
+import { resolveImportResult } from '@fairgarden/docs/pipeline/loaderUtils';
+import type { DirectoryReader } from '@fairgarden/docs/pipeline/loaderUtils';
+import { createLoadIsomorphicCodeSource } from '@fairgarden/docs/pipeline/loadIsomorphicCodeSource';
 import {
   buildGitHubUrl,
   fetchContents,

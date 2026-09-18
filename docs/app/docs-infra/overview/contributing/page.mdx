@@ -1,6 +1,6 @@
 # Contributing
 
-This guide covers how to set up your development environment and contribute to `@mui/internal-docs-infra`.
+This guide covers how to set up your development environment and contribute to `@fairgarden/docs`.
 
 ---
 
@@ -85,7 +85,7 @@ pnpm release:build && pnpm typescript && pnpm eslint && pnpm prettier && pnpm te
 ## Project Structure
 
 ```ascii
-packages/docs-infra/
+packages/docs/
 ├── src/
 │   ├── CodeHighlighter/        # React components
 │   ├── useCode/                # React hooks
@@ -227,10 +227,10 @@ When working with workspace packages, use the `-F` flag:
 
 ```bash
 # Add a dependency
-pnpm -F @mui/internal-docs-infra add lodash
+pnpm -F @fairgarden/docs add lodash
 
 # Remove a dependency
-pnpm -F @mui/internal-docs-infra remove lodash
+pnpm -F @fairgarden/docs remove lodash
 
 # Always dedupe after adding dependencies
 pnpm dedupe

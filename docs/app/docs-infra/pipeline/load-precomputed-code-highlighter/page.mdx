@@ -32,7 +32,7 @@ The easiest way to configure this loader is with the [`withDocsInfra`](../with-d
 
 ```javascript
 // next.config.js
-import { withDocsInfra } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra } from '@fairgarden/docs/withDocsInfra';
 
 export default withDocsInfra({
   // Automatically includes:
@@ -59,11 +59,11 @@ const nextConfig = {
   turbopack: {
     rules: {
       './app/**/demos/*/index.ts': {
-        loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter'],
+        loaders: ['@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter'],
       },
       // Add pattern for global demo data
       './demo-data/*/index.ts': {
-        loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter'],
+        loaders: ['@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter'],
       },
     },
   },
@@ -72,7 +72,7 @@ const nextConfig = {
       test: /[/\\]demos[/\\][^/\\]+[/\\]index\.ts$/,
       use: [
         defaultLoaders.babel,
-        '@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter',
+        '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
       ],
     });
 
@@ -81,7 +81,7 @@ const nextConfig = {
       test: /[/\\]demo-data[/\\][^/\\]+[/\\]index\.ts$/,
       use: [
         defaultLoaders.babel,
-        '@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter',
+        '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
       ],
     });
 
@@ -186,11 +186,11 @@ const nextConfig = {
   turbopack: {
     rules: {
       './app/**/demos/*/index.ts': {
-        loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter'],
+        loaders: ['@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter'],
       },
       // Add pattern for snippets directory
       './app/**/snippets/*/index.ts': {
-        loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter'],
+        loaders: ['@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter'],
       },
     },
   },
@@ -257,7 +257,7 @@ export const Demo = createDemo(
 
 The loader injects a `precompute` value shaped like the
 [`Code`](../../components/code-highlighter#code) type from
-`@mui/internal-docs-infra/CodeHighlighter/types` — one
+`@fairgarden/docs/CodeHighlighter/types` — one
 [`VariantCode`](../../components/code-highlighter#variantcode) per variant:
 
 ```typescript
@@ -291,7 +291,7 @@ config.module.rules.push({
   use: [
     defaultLoaders.babel,
     {
-      loader: '@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter',
+      loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
       options: {
         // Output format for HAST nodes
         output: 'hastCompressed', // 'hast' | 'hastJson' | 'hastCompressed'
@@ -467,6 +467,6 @@ import { TypesLoadPrecomputedCodeHighlighter } from './types';
 - [`abstractCreateDemo`](../../factories/abstract-create-demo/page.mdx) - Implements the `createDemo` factory this loader processes
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['webpack loader', 'turbopack', 'precompute', 'build-time', 'createDemo'],
   });

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { ChunkLoadingProps } from '@mui/internal-docs-infra/CoordinatedLazy';
+import type { ChunkLoadingProps } from '@fairgarden/docs/CoordinatedLazy';
 import { LOW_RES, Line } from './lineParts';
 import type { Point } from './lineParts';
 

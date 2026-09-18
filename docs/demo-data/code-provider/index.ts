@@ -1,5 +1,5 @@
-import { createDemoGlobal } from '@mui/internal-docs-infra/createDemoData';
-import type { DemoGlobalData } from '@mui/internal-docs-infra/createDemoData/types';
+import { createDemoGlobal } from '@fairgarden/docs/createDemoData';
+import type { DemoGlobalData } from '@fairgarden/docs/createDemoData/types';
 import DemoCodeProvider from './DemoCodeProvider';
 
 export const DemoDataCodeProvider: DemoGlobalData = createDemoGlobal(

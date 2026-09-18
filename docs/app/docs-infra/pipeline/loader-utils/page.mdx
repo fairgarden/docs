@@ -43,7 +43,7 @@ graph TD
 Parses import statements from JavaScript/TypeScript/CSS source code and extracts import information. Optionally processes and removes comments.
 
 ```typescript
-import { parseImportsAndComments } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { parseImportsAndComments } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const source = `
 import React from 'react';
@@ -110,8 +110,8 @@ const result = parseImportsAndComments(source, fileUrl, {
 Resolves module paths to actual file paths using filesystem directory reading.
 
 ```typescript
-import { resolveModulePath } from '@mui/internal-docs-infra/pipeline/loaderUtils';
-import type { DirectoryReader } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { resolveModulePath } from '@fairgarden/docs/pipeline/loaderUtils';
+import type { DirectoryReader } from '@fairgarden/docs/pipeline/loaderUtils';
 
 // directoryReader returns directory entries for a given file:// URL
 const directoryReader: DirectoryReader = async (path) => {
@@ -154,7 +154,7 @@ console.log(typeAware);
 Resolves multiple module paths efficiently by grouping them by directory.
 
 ```typescript
-import { resolveModulePaths } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { resolveModulePaths } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const paths = ['/src/components/Button', '/src/components/Input', '/src/utils/helpers'];
 
@@ -174,7 +174,7 @@ Resolves all imports from a `parseImportsAndComments` result, handling JavaScrip
 import {
   parseImportsAndComments,
   resolveImportResult,
-} from '@mui/internal-docs-infra/pipeline/loaderUtils';
+} from '@fairgarden/docs/pipeline/loaderUtils';
 
 const { relative } = parseImportsAndComments(source, fileUrl);
 const resolved = await resolveImportResult(relative, directoryReader);
@@ -186,7 +186,7 @@ const resolved = await resolveImportResult(relative, directoryReader);
 Resolves variant paths from a variants object (useful for demo systems).
 
 ```typescript
-import { resolveVariantPaths } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { resolveVariantPaths } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const variants = {
   TypeScript: '/src/demos/Button',
@@ -205,7 +205,7 @@ const resolved = await resolveVariantPaths(variants, directoryReader);
 Transforms resolved imports based on different storage strategies.
 
 ```typescript
-import { processRelativeImports } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { processRelativeImports } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const result = processRelativeImports(
   source,
@@ -254,7 +254,7 @@ console.log(result);
 Extracts file names and extensions from URLs and file paths.
 
 ```typescript
-import { getFileNameFromUrl } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { getFileNameFromUrl } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const meta = getFileNameFromUrl('file:///src/components/Button.tsx');
 console.log(meta); // { fileName: 'Button.tsx', extension: '.tsx' }
@@ -281,7 +281,7 @@ console.log(url); // { fileName: 'file.js', extension: '.js' }
 Extracts and formats human-readable names and URL-friendly slugs from file paths.
 
 ```typescript
-import { extractNameAndSlugFromUrl } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { extractNameAndSlugFromUrl } from '@fairgarden/docs/pipeline/loaderUtils';
 
 // Handles index files (uses parent directory name)
 const demo = extractNameAndSlugFromUrl('file:///app/components/demos/advanced-keyboard/index.ts');
@@ -309,13 +309,13 @@ console.log(kebab); // { name: 'Button Group', slug: 'button-group' }
 Converts an array of external import paths to a packages object for dependency tracking.
 
 ```typescript
-import { externalsToPackages } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { externalsToPackages } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const externals = [
   'react',
   'react-dom',
-  '@mui/internal-docs-infra/CodeHighlighter',
-  '@mui/internal-docs-infra/pipeline/parseSource',
+  '@fairgarden/docs/CodeHighlighter',
+  '@fairgarden/docs/pipeline/parseSource',
   'lodash/get',
   'some-package/submodule/deep',
   '@/components/Button', // path alias - filtered out
@@ -326,7 +326,7 @@ console.log(packages);
 // {
 //   'react': true,
 //   'react-dom': true,
-//   '@mui/internal-docs-infra': true,
+//   '@fairgarden/docs': true,
 //   'lodash': true,
 //   'some-package': true
 // }
@@ -344,7 +344,7 @@ console.log(packages);
 Rewrites import statements in source code based on a mapping, using precise position data.
 
 ```typescript
-import { rewriteImports } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { rewriteImports } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const source = `
 import Component from '../components/Component';
@@ -368,7 +368,7 @@ console.log(rewritten);
 Converts import statements to const declarations set to null. Useful when precomputing data that makes imports unnecessary.
 
 ```typescript
-import { rewriteImportsToNull } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { rewriteImportsToNull } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const source = `import { Component } from './Component';`;
 
@@ -383,7 +383,7 @@ console.log(rewritten);
 Removes entire import statements for specified import paths.
 
 ```typescript
-import { removeImports } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { removeImports } from '@fairgarden/docs/pipeline/loaderUtils';
 
 const source = `
 import React from 'react';
@@ -403,7 +403,7 @@ console.log(result);
 Converts a `file://` URL to a portable POSIX-style path for cross-platform path manipulation.
 
 ```typescript
-import { fileUrlToPortablePath } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { fileUrlToPortablePath } from '@fairgarden/docs/pipeline/loaderUtils';
 
 // Unix
 fileUrlToPortablePath('file:///home/user/file.ts');
@@ -423,7 +423,7 @@ fileUrlToPortablePath('/home/user/file.ts');
 Converts a portable path back to a `file://` URL.
 
 ```typescript
-import { portablePathToFileUrl } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { portablePathToFileUrl } from '@fairgarden/docs/pipeline/loaderUtils';
 
 portablePathToFileUrl('/home/user/file.ts');
 // => 'file:///home/user/file.ts'
@@ -443,7 +443,7 @@ portablePathToFileUrl('file:///home/user/file.ts');
 Gets the language name from a file extension.
 
 ```typescript
-import { getLanguageFromExtension } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { getLanguageFromExtension } from '@fairgarden/docs/pipeline/loaderUtils';
 
 getLanguageFromExtension('.tsx'); // => 'tsx'
 getLanguageFromExtension('.ts'); // => 'typescript'
@@ -456,7 +456,7 @@ getLanguageFromExtension('.mdx'); // => 'mdx'
 Normalizes language aliases to canonical names.
 
 ```typescript
-import { normalizeLanguage } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { normalizeLanguage } from '@fairgarden/docs/pipeline/loaderUtils';
 
 normalizeLanguage('js'); // => 'javascript'
 normalizeLanguage('ts'); // => 'typescript'
@@ -469,7 +469,7 @@ normalizeLanguage('yml'); // => 'yaml'
 Constants for extension-to-language and alias-to-language mappings.
 
 ```typescript
-import { languageMap, languageAliasMap } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { languageMap, languageAliasMap } from '@fairgarden/docs/pipeline/loaderUtils';
 
 // languageMap: { '.js': 'javascript', '.ts': 'typescript', ... }
 // languageAliasMap: { 'js': 'javascript', 'bash': 'shell', ... }
@@ -482,7 +482,7 @@ import { languageMap, languageAliasMap } from '@mui/internal-docs-infra/pipeline
 Checks if a path represents a JavaScript/TypeScript module.
 
 ```typescript
-import { isJavaScriptModule } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import { isJavaScriptModule } from '@fairgarden/docs/pipeline/loaderUtils';
 
 isJavaScriptModule('./component.tsx'); // => true
 isJavaScriptModule('./styles.css'); // => false
@@ -499,8 +499,8 @@ import {
   parseImportsAndComments,
   resolveImportResult,
   processRelativeImports,
-} from '@mui/internal-docs-infra/pipeline/loaderUtils';
-import type { DirectoryReader } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+} from '@fairgarden/docs/pipeline/loaderUtils';
+import type { DirectoryReader } from '@fairgarden/docs/pipeline/loaderUtils';
 
 // Create a directory reader (implementation depends on your environment)
 const directoryReader: DirectoryReader = async (dirUrl) => {

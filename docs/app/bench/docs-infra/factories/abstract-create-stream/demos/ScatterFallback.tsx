@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useCoordinatedFallback } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { useCoordinatedFallback } from '@fairgarden/docs/CoordinatedLazy';
 import type { Cluster } from './scatterConstants';
 import { CoarseOverlay, ScatterFrame, StatusIndicator } from './scatterParts';
 

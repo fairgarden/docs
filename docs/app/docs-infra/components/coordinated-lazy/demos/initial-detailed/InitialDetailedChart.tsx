@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createCoordinatedLazy } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { createCoordinatedLazy } from '@fairgarden/docs/CoordinatedLazy';
 import type { Point } from './lineParts';
 import FullChart from './FullChart';
 import { SimpleChart } from './SimpleChart';

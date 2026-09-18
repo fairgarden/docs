@@ -170,7 +170,7 @@ This represents: `const x` with syntax highlighting classes applied.
 When working with HAST from untrusted sources (e.g., JSON from external APIs or user-generated content), sanitize the HAST tree before converting it to React components:
 
 ```typescript
-import { hastToJsx } from '@mui/internal-docs-infra/hastToJsx';
+import { hastToJsx } from '@fairgarden/docs/hastToJsx';
 import { sanitize } from 'hast-util-sanitize';
 
 // Untrusted HAST from external source
@@ -368,7 +368,7 @@ You can still customize precomputed HAST at render-time on the server or client 
 - Component mapping (replace elements with React components):
 
 ```tsx
-import { hastToJsx } from '@mui/internal-docs-infra/pipeline/hastUtils';
+import { hastToJsx } from '@fairgarden/docs/pipeline/hastUtils';
 
 const components = {
   code: (props: any) => <CodeBlock {...props} />, // enhance code blocks

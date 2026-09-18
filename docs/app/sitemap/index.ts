@@ -1,4 +1,4 @@
-import { createSitemap } from '@mui/internal-docs-infra/createSitemap';
+import { createSitemap } from '@fairgarden/docs/createSitemap';
 import DocsInfraOverview from '../docs-infra/overview/page.mdx';
 import DocsInfraComponents from '../docs-infra/components/page.mdx';
 import DocsInfraHooks from '../docs-infra/hooks/page.mdx';

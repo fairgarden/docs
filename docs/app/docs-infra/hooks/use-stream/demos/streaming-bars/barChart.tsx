@@ -4,8 +4,8 @@ import {
   CoordinatedLazy,
   useCoordinatedContent,
   useCoordinatedFallback,
-} from '@mui/internal-docs-infra/CoordinatedLazy';
-import type { StreamSource } from '@mui/internal-docs-infra/useStream';
+} from '@fairgarden/docs/CoordinatedLazy';
+import type { StreamSource } from '@fairgarden/docs/useStream';
 
 // One bar of one chart: the fallback paints (and hoists) `value`; `error`/`n` —
 // "the rest" — reach only the content, where they become the interactive error bar.

@@ -21,7 +21,7 @@ The hook remembers user preferences across sessions. Try selecting different var
 ### Variant Preferences
 
 ```tsx
-import { usePreference } from '@mui/internal-docs-infra/usePreference';
+import { usePreference } from '@fairgarden/docs/usePreference';
 
 function ButtonVariantSelector() {
   // For multiple variants - will persist to localStorage
@@ -55,7 +55,7 @@ function ButtonVariantSelector() {
 Code language or format selection.
 
 ```tsx
-import { usePreference } from '@mui/internal-docs-infra/usePreference';
+import { usePreference } from '@fairgarden/docs/usePreference';
 
 function CodeLanguageToggle() {
   const [language, setLanguage] = usePreference(
@@ -94,7 +94,7 @@ function CodeLanguageToggle() {
 ### With Custom Prefix
 
 ```tsx
-import { usePreference, PreferencesProvider } from '@mui/internal-docs-infra/usePreference';
+import { usePreference, PreferencesProvider } from '@fairgarden/docs/usePreference';
 
 function CustomPrefixDemo() {
   return (
@@ -129,7 +129,7 @@ function ComponentWithPreferences() {
 Manage multiple independent preferences in a single component.
 
 ```tsx
-import { usePreference } from '@mui/internal-docs-infra/usePreference';
+import { usePreference } from '@fairgarden/docs/usePreference';
 
 function DemoConfigPanel() {
   const [size, setSize] = usePreference('variant', ['small', 'medium', 'large'], () => 'medium');
@@ -202,7 +202,7 @@ The hook automatically skips localStorage for single-option scenarios:
 ### Demo Configuration Panel
 
 ```tsx
-import { usePreference } from '@mui/internal-docs-infra/usePreference';
+import { usePreference } from '@fairgarden/docs/usePreference';
 
 function DemoConfigPanel() {
   const [size, setSize] = usePreference('variant', ['small', 'medium', 'large'], () => 'medium');

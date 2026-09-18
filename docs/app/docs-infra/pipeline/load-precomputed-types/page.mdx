@@ -82,7 +82,7 @@ The easiest way to configure this loader is with the [`withDocsInfra`](../with-d
 
 ```javascript
 // next.config.mjs
-import { withDocsInfra } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra } from '@fairgarden/docs/withDocsInfra';
 
 export default withDocsInfra({
   // Automatically includes types.ts loader pattern
@@ -102,14 +102,14 @@ const nextConfig = {
   turbopack: {
     rules: {
       './app/**/types.ts': {
-        loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedTypes'],
+        loaders: ['@fairgarden/docs/pipeline/loadPrecomputedTypes'],
       },
     },
   },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     config.module.rules.push({
       test: /[/\\\\]app[/\\\\].*[/\\\\]types\.ts$/,
-      use: [defaultLoaders.babel, '@mui/internal-docs-infra/pipeline/loadPrecomputedTypes'],
+      use: [defaultLoaders.babel, '@fairgarden/docs/pipeline/loadPrecomputedTypes'],
     });
 
     return config;
@@ -156,7 +156,7 @@ config.module.rules.push({
   use: [
     defaultLoaders.babel,
     {
-      loader: '@mui/internal-docs-infra/pipeline/loadPrecomputedTypes',
+      loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
       options: {
         performance: { logging: true, notableMs: 100 },
         formatting: { shortTypeUnionPrintWidth: 50, defaultValueUnionPrintWidth: 40 },

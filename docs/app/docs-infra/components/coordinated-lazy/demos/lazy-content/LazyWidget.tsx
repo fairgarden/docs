@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { CoordinatedLazy, LazyContent } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { CoordinatedLazy, LazyContent } from '@fairgarden/docs/CoordinatedLazy';
 import { Replayable } from '@/components/Replayable/Replayable';
 
 // Matches the widget's footprint so revealing it doesn't shift the layout.

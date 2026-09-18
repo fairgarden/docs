@@ -77,8 +77,8 @@ In practice the eager variant is the right starting point for documentation that
 `CodeProvider` works seamlessly with `CodeHighlighter` for dynamic content:
 
 ```tsx
-import { CodeProvider } from '@mui/internal-docs-infra/CodeProvider';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
+import { CodeProvider } from '@fairgarden/docs/CodeProvider';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
 import { CodeContent } from './CodeContent';
 
 function DynamicCodeExample() {
@@ -95,8 +95,8 @@ function DynamicCodeExample() {
 You can provide custom functions for loading code from different sources:
 
 ```tsx
-import { CodeProvider } from '@mui/internal-docs-infra/CodeProvider';
-import type { LoadCodeMeta, LoadSource } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import { CodeProvider } from '@fairgarden/docs/CodeProvider';
+import type { LoadCodeMeta, LoadSource } from '@fairgarden/docs/CodeHighlighter/types';
 
 const loadCodeFromApi: LoadCodeMeta = async (url: string) => {
   const response = await fetch(`/api/code/${encodeURIComponent(url)}`);
@@ -186,7 +186,7 @@ warm them at the provider level instead â€” a list of language names (`'tsx'`,
 barrel up front:
 
 ```tsx
-import { CodeProviderLazy } from '@mui/internal-docs-infra/CodeProvider';
+import { CodeProviderLazy } from '@fairgarden/docs/CodeProvider';
 
 export default function Layout({ children }) {
   // Warm just the languages this docs section uses.
@@ -262,7 +262,7 @@ or compute transforms) shares the same promise the eventual consumer resolves â€
 all with no extra wiring:
 
 ```tsx
-import { CodeProviderLazy } from '@mui/internal-docs-infra/CodeProvider';
+import { CodeProviderLazy } from '@fairgarden/docs/CodeProvider';
 
 export default function Layout({ children }) {
   return <CodeProviderLazy>{children}</CodeProviderLazy>;
@@ -304,7 +304,7 @@ consumer) within each provider's subtree.
 - **[ChunkProvider](../chunk-provider/page.mdx)**: The same provider layering pattern applied to the coordinated-lazy system
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: [
       'client-side highlighting',
       'lazy loading',

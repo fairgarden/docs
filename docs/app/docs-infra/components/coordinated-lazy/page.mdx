@@ -24,7 +24,7 @@ Drive the swap yourself with the `CoordinatedLazy` component when you already ha
 
 ```tsx
 'use client';
-import { CoordinatedLazy } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { CoordinatedLazy } from '@fairgarden/docs/CoordinatedLazy';
 
 function Block({ ready, data }) {
   return <CoordinatedLazy ready={ready} fallback={<Loading />} content={<Content data={data} />} />;

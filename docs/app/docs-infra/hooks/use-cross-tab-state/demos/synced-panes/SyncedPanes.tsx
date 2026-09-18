@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useCrossTabState } from '@mui/internal-docs-infra/useCrossTabState';
+import { useCrossTabState } from '@fairgarden/docs/useCrossTabState';
 import styles from './SyncedPanes.module.css';
 
 function SyncedEditor({ label }: { label: string }) {

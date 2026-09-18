@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { CoordinatedLazy } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { CoordinatedLazy } from '@fairgarden/docs/CoordinatedLazy';
 
 // Advances a front one chunk per animation frame for the serial detail swap.
 function useSerialFront(count: number): number {

@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import type { ContentProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { useCode } from '@mui/internal-docs-infra/useCode';
+import type { ContentProps } from '@fairgarden/docs/CodeHighlighter/types';
+import { useCode } from '@fairgarden/docs/useCode';
 import {
   CodeBlockHeader,
   CodeBlockHeaderLabel,

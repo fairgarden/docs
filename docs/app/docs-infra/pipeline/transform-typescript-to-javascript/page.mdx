@@ -13,7 +13,7 @@ The `transformTypescriptToJavascript` utility transforms TypeScript/TSX code int
 ## Usage
 
 ```ts
-import transformTypescriptToJavascript from '@mui/internal-docs-infra/pipeline/transformTypescriptToJavascript';
+import transformTypescriptToJavascript from '@fairgarden/docs/pipeline/transformTypescriptToJavascript';
 
 // Transform TypeScript to JavaScript
 const result = await transformTypescriptToJavascript(
@@ -35,7 +35,7 @@ const result = await transformTypescriptToJavascript(
 The utility is also available as a source transformer for automatic processing:
 
 ```ts
-import { TypescriptToJavascriptTransformer } from '@mui/internal-docs-infra/pipeline/transformTypescriptToJavascript';
+import { TypescriptToJavascriptTransformer } from '@fairgarden/docs/pipeline/transformTypescriptToJavascript';
 
 // Transformer configuration
 // {
@@ -50,7 +50,7 @@ The underlying `removeTypes` function is exposed for callers that only
 need the raw Sucrase strip without the transformer wrapper:
 
 ```ts
-import { removeTypes } from '@mui/internal-docs-infra/pipeline/transformTypescriptToJavascript/removeTypes';
+import { removeTypes } from '@fairgarden/docs/pipeline/transformTypescriptToJavascript/removeTypes';
 
 const stripped = await removeTypes(code, 'file.ts');
 ```

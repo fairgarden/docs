@@ -1,8 +1,8 @@
 'use client';
 import * as React from 'react';
 import { Popover } from '@base-ui/react/popover';
-import { useCoordinatedContent } from '@mui/internal-docs-infra/CoordinatedLazy';
-import { decompressString } from '@mui/internal-docs-infra/pipeline/hastUtils';
+import { useCoordinatedContent } from '@fairgarden/docs/CoordinatedLazy';
+import { decompressString } from '@fairgarden/docs/pipeline/hastUtils';
 import { DocumentView } from './DocumentView';
 import { COMPRESSED } from './documentData';
 import type { Comment, DocumentRoot, Hoisted, MarkNode, TextNode } from './documentData';

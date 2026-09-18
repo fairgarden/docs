@@ -1,4 +1,4 @@
-import { createStreamFactory } from '@mui/internal-docs-infra/abstractCreateStream';
+import { createStreamFactory } from '@fairgarden/docs/abstractCreateStream';
 import ServerLineChart from './ServerLineChart';
 import { SimpleLineChart } from '../SimpleLineChart';
 

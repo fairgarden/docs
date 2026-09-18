@@ -2,7 +2,7 @@ import * as React from 'react';
 import type {
   SearchResult,
   SearchResults as SearchResultsType,
-} from '@mui/internal-docs-infra/useSearch/types';
+} from '@fairgarden/docs/useSearch/types';
 import { Autocomplete } from '@base-ui/react/autocomplete';
 import { SearchItem } from './SearchItem';
 import styles from './SearchResults.module.css';

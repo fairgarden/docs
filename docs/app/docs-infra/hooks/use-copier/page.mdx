@@ -22,7 +22,7 @@ A simple example showing how to copy text from an input field.
 ### Dynamic Content
 
 ```tsx
-import { useCopier } from '@mui/internal-docs-infra/useCopier';
+import { useCopier } from '@fairgarden/docs/useCopier';
 
 function CodeBlockCopy({ getCode }: { getCode: () => string }) {
   const { copy, recentlySuccessful } = useCopier(getCode);
@@ -38,7 +38,7 @@ function CodeBlockCopy({ getCode }: { getCode: () => string }) {
 ### With Error Handling
 
 ```tsx
-import { useCopier } from '@mui/internal-docs-infra/useCopier';
+import { useCopier } from '@fairgarden/docs/useCopier';
 
 function CopyWithFeedback({ content }: { content: string }) {
   const [error, setError] = React.useState<string | null>(null);
@@ -61,7 +61,7 @@ function CopyWithFeedback({ content }: { content: string }) {
 ### With Custom Analytics
 
 ```tsx
-import { useCopier } from '@mui/internal-docs-infra/useCopier';
+import { useCopier } from '@fairgarden/docs/useCopier';
 
 function AnalyticsCopyButton({ text, label }: { text: string; label: string }) {
   const { copy, recentlySuccessful } = useCopier(text, {

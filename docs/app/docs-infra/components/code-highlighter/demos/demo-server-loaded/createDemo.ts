@@ -3,10 +3,10 @@ import 'server-only';
 import {
   createDemoFactory,
   createDemoWithVariantsFactory,
-} from '@mui/internal-docs-infra/abstractCreateDemo';
-import { loadServerCodeMeta } from '@mui/internal-docs-infra/pipeline/loadServerCodeMeta';
-import { createLoadServerCodeSource } from '@mui/internal-docs-infra/pipeline/loadServerCodeSource';
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+} from '@fairgarden/docs/abstractCreateDemo';
+import { loadServerCodeMeta } from '@fairgarden/docs/pipeline/loadServerCodeMeta';
+import { createLoadServerCodeSource } from '@fairgarden/docs/pipeline/loadServerCodeSource';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
 
 import { DemoContent } from '../DemoContent';
 

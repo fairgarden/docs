@@ -8,7 +8,7 @@ The `createSitemap` factory function defines sitemap data for documentation site
 > Place your sitemap at `app/sitemap/index.ts` for automatic detection by [`withDocsInfra`](../../pipeline/with-docs-infra/page.mdx).
 
 ```typescript
-import { createSitemap } from '@mui/internal-docs-infra/createSitemap';
+import { createSitemap } from '@fairgarden/docs/createSitemap';
 import DocsInfraComponents from '../docs-infra/components/page.mdx';
 import DocsInfraFunctions from '../docs-infra/functions/page.mdx';
 
@@ -27,7 +27,7 @@ During Next.js builds, the [`loadPrecomputedSitemap`](../../pipeline/load-precom
 For loading sitemap data outside of Next.js builds (e.g., in tests, scripts, or non-Next.js applications), use [`loadServerSitemap`](../../pipeline/load-server-sitemap/page.mdx):
 
 ```typescript
-import { loadServerSitemap } from '@mui/internal-docs-infra/pipeline/loadServerSitemap';
+import { loadServerSitemap } from '@fairgarden/docs/pipeline/loadServerSitemap';
 
 // Load sitemap at runtime by parsing the sitemap index file
 const sitemap = await loadServerSitemap('file:///path/to/app/sitemap/index.ts');
@@ -95,7 +95,7 @@ Here's a lower-level example using Orama directly:
 
 ```typescript
 import { create, insertMultiple, search } from '@orama/orama';
-import { loadServerSitemap } from '@mui/internal-docs-infra/pipeline/loadServerSitemap';
+import { loadServerSitemap } from '@fairgarden/docs/pipeline/loadServerSitemap';
 
 // Load the sitemap at runtime
 const sitemap = await loadServerSitemap('file:///path/to/app/sitemap/index.ts');

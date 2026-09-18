@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { CodeComponentsContext } from '@mui/internal-docs-infra/useCode';
+import { CodeComponentsContext } from '@fairgarden/docs/useCode';
 import type { MDXComponents } from 'mdx/types';
 import { TypeRef } from './components/TypeRef';
 import { TypePropRef } from './components/TypePropRef';

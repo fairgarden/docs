@@ -22,7 +22,7 @@ The `transformHtmlCodeInline` plugin transforms plain inline code into beautiful
 
 ## Installation
 
-This plugin is part of `@mui/internal-docs-infra` and doesn't need separate installation.
+This plugin is part of `@fairgarden/docs` and doesn't need separate installation.
 
 ---
 
@@ -34,7 +34,7 @@ This plugin is part of `@mui/internal-docs-infra` and doesn't need separate inst
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeStringify from 'rehype-stringify';
-import transformHtmlCodeInline from '@mui/internal-docs-infra/pipeline/transformHtmlCodeInline';
+import transformHtmlCodeInline from '@fairgarden/docs/pipeline/transformHtmlCodeInline';
 
 const processor = unified()
   .use(rehypeParse, { fragment: true })
@@ -482,6 +482,6 @@ import { TypesTransformHtmlCodeInline } from './types';
 - [Rehype Plugins](https://github.com/rehypejs/rehype/blob/main/doc/plugins.md)
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['inline highlighting', 'type expressions', 'highlighting prefix', 'data-inline'],
   });

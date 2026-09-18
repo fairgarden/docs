@@ -136,7 +136,7 @@ All commands are fast in this repository, but network issues or system load can 
 
 ## Docs Infra Conventions
 
-Follow additional instructions when working in the `@mui/internal-docs-infra` (`packages/docs-infra`) package or `docs/app/docs-infra` docs:
+Follow additional instructions when working in the `@fairgarden/docs` (`packages/docs`) package or `docs/app/docs-infra` docs:
 
 ### Development Process
 

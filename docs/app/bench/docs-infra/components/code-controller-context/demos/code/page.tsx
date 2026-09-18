@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
-import { CodeProvider } from '@mui/internal-docs-infra/CodeProvider';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
+import { CodeProvider } from '@fairgarden/docs/CodeProvider';
 import { CodeController } from '../../../../../../docs-infra/components/code-controller-context/demos/code-editor/CodeController';
 import { CodeEditorContent } from '../../../../../../docs-infra/components/code-controller-context/demos/code-editor/CodeEditorContent';
 

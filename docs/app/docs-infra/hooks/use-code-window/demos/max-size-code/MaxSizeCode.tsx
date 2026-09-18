@@ -1,7 +1,7 @@
 import * as React from 'react';
-import type { Code as CodeType } from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { parseImportsAndComments } from '@mui/internal-docs-infra/pipeline/loaderUtils';
-import { EMPHASIS_COMMENT_PREFIX } from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
+import type { Code as CodeType } from '@fairgarden/docs/CodeHighlighter/types';
+import { parseImportsAndComments } from '@fairgarden/docs/pipeline/loaderUtils';
+import { EMPHASIS_COMMENT_PREFIX } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 import { CodeMaxSize } from '../CodeMaxSize';
 
 const source = `import * as React from 'react';

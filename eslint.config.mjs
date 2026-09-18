@@ -7,7 +7,7 @@ import {
   EXTENSION_TS,
 } from '@mui/internal-code-infra/eslint';
 import nPlugin from 'eslint-plugin-n';
-import { lintJavascriptDemoFocus } from '@mui/internal-docs-infra/pipeline/lintJavascriptDemoFocus';
+import { lintJavascriptDemoFocus } from '@fairgarden/docs/pipeline/lintJavascriptDemoFocus';
 import remarkConfig from './.remarkrc.mjs';
 
 const config = defineConfig(
@@ -54,7 +54,7 @@ const config = defineConfig(
     extends: createTestConfig({ useMocha: false, useVitest: true }),
   },
   {
-    files: [`packages/docs-infra/**/*${EXTENSION_TEST_FILE}`],
+    files: [`packages/docs/**/*${EXTENSION_TEST_FILE}`],
     rules: {
       // TODO @dav-is
       'vitest/no-conditional-expect': 'off',

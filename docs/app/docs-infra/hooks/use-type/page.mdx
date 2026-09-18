@@ -36,7 +36,7 @@ TypeRef / TypePropRef component — renders interactive popover
 ```tsx
 'use client';
 
-import { useType } from '@mui/internal-docs-infra/useType';
+import { useType } from '@fairgarden/docs/useType';
 
 function MyTypeViewer({ typeName }: { typeName: string }) {
   const typeData = useType(typeName);
@@ -60,7 +60,7 @@ The provider must wrap your component tree so that `useTypes` can register types
 
 ```tsx
 // layout.tsx
-import { TypesDataProvider } from '@mui/internal-docs-infra/useType';
+import { TypesDataProvider } from '@fairgarden/docs/useType';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return <TypesDataProvider>{children}</TypesDataProvider>;
@@ -75,7 +75,7 @@ A common use case is building a `TypeRef` component that renders an interactive 
 'use client';
 
 import { Popover } from '@base-ui/react/popover';
-import { useType } from '@mui/internal-docs-infra/useType';
+import { useType } from '@fairgarden/docs/useType';
 
 function TypeRef({ href, name, className, children }) {
   const typeData = useType(name);
@@ -115,7 +115,7 @@ The `useTypeProp` hook looks up a single property from a registered type. This i
 ```tsx
 'use client';
 
-import { useTypeProp } from '@mui/internal-docs-infra/useType';
+import { useTypeProp } from '@fairgarden/docs/useType';
 
 function TypePropRef({ typeName, propName, href, className, children }) {
   const propData = useTypeProp(typeName, propName);

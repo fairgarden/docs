@@ -2,7 +2,7 @@ import { createMultipleTypes } from '@/functions/createTypes';
 import {
   abstractCreateStream,
   createStreamFactory,
-} from '@mui/internal-docs-infra/abstractCreateStream';
+} from '@fairgarden/docs/abstractCreateStream';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, {
   abstractCreateStream,

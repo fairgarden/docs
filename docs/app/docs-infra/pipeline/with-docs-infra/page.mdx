@@ -15,7 +15,7 @@ The `withDocsInfra` function is a Next.js configuration plugin that sets up webp
 
 ```js
 // next.config.mjs
-import { withDocsInfra } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra } from '@fairgarden/docs/withDocsInfra';
 
 const nextConfig = {
   // Your existing Next.js config
@@ -28,7 +28,7 @@ export default withDocsInfra()(nextConfig);
 
 ```js
 // next.config.mjs
-import { withDocsInfra, getDocsInfraMdxOptions } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra, getDocsInfraMdxOptions } from '@fairgarden/docs/withDocsInfra';
 import createMDX from '@next/mdx';
 
 const withMDX = createMDX({
@@ -122,10 +122,10 @@ The plugin automatically configures loaders for these patterns:
 ```js
 {
   './app/**/demos/*/index.ts': {
-    loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter']
+    loaders: ['@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter']
   },
   './app/**/demos/*/client.ts': {
-    loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighterClient']
+    loaders: ['@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient']
   }
 }
 ```
@@ -137,7 +137,7 @@ The plugin automatically configures loaders for these patterns:
   test: /[/\\]demos[/\\][^/\\]+[/\\]index\.ts$/,
   use: [
     defaultLoaders.babel,
-    '@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighter'
+    '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter'
   ]
 }
 ```
@@ -147,7 +147,7 @@ The plugin automatically configures loaders for these patterns:
 Use `getDocsInfraMdxOptions` to configure MDX with docs-infra plugins:
 
 ```js
-import { withDocsInfra, getDocsInfraMdxOptions } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra, getDocsInfraMdxOptions } from '@fairgarden/docs/withDocsInfra';
 import createMDX from '@next/mdx';
 
 // Default docs-infra MDX plugins with automatic index generation
@@ -391,7 +391,7 @@ Complete Next.js configuration for a docs site:
 
 ```js
 // next.config.mjs
-import { withDocsInfra, getDocsInfraMdxOptions } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra, getDocsInfraMdxOptions } from '@fairgarden/docs/withDocsInfra';
 import createMDX from '@next/mdx';
 
 const withMDX = createMDX({

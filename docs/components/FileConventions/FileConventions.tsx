@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getFileConventions } from '@mui/internal-docs-infra/pipeline/getFileConventions';
+import { getFileConventions } from '@fairgarden/docs/pipeline/getFileConventions';
 import Link from 'next/link';
 
 export async function FileConventions() {

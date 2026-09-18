@@ -1,5 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import * as useCrossTabState from '@mui/internal-docs-infra/useCrossTabState';
+import * as useCrossTabState from '@fairgarden/docs/useCrossTabState';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, useCrossTabState);
 

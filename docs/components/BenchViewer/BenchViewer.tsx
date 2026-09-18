@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Dialog } from '@base-ui/react/dialog';
-import type { useDemo } from '@mui/internal-docs-infra/useDemo';
+import type { useDemo } from '@fairgarden/docs/useDemo';
 import styles from './BenchViewer.module.css';
 
 const metricNames: Record<string, string | undefined> = {

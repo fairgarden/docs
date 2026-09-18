@@ -10,7 +10,7 @@ The `loadIsomorphicCodeVariant` module provides utilities for loading, processin
 ### Loading a Code Variant
 
 ```ts
-import { loadIsomorphicCodeVariant } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { loadIsomorphicCodeVariant } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 // Load and process a single variant
 const result = await loadIsomorphicCodeVariant(
@@ -115,7 +115,7 @@ const result = await loadIsomorphicCodeVariant(
 Convert code objects to HAST for rendering:
 
 ```ts
-import { parseCode } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { parseCode } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const code = {
   Default: {
@@ -136,7 +136,7 @@ Use `sourceEnhancers` to modify HAST nodes after parsing. Enhancers receive the 
 import type {
   SourceEnhancer,
   SourceComments,
-} from '@mui/internal-docs-infra/CodeHighlighter/types';
+} from '@fairgarden/docs/CodeHighlighter/types';
 
 // SourceComments is Record<number, string[]> - line numbers to comment arrays
 
@@ -178,7 +178,7 @@ Enhancers run sequentially after parsing, each receiving the output of the previ
 Convert nested variant structure to flat file paths:
 
 ```ts
-import { flattenCodeVariant } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { flattenCodeVariant } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const variant = {
   url: 'file:///src/components/button/Button.tsx',
@@ -223,7 +223,7 @@ flattening that powers `useDemo`'s
 Determine if you have enough data to render without loading:
 
 ```ts
-import { maybeCodeInitialData } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { maybeCodeInitialData } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const { initialData, reason } = maybeCodeInitialData(
   ['typescript', 'javascript'],
@@ -253,7 +253,7 @@ if (initialData) {
 Use `loadCodeFallback` to load the minimal data needed for initial render:
 
 ```ts
-import { loadCodeFallback } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { loadCodeFallback } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const fallback = await loadCodeFallback(
   'file:///app/demos/example/index.ts',
@@ -285,7 +285,7 @@ const fallback = await loadCodeFallback(
 Apply TypeScript-to-JavaScript transforms to rendered code:
 
 ```ts
-import { applyCodeTransform } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { applyCodeTransform } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const jsSource = applyCodeTransform(
   tsSource, // Original TypeScript HAST
@@ -301,7 +301,7 @@ const jsSource = applyCodeTransform(
 Position metadata files (package.json, configs) relative to source files:
 
 ```ts
-import { mergeCodeMetadata } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { mergeCodeMetadata } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const merged = mergeCodeMetadata(
   variant,
@@ -320,7 +320,7 @@ const merged = mergeCodeMetadata(
 Analyze variant structure for path resolution:
 
 ```ts
-import { examineCodeVariant } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { examineCodeVariant } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const context = examineCodeVariant(variant);
 // Returns:
@@ -747,6 +747,6 @@ import { TypesLoadIsomorphicCodeVariant, TypesLoadIsomorphicCodeVariantAdditiona
 - [`transformTypescriptToJavascript`](../transform-typescript-to-javascript/page.mdx) - TypeScript transformer
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['variant loading', 'extraFiles', 'transforms', 'deltas', 'globalsCode', 'fallback'],
   });

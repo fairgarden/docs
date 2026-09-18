@@ -1,5 +1,5 @@
 import { createTypes } from '@/functions/createTypes';
-import loadPrecomputedCodeHighlighterClient from '@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighterClient';
+import loadPrecomputedCodeHighlighterClient from '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient';
 
 export const TypesLoadPrecomputedCodeHighlighterClient = createTypes(
   import.meta.url,

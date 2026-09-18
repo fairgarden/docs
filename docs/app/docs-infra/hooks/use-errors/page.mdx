@@ -23,7 +23,7 @@ import { TypesUseErrors } from './types';
 ### Basic Error Display
 
 ```tsx
-import { useErrors } from '@mui/internal-docs-infra/useErrors';
+import { useErrors } from '@fairgarden/docs/useErrors';
 
 function DemoErrorHandler({ errors: propErrors }: { errors?: Error[] }) {
   const { errors } = useErrors({ errors: propErrors });
@@ -48,7 +48,7 @@ function DemoErrorHandler({ errors: propErrors }: { errors?: Error[] }) {
 ### Isomorphic Error Handler
 
 ```tsx
-import { useErrors } from '@mui/internal-docs-infra/useErrors';
+import { useErrors } from '@fairgarden/docs/useErrors';
 
 interface ErrorHandlerProps {
   errors?: Error[]; // Props-based errors for SSR
@@ -77,8 +77,8 @@ function CodeErrorHandler({ errors }: ErrorHandlerProps) {
 ### Conditional Rendering Based on Errors
 
 ```tsx
-import { useErrors } from '@mui/internal-docs-infra/useErrors';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
+import { useErrors } from '@fairgarden/docs/useErrors';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
 
 function SafeCodeDemo({
   code,
@@ -117,7 +117,7 @@ function SafeCodeDemo({
 ### Custom Error Formatting
 
 ```tsx
-import { useErrors } from '@mui/internal-docs-infra/useErrors';
+import { useErrors } from '@fairgarden/docs/useErrors';
 
 function FormattedErrorDisplay({ errors: propErrors }: { errors?: Error[] }) {
   const { errors } = useErrors({ errors: propErrors });
@@ -285,7 +285,7 @@ This ensures consistent error reporting and user experience while respecting Rea
 The hook connects to the `CodeErrorsContext` which is provided by components like `CodeHighlighterClient`:
 
 ```tsx
-import { CodeErrorsContext } from '@mui/internal-docs-infra/useErrors/ErrorsContext';
+import { CodeErrorsContext } from '@fairgarden/docs/useErrors/ErrorsContext';
 
 function ErrorProvider({ children, errors }: { children: React.ReactNode; errors?: Error[] }) {
   const errorsContextValue = React.useMemo(() => ({ errors }), [errors]);
@@ -308,8 +308,8 @@ function ErrorProvider({ children, errors }: { children: React.ReactNode; errors
 The hook is commonly used with code highlighting components:
 
 ```tsx
-import { useErrors } from '@mui/internal-docs-infra/useErrors';
-import { CodeHighlighterClient } from '@mui/internal-docs-infra/CodeHighlighter';
+import { useErrors } from '@fairgarden/docs/useErrors';
+import { CodeHighlighterClient } from '@fairgarden/docs/CodeHighlighter';
 
 function CodeDemo() {
   return (

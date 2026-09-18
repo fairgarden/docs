@@ -1,4 +1,4 @@
-import type { SitemapSectionData } from '@mui/internal-docs-infra/createSitemap/types';
+import type { SitemapSectionData } from '@fairgarden/docs/createSitemap/types';
 import * as React from 'react';
 import Link from 'next/link';
 import styles from './PagesIndex.module.css';

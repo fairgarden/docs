@@ -1,5 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import * as parseCreateFactoryCall from '@mui/internal-docs-infra/pipeline/parseCreateFactoryCall';
+import * as parseCreateFactoryCall from '@fairgarden/docs/pipeline/parseCreateFactoryCall';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, parseCreateFactoryCall);
 

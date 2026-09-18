@@ -124,7 +124,7 @@
     },
     {
       "groupName": "MUI docs infra packages",
-      "matchPackageNames": ["@mui/internal-docs-infra", "@mui/docs", "@mui/internal-core-docs"],
+      "matchPackageNames": ["@fairgarden/docs", "@mui/docs", "@mui/internal-core-docs"],
       "reviewers": ["team:infra"]
     },
     {

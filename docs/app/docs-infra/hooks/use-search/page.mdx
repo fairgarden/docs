@@ -25,7 +25,7 @@ The `useSearch` hook provides a powerful client-side search engine using [Orama]
 ## Basic Usage
 
 ```tsx
-import { useSearch } from '@mui/internal-docs-infra/useSearch';
+import { useSearch } from '@fairgarden/docs/useSearch';
 
 function SearchComponent() {
   const { results, search, isReady, defaultResults, buildResultUrl } = useSearch({
@@ -126,7 +126,7 @@ const { search } = useSearch({
 Boost specific fields to prioritize certain result types. You can import `defaultSearchBoost` and extend it:
 
 ```tsx
-import { useSearch, defaultSearchBoost } from '@mui/internal-docs-infra/useSearch';
+import { useSearch, defaultSearchBoost } from '@fairgarden/docs/useSearch';
 
 const { search } = useSearch({
   sitemap: () => import('./sitemap'),
@@ -281,7 +281,7 @@ Create a sitemap index file using [`createSitemap`](../../factories/create-sitem
 
 ```typescript
 // app/sitemap/index.ts
-import { createSitemap } from '@mui/internal-docs-infra/createSitemap';
+import { createSitemap } from '@fairgarden/docs/createSitemap';
 import Components from '../components/page.mdx';
 import Functions from '../functions/page.mdx';
 

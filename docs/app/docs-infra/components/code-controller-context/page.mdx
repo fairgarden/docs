@@ -65,10 +65,10 @@ For interactive code editing with syntax highlighting:
 'use client';
 
 import * as React from 'react';
-import { CodeProvider } from '@mui/internal-docs-infra/CodeProvider';
-import { CodeControllerContext } from '@mui/internal-docs-infra/CodeControllerContext';
-import type { ControlledCode } from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
+import { CodeProvider } from '@fairgarden/docs/CodeProvider';
+import { CodeControllerContext } from '@fairgarden/docs/CodeControllerContext';
+import type { ControlledCode } from '@fairgarden/docs/CodeHighlighter/types';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
 
 // Simple controller implementation
 function CodeController({ children }: { children: React.ReactNode }) {
@@ -124,7 +124,7 @@ The [`useCode`](../../hooks/use-code/page.mdx) hook automatically integrates wit
 ```tsx
 'use client';
 
-import { useCode } from '@mui/internal-docs-infra/useCode';
+import { useCode } from '@fairgarden/docs/useCode';
 
 function EditorContent(props) {
   const code = useCode(props);
@@ -146,7 +146,7 @@ Editing is handled automatically by the `Pre` component — just render `demo.se
 ```tsx
 'use client';
 
-import { useDemo } from '@mui/internal-docs-infra/useDemo';
+import { useDemo } from '@fairgarden/docs/useDemo';
 
 function DemoContent(props) {
   const demo = useDemo(props);
@@ -214,8 +214,8 @@ import * as React from 'react';
 import {
   CodeControllerContext,
   type Selection,
-} from '@mui/internal-docs-infra/CodeControllerContext';
-import type { ControlledCode } from '@mui/internal-docs-infra/CodeHighlighter/types';
+} from '@fairgarden/docs/CodeControllerContext';
+import type { ControlledCode } from '@fairgarden/docs/CodeHighlighter/types';
 
 function SyncedController({ children }: { children: React.ReactNode }) {
   const [code, setCode] = React.useState<ControlledCode | undefined>(undefined);
@@ -379,6 +379,6 @@ import { TypesCodeControllerContext } from './types';
 - **[`useDemo`](../../hooks/use-demo/page.mdx) Hook** - Extends [`useCode`](../../hooks/use-code/page.mdx) with live component preview capabilities
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['controlled code', 'live editing', 'editable code', 'playground', 'focus trap'],
   });

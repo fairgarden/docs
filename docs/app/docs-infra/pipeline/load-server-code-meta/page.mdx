@@ -8,7 +8,7 @@ The `loadServerCodeMeta` utility parses demo files to extract variant informatio
 ## Basic Usage
 
 ```ts
-import { loadServerCodeMeta } from '@mui/internal-docs-infra/pipeline/loadServerCodeMeta';
+import { loadServerCodeMeta } from '@fairgarden/docs/pipeline/loadServerCodeMeta';
 
 // Load metadata from a demo index file
 const code = await loadServerCodeMeta('file:///app/components/button/demos/basic/index.ts');
@@ -100,7 +100,7 @@ const code = await loadServerCodeMeta('file:///app/components/form/demos/validat
 Create a custom `loadCodeMeta` function using the factory:
 
 ```ts
-import { createLoadServerCodeMeta } from '@mui/internal-docs-infra/pipeline/loadServerCodeMeta';
+import { createLoadServerCodeMeta } from '@fairgarden/docs/pipeline/loadServerCodeMeta';
 
 const customLoadCodeMeta = createLoadServerCodeMeta({
   // Configuration options (currently none available)
@@ -116,10 +116,10 @@ Using with server-side rendering:
 Pass it as the `loadCodeMeta` function — `CodeHighlighter` calls it with the `url` itself, then loads each resolved variant with `loadSource`:
 
 ```tsx
-import { loadServerCodeMeta } from '@mui/internal-docs-infra/pipeline/loadServerCodeMeta';
-import { createLoadServerCodeSource } from '@mui/internal-docs-infra/pipeline/loadServerCodeSource';
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
+import { loadServerCodeMeta } from '@fairgarden/docs/pipeline/loadServerCodeMeta';
+import { createLoadServerCodeSource } from '@fairgarden/docs/pipeline/loadServerCodeSource';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
 import { CodeContent } from './CodeContent';
 
 const loadSource = createLoadServerCodeSource();
@@ -191,6 +191,6 @@ import { TypesLoadServerCodeMeta } from './types';
 - [`loadPrecomputedCodeHighlighter`](../load-precomputed-code-highlighter/page.mdx) - Build-time alternative
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['loadCodeMeta', 'variants', 'demo parsing', 'path resolution'],
   });

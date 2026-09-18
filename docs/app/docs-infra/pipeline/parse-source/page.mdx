@@ -5,7 +5,7 @@ The `parseSource` utility parses source code into HAST (Hypertext Abstract Synta
 ## Basic Usage
 
 ```ts
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
 
 // Initialize the parser (do this once, typically at app startup)
 const parseSource = await createParseSource();
@@ -30,7 +30,7 @@ The parser automatically:
 ### Highlighting Different Languages
 
 ```ts
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
 
 const parseSource = await createParseSource();
 
@@ -50,7 +50,7 @@ const htmlCode = parseSource('<div>Hello</div>', 'index.html');
 ### Processing Multiple Files
 
 ```ts
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
 
 const parseSource = await createParseSource();
 
@@ -97,7 +97,7 @@ language detection.
 After initialization, `parseSource` can be used directly from anywhere:
 
 ```ts
-import { createParseSource, parseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+import { createParseSource, parseSource } from '@fairgarden/docs/pipeline/parseSource';
 
 // Initialize once (e.g., in app startup)
 await createParseSource();
@@ -111,8 +111,8 @@ function highlightCode(code: string, fileName: string) {
 ### Integration with Code Highlighter
 
 ```tsx
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
-import { hastToJsx } from '@mui/internal-docs-infra/pipeline/hastUtils';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
+import { hastToJsx } from '@fairgarden/docs/pipeline/hastUtils';
 
 const parseSource = await createParseSource();
 
@@ -198,14 +198,14 @@ The parser supports languages based on file extensions:
 ### Uninitialized Parser
 
 ```ts
-import { parseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+import { parseSource } from '@fairgarden/docs/pipeline/parseSource';
 
 // ❌ This will throw an error
 parseSource('code', 'file.js');
 // Error: Starry Night not initialized. Use createParseSource to create an initialized parseSource function.
 
 // ✓ Initialize first
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
 await createParseSource();
 parseSource('code', 'file.js'); // Now works
 ```
@@ -276,6 +276,6 @@ import { TypesParseSource, TypesParseSourceAdditional } from './types';
 - [`loadPrecomputedCodeHighlighter`](../load-precomputed-code-highlighter/page.mdx) - Build-time optimization using parseSource
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['starry night', 'syntax highlighting', 'grammars', 'HAST', 'TextMate'],
   });

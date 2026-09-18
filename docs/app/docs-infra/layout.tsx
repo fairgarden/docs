@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import DemoCodeProvider from '@/demo-data/code-provider/DemoCodeProvider';
-import { TypesDataProvider } from '@mui/internal-docs-infra/useType';
+import { TypesDataProvider } from '@fairgarden/docs/useType';
 import { Navigation } from '@/components/Navigation';
 import { CodeComponentsProvider } from '@/code-components';
 import styles from '../layout.module.css';

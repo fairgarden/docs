@@ -32,7 +32,7 @@ The easiest way to configure this loader is with the [`withDocsInfra`](../with-d
 
 ```javascript
 // next.config.js
-import { withDocsInfra } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra } from '@fairgarden/docs/withDocsInfra';
 
 export default withDocsInfra({
   // Automatically includes:
@@ -58,7 +58,7 @@ const nextConfig = {
   turbopack: {
     rules: {
       './app/**/demos/*/client.ts': {
-        loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighterClient'],
+        loaders: ['@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient'],
       },
     },
   },
@@ -67,7 +67,7 @@ const nextConfig = {
       test: /[/\\]demos[/\\][^/\\]+[/\\]client\.ts$/,
       use: [
         defaultLoaders.babel,
-        '@mui/internal-docs-infra/pipeline/loadPrecomputedCodeHighlighterClient',
+        '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
       ],
     });
 
@@ -379,6 +379,6 @@ import { TypesLoadPrecomputedCodeHighlighterClient } from './types';
 - [CodeHighlighter](../../components/code-highlighter/page.mdx) - Code highlighting component system
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['externals', 'demo client', 'webpack loader', 'live editing', 'createDemoClient'],
   });

@@ -4,8 +4,8 @@ import {
   CoordinatedLazy,
   useCoordinatedContent,
   useCoordinatedFallback,
-} from '@mui/internal-docs-infra/CoordinatedLazy';
-import type { StreamSource } from '@mui/internal-docs-infra/useStream';
+} from '@fairgarden/docs/CoordinatedLazy';
+import type { StreamSource } from '@fairgarden/docs/useStream';
 
 export const SLICE_WIDTH = 34;
 export const WINDOW = 12;

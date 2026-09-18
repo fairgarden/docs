@@ -16,21 +16,21 @@ New to the codebase? Start with the [Architecture](./overview/architecture/page.
 ## Installation
 
 ```bash variant=pnpm
-pnpm install @mui/internal-docs-infra
+pnpm install @fairgarden/docs
 ```
 
 ```bash variant=yarn
-yarn add @mui/internal-docs-infra
+yarn add @fairgarden/docs
 ```
 
 ```bash variant=npm
-npm install @mui/internal-docs-infra
+npm install @fairgarden/docs
 ```
 
 Then configure your Next.js app with [`withDocsInfra`](./pipeline/with-docs-infra/page.mdx):
 
 ```js title="next.config.mjs"
-import { withDocsInfra } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra } from '@fairgarden/docs/withDocsInfra';
 
 export default withDocsInfra()(nextConfig);
 ```

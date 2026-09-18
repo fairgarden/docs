@@ -25,7 +25,7 @@ module.exports = function getBabelConfig(api) {
   const baseConfig = getBaseConfig(api);
 
   const defaultAlias = {
-    '@mui/internal-docs-infra': resolveAliasPath('./packages/docs-infra/src'),
+    '@fairgarden/docs': resolveAliasPath('./packages/docs/src'),
   };
 
   return {

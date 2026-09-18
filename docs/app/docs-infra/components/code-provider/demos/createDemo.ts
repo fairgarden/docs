@@ -1,7 +1,7 @@
 import {
   createDemoFactory,
   createDemoWithVariantsFactory,
-} from '@mui/internal-docs-infra/abstractCreateDemo';
+} from '@fairgarden/docs/abstractCreateDemo';
 
 import { DemoContent } from '../../code-highlighter/demos/DemoContent';
 import { DemoTitle } from '../../code-highlighter/demos/DemoTitle';

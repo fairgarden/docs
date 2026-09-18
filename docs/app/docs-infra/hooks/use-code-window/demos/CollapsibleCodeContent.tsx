@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import type { ContentProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { useCode } from '@mui/internal-docs-infra/useCode';
-import { useCodeWindow } from '@mui/internal-docs-infra/useCodeWindow';
-import { useScrollAnchor } from '@mui/internal-docs-infra/useScrollAnchor';
+import type { ContentProps } from '@fairgarden/docs/CodeHighlighter/types';
+import { useCode } from '@fairgarden/docs/useCode';
+import { useCodeWindow } from '@fairgarden/docs/useCodeWindow';
+import { useScrollAnchor } from '@fairgarden/docs/useScrollAnchor';
 import { CodeActionsMenu } from '../../../components/code-highlighter/demos/CodeActionsMenu';
 import { CodeBlockHeader } from '../../../components/code-highlighter/demos/CodeBlockHeader';
 import { CodeSource } from '../../../components/code-highlighter/demos/CodeSource';

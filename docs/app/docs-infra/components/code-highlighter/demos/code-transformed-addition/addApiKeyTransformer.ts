@@ -1,4 +1,4 @@
-import type { SourceTransformer } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import type { SourceTransformer } from '@fairgarden/docs/CodeHighlighter/types';
 
 /**
  * Demo transformer that prepends a randomly generated API key constant

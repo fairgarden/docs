@@ -1,6 +1,6 @@
 # Architecture
 
-This page explains the overall architecture of `@mui/internal-docs-infra`, including data flows, key design decisions, and how the various pieces fit together.
+This page explains the overall architecture of `@fairgarden/docs`, including data flows, key design decisions, and how the various pieces fit together.
 
 ## Overview
 
@@ -350,7 +350,7 @@ Type processing uses a singleton worker thread to preserve the TypeScript langua
 - A persistent worker preserves the cache across all loader invocations
 - Uses `Symbol.for()` on `process` to ensure singleton across Turbopack contexts
 
-See [workerManager.ts](https://github.com/mui/mui-public/blob/master/packages/docs-infra/src/pipeline/syncTypes/workerManager.ts) for implementation.
+See [workerManager.ts](https://github.com/mui/mui-public/blob/master/packages/docs/src/pipeline/syncTypes/workerManager.ts) for implementation.
 
 ## Module Organization
 

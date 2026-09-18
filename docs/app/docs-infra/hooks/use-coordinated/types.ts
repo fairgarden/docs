@@ -5,7 +5,7 @@ import {
   useCoordinatedPreference,
   createSettleGate,
   useSettleGate,
-} from '@mui/internal-docs-infra/useCoordinated';
+} from '@fairgarden/docs/useCoordinated';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, {
   useCoordinated,

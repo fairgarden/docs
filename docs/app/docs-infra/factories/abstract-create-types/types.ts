@@ -1,5 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import * as AbstractCreateTypesModule from '@mui/internal-docs-infra/abstractCreateTypes';
+import * as AbstractCreateTypesModule from '@fairgarden/docs/abstractCreateTypes';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, AbstractCreateTypesModule);
 

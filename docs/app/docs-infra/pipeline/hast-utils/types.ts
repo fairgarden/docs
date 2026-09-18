@@ -1,5 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import * as hastUtils from '@mui/internal-docs-infra/pipeline/hastUtils';
+import * as hastUtils from '@fairgarden/docs/pipeline/hastUtils';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, hastUtils);
 

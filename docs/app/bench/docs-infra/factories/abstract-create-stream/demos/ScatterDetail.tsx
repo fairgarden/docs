@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useCoordinatedContent } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { useCoordinatedContent } from '@fairgarden/docs/CoordinatedLazy';
 import { DETAIL_FILL, POINT_RADIUS } from './scatterConstants';
 import type { Cluster, DetailChunk } from './scatterConstants';
 import { CoarseOverlay, ScatterFrame, StatusIndicator } from './scatterParts';

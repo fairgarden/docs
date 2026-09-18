@@ -20,14 +20,14 @@ Use this plugin to automatically clean up meta link patterns in your documentati
 ```typescript
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
-import transformMarkdownMetaLinks from '@mui/internal-docs-infra/pipeline/transformMarkdownMetaLinks';
+import transformMarkdownMetaLinks from '@fairgarden/docs/pipeline/transformMarkdownMetaLinks';
 
 const processor = unified().use(remarkParse).use(transformMarkdownMetaLinks);
 ```
 
 ### With docs-infra
 
-This plugin is automatically included when using `withDocsInfra()` from `@mui/internal-docs-infra`. See the [CodeHighlighter documentation](../../components/code-highlighter/page.mdx#link-to-demo) for examples of Demo components in action.
+This plugin is automatically included when using `withDocsInfra()` from `@fairgarden/docs`. See the [CodeHighlighter documentation](../../components/code-highlighter/page.mdx#link-to-demo) for examples of Demo components in action.
 
 ## Syntax Examples
 

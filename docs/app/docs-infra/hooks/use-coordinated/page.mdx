@@ -26,7 +26,7 @@ With `useCoordinated`, the channel uses `causesLayoutShift: (target) => target.d
 The minimum wiring is just a `useState` tuple plus a `channelKey` and `causesLayoutShift`:
 
 ```tsx
-import { useCoordinated } from '@mui/internal-docs-infra/useCoordinated';
+import { useCoordinated } from '@fairgarden/docs/useCoordinated';
 
 function MyView({ value, setValue }: { value: string; setValue: (next: string) => void }) {
   const [visibleValue, setVisible, extras] = useCoordinated([value, setValue], {
@@ -64,8 +64,8 @@ The result is the best of both worlds: layout shifts batch into a single paint, 
 Wrap an existing `[value, setValue]` tuple to make any change show up everywhere at once.
 
 ```tsx
-import { useCoordinated } from '@mui/internal-docs-infra/useCoordinated';
-import { useLocalStorageState } from '@mui/internal-docs-infra/useLocalStorageState';
+import { useCoordinated } from '@fairgarden/docs/useCoordinated';
+import { useLocalStorageState } from '@fairgarden/docs/useLocalStorageState';
 
 function ThemePanel() {
   const underlying = useLocalStorageState('theme', ['light', 'dark'], () => 'light');
@@ -242,7 +242,7 @@ content with `useCoordinatedLazy`, passing `true` once it has reached its stable
 post-hydration layout:
 
 ```tsx
-import { useCoordinatedLazy } from '@mui/internal-docs-infra/useCoordinated';
+import { useCoordinatedLazy } from '@fairgarden/docs/useCoordinated';
 
 function DeferredBlock({ settled }: { settled: boolean }) {
   // Registers on mount; releases on settle and on unmount, so a block that

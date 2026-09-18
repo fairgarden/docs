@@ -1,5 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import * as parseSource from '@mui/internal-docs-infra/pipeline/parseSource';
+import * as parseSource from '@fairgarden/docs/pipeline/parseSource';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, parseSource);
 

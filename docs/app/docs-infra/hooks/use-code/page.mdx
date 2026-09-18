@@ -32,8 +32,8 @@ The hook is built using a modular architecture with seven specialized sub-hooks:
 ## Basic Usage
 
 ```tsx
-import { useCode } from '@mui/internal-docs-infra/useCode';
-import type { ContentProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import { useCode } from '@fairgarden/docs/useCode';
+import type { ContentProps } from '@fairgarden/docs/CodeHighlighter/types';
 
 function CodeContent(props: ContentProps<{}>) {
   const code = useCode(props, {
@@ -703,7 +703,7 @@ Enhancers can be passed to either:
 ### Enhancer Basic Usage
 
 ```tsx
-import type { SourceEnhancer, HastRoot } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import type { SourceEnhancer, HastRoot } from '@fairgarden/docs/CodeHighlighter/types';
 
 // Simple enhancer that adds data attributes to line elements
 const addLineAnnotations: SourceEnhancer = (root, comments, fileName) => {
@@ -1022,7 +1022,7 @@ Errors are logged to the console and the hook gracefully degrades functionality 
 - **[CodeHighlighter](../../components/code-highlighter/page.mdx)**: The main component this hook is designed to work with
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: [
       'file navigation',
       'deep linking',

@@ -1,5 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import * as withDocsInfra from '@mui/internal-docs-infra/withDocsInfra';
+import * as withDocsInfra from '@fairgarden/docs/withDocsInfra';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, withDocsInfra);
 

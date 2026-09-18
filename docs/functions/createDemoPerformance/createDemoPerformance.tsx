@@ -3,7 +3,7 @@ import 'server-only';
 import {
   createDemoFactory,
   createDemoWithVariantsFactory,
-} from '@mui/internal-docs-infra/abstractCreateDemo';
+} from '@fairgarden/docs/abstractCreateDemo';
 
 import { DemoPerformanceContent } from '@/components/DemoPerformanceContent';
 import { DemoPerformanceContentLoading } from '@/components/DemoPerformanceContentLoading';

@@ -152,7 +152,7 @@ type EnhanceCodeTypesOptions = {
    * ```ts
    * moduleLinkMap: {
    *   js: {
-   *     '@mui/internal-docs-infra/pipeline/enhanceCodeTypes': {
+   *     '@fairgarden/docs/pipeline/enhanceCodeTypes': {
    *       href: '/docs-infra/pipeline/enhanceCodeTypes',
    *       exports: {
    *         enhanceCodeTypes: { slug: '#enhance-code-types' },

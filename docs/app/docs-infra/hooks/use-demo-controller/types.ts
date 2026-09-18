@@ -1,4 +1,4 @@
 import { createTypes } from '@/functions/createTypes';
-import { useDemoController } from '@mui/internal-docs-infra/useDemoController';
+import { useDemoController } from '@fairgarden/docs/useDemoController';
 
 export const TypesUseDemoController = createTypes(import.meta.url, useDemoController);

@@ -3,7 +3,7 @@ import 'server-only';
 import {
   createDemoFactory,
   createDemoWithVariantsFactory,
-} from '@mui/internal-docs-infra/abstractCreateDemo';
+} from '@fairgarden/docs/abstractCreateDemo';
 
 import { CollapsibleDemoContentLazy as DemoContent } from '../CollapsibleDemoContentLazy';
 import { CollapsibleDemoContentLoading as DemoContentLoading } from '../CollapsibleDemoContentLoading';

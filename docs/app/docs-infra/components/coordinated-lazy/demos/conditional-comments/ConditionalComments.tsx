@@ -5,7 +5,7 @@ import {
   LazyContent,
   useCoordinatedContent,
   useCoordinatedFallback,
-} from '@mui/internal-docs-infra/CoordinatedLazy';
+} from '@fairgarden/docs/CoordinatedLazy';
 import { DemoButton } from '@/components/DemoButton/DemoButton';
 import { DocumentView } from '../compressed/DocumentView';
 import { HOISTED, PROSE } from '../compressed/documentData';

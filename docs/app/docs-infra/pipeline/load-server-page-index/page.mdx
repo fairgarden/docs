@@ -8,7 +8,7 @@ The `loadServerPageIndex` utility reads a markdown file and extracts page metada
 ## Basic Usage
 
 ```ts
-import { loadServerPageIndex } from '@mui/internal-docs-infra/pipeline/loadServerPageIndex';
+import { loadServerPageIndex } from '@fairgarden/docs/pipeline/loadServerPageIndex';
 
 // Load metadata from a markdown file
 const pageData = await loadServerPageIndex('file:///path/to/docs-infra/components/page.mdx');
@@ -31,7 +31,7 @@ The function:
 ### Loading a Single Page Index
 
 ```ts
-import { loadServerPageIndex } from '@mui/internal-docs-infra/pipeline/loadServerPageIndex';
+import { loadServerPageIndex } from '@fairgarden/docs/pipeline/loadServerPageIndex';
 
 const data = await loadServerPageIndex('file:///app/docs-infra/functions/page.mdx');
 
@@ -58,7 +58,7 @@ const data = await loadServerPageIndex('file:///app/docs-infra/functions/page.md
 When your files are not at the default location:
 
 ```ts
-import { createLoadServerPageIndex } from '@mui/internal-docs-infra/pipeline/loadServerPageIndex';
+import { createLoadServerPageIndex } from '@fairgarden/docs/pipeline/loadServerPageIndex';
 
 const loadPageIndex = createLoadServerPageIndex({
   rootContext: '/custom/docs/root',
@@ -79,7 +79,7 @@ The loader automatically processes file paths to generate useful metadata.
 Converts kebab-case path segments to Title Case:
 
 ```ts
-import { pathSegmentToTitle } from '@mui/internal-docs-infra/pipeline/loadServerPageIndex';
+import { pathSegmentToTitle } from '@fairgarden/docs/pipeline/loadServerPageIndex';
 
 pathSegmentToTitle('docs-infra'); // 'Docs Infra'
 pathSegmentToTitle('code-highlighter'); // 'Code Highlighter'
@@ -91,7 +91,7 @@ pathSegmentToTitle('abstract-create-demo'); // 'Abstract Create Demo'
 The `extractPrefixAndTitle` function generates URL prefixes from directory structure:
 
 ```ts
-import { extractPrefixAndTitle } from '@mui/internal-docs-infra/pipeline/loadServerPageIndex';
+import { extractPrefixAndTitle } from '@fairgarden/docs/pipeline/loadServerPageIndex';
 
 extractPrefixAndTitle('/app/docs-infra/components/page.mdx', '/app');
 // { prefix: '/docs-infra/components/', title: 'Docs Infra Components' }

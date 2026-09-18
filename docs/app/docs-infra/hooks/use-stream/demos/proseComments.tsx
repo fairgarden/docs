@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { Popover } from '@base-ui/react/popover';
-import { compressString } from '@mui/internal-docs-infra/pipeline/hastUtils';
+import { compressString } from '@fairgarden/docs/pipeline/hastUtils';
 
 export interface Comment {
   author: string;

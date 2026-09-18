@@ -22,7 +22,7 @@ Built on top of the `useCode` hook, `useDemo` adds demo-specific functionality l
 ## Basic Usage
 
 ```tsx
-import { useDemo } from '@mui/internal-docs-infra/useDemo';
+import { useDemo } from '@fairgarden/docs/useDemo';
 
 export function DemoContent(props) {
   const demo = useDemo(props, { preClassName: styles.codeBlock });
@@ -647,7 +647,7 @@ the [`exportVariant`](#exportvariant) types above for the available fields
 #### How the export pipeline works
 
 Each callback runs a three-stage pipeline, and every stage is exported from
-`@mui/internal-docs-infra/useDemo` for standalone use:
+`@fairgarden/docs/useDemo` for standalone use:
 
 1. **Export** — `exportVariantAsCra` (the default; swap it via the `exportFunction`
    field of the export config) wraps the selected variant — with the selected
@@ -676,8 +676,8 @@ import {
   flattenCodeVariant,
   createStackBlitz,
   openWithForm,
-} from '@mui/internal-docs-infra/useDemo';
-import type { VariantCode } from '@mui/internal-docs-infra/CodeHighlighter/types';
+} from '@fairgarden/docs/useDemo';
+import type { VariantCode } from '@fairgarden/docs/CodeHighlighter/types';
 
 function openInStackBlitz(variant: VariantCode) {
   const { exported, rootFile } = exportVariant(variant, { title: 'My Demo' });
@@ -741,7 +741,7 @@ function openInStackBlitz(variant: VariantCode) {
 - **[abstractCreateDemo](../../factories/abstract-create-demo/page.mdx)**: Factory function for creating precomputed demos
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: [
       'component preview',
       'StackBlitz',

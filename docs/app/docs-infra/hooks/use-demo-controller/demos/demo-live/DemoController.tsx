@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { useDemoController } from '@mui/internal-docs-infra/useDemoController';
-import type { UseDemoControllerOptions } from '@mui/internal-docs-infra/useDemoController';
-import { CodeControllerContext } from '@mui/internal-docs-infra/CodeControllerContext';
-import type { CodeControllerProps } from '@mui/internal-docs-infra/CodeControllerContext';
+import { useDemoController } from '@fairgarden/docs/useDemoController';
+import type { UseDemoControllerOptions } from '@fairgarden/docs/useDemoController';
+import { CodeControllerContext } from '@fairgarden/docs/CodeControllerContext';
+import type { CodeControllerProps } from '@fairgarden/docs/CodeControllerContext';
 
 export function DemoController(props: CodeControllerProps<UseDemoControllerOptions>) {
   // @focus-start @padding 1

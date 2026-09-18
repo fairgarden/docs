@@ -143,7 +143,7 @@ The plugin is automatically included when using the docs-infra Next.js plugin:
 
 ```javascript
 // next.config.js
-const { withDocsInfra } = require('@mui/internal-docs-infra/next');
+const { withDocsInfra } = require('@fairgarden/docs/next');
 
 module.exports = withDocsInfra({
   // Your Next.js config
@@ -156,7 +156,7 @@ You can also use the plugin directly with Remark:
 
 ```javascript
 import { remark } from 'remark';
-import transformMarkdownRelativePaths from '@mui/internal-docs-infra/pipeline/transformMarkdownRelativePaths';
+import transformMarkdownRelativePaths from '@fairgarden/docs/pipeline/transformMarkdownRelativePaths';
 
 const processor = remark().use(transformMarkdownRelativePaths);
 

@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useUrlHashState } from '@mui/internal-docs-infra/useUrlHashState';
+import { useUrlHashState } from '@fairgarden/docs/useUrlHashState';
 import styles from './TabNavigation.module.css';
 
 const tabs = [

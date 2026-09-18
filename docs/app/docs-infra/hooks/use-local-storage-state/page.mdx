@@ -18,7 +18,7 @@ The `useLocalStorageState` hook provides persistent state management using local
 ### Basic Persistence
 
 ```tsx
-import useLocalStorageState from '@mui/internal-docs-infra/useLocalStorageState';
+import useLocalStorageState from '@fairgarden/docs/useLocalStorageState';
 
 function ThemeToggle() {
   const [theme, setTheme] = useLocalStorageState('theme', () => 'light');
@@ -34,7 +34,7 @@ function ThemeToggle() {
 ### Function Updates
 
 ```tsx
-import useLocalStorageState from '@mui/internal-docs-infra/useLocalStorageState';
+import useLocalStorageState from '@fairgarden/docs/useLocalStorageState';
 
 function Counter() {
   const [count, setCount] = useLocalStorageState('counter', () => '0');
@@ -60,7 +60,7 @@ function Counter() {
 ### Conditional Persistence
 
 ```tsx
-import useLocalStorageState from '@mui/internal-docs-infra/useLocalStorageState';
+import useLocalStorageState from '@fairgarden/docs/useLocalStorageState';
 
 function UserSettings({ enablePersistence }: { enablePersistence: boolean }) {
   // When enablePersistence is false, key is null and state isn't persisted
@@ -82,7 +82,7 @@ function UserSettings({ enablePersistence }: { enablePersistence: boolean }) {
 ### Demo Code Editor
 
 ```tsx
-import useLocalStorageState from '@mui/internal-docs-infra/useLocalStorageState';
+import useLocalStorageState from '@fairgarden/docs/useLocalStorageState';
 
 function CodeEditor({ demoId }: { demoId: string }) {
   const [code, setCode] = useLocalStorageState(
@@ -111,7 +111,7 @@ function CodeEditor({ demoId }: { demoId: string }) {
 ### User Preferences Panel
 
 ```tsx
-import useLocalStorageState from '@mui/internal-docs-infra/useLocalStorageState';
+import useLocalStorageState from '@fairgarden/docs/useLocalStorageState';
 
 function PreferencesPanel() {
   const [language, setLanguage] = useLocalStorageState('ui-language', () => 'en');

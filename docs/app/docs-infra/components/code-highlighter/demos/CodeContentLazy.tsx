@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import type { ContentProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { LazyContent } from '@mui/internal-docs-infra/CoordinatedLazy';
+import type { ContentProps } from '@fairgarden/docs/CodeHighlighter/types';
+import { LazyContent } from '@fairgarden/docs/CoordinatedLazy';
 
 /**
  * Client wrapper that code-splits the heavy {@link CodeContent} (the syntax

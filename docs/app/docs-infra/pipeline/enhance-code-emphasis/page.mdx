@@ -18,7 +18,7 @@ The `enhanceCodeEmphasis` source enhancer adds visual emphasis to specific lines
 ## Basic Usage
 
 ```ts
-import { enhanceCodeEmphasis } from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
+import { enhanceCodeEmphasis } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 
 // Use as a source enhancer
 const sourceEnhancers = [enhanceCodeEmphasis];
@@ -208,9 +208,9 @@ This is useful for documentation pages where you want to show users the comment 
 Configure in your webpack loader or server-side loading:
 
 ```ts
-import { enhanceCodeEmphasis } from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
-import { createLoadServerCodeSource } from '@mui/internal-docs-infra/pipeline/loadServerCodeSource';
-import { loadIsomorphicCodeVariant } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeVariant';
+import { enhanceCodeEmphasis } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
+import { createLoadServerCodeSource } from '@fairgarden/docs/pipeline/loadServerCodeSource';
+import { loadIsomorphicCodeVariant } from '@fairgarden/docs/pipeline/loadIsomorphicCodeVariant';
 
 const sourceEnhancers = [enhanceCodeEmphasis];
 ```
@@ -218,7 +218,7 @@ const sourceEnhancers = [enhanceCodeEmphasis];
 For configurable padding, use the factory:
 
 ```ts
-import { createEnhanceCodeEmphasis } from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
+import { createEnhanceCodeEmphasis } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 
 const sourceEnhancers = [
   createEnhanceCodeEmphasis({
@@ -264,7 +264,7 @@ The default comment prefixes are `@highlight` and `@focus`, exported as `EMPHASI
 import {
   EMPHASIS_COMMENT_PREFIX,
   FOCUS_COMMENT_PREFIX,
-} from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
+} from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 
 console.log(EMPHASIS_COMMENT_PREFIX); // '@highlight'
 console.log(FOCUS_COMMENT_PREFIX); // '@focus'
@@ -380,7 +380,7 @@ When padding is configured (see [Configurable Padding](#configurable-padding)), 
 Use `createEnhanceCodeEmphasis` to configure padding frames around the focused highlight region:
 
 ```ts
-import { createEnhanceCodeEmphasis } from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
+import { createEnhanceCodeEmphasis } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 
 const sourceEnhancers = [
   createEnhanceCodeEmphasis({
@@ -1046,6 +1046,6 @@ import { TypesEnhanceCodeEmphasis } from './types';
 - [Code Highlighter](../../components/code-highlighter/page.mdx) - Displaying code with emphasis
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['@highlight', '@focus', 'collapsible', 'frames', 'padding', 'data-hl'],
   });

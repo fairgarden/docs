@@ -4,7 +4,7 @@ import {
   CoordinatedLazy,
   useCoordinatedContent,
   useCoordinatedFallback,
-} from '@mui/internal-docs-infra/CoordinatedLazy';
+} from '@fairgarden/docs/CoordinatedLazy';
 
 export interface Point {
   x: number;

@@ -1,5 +1,5 @@
 import { createMultipleTypes } from '@/functions/createTypes';
-import * as UseTypeModule from '@mui/internal-docs-infra/useType';
+import * as UseTypeModule from '@fairgarden/docs/useType';
 
 const { types, AdditionalTypes } = createMultipleTypes(import.meta.url, UseTypeModule);
 

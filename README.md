@@ -8,10 +8,10 @@ You can [read the documentation here](./docs/README.md).
 
 ## Packages
 
-### [docs-infra](./packages/docs-infra/)
+### [@fairgarden/docs](./packages/docs/)
 
-- Source: `/packages/docs-infra/`
-- [Docs](./packages/docs-infra/README.md)
+- Source: `/packages/docs/`
+- [Docs](./packages/docs/README.md)
 
 ## Original Repository
 

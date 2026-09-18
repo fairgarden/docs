@@ -7,7 +7,7 @@ For everything the loader does — import parsing, `storeAt` modes, comment proc
 ## Usage
 
 ```ts
-import { loadServerCodeSource } from '@mui/internal-docs-infra/pipeline/loadServerCodeSource';
+import { loadServerCodeSource } from '@fairgarden/docs/pipeline/loadServerCodeSource';
 
 const result = await loadServerCodeSource('file:///app/components/button/Component.tsx');
 ```
@@ -15,7 +15,7 @@ const result = await loadServerCodeSource('file:///app/components/button/Compone
 The default export is pre-configured for the common case. To customize options (`storeAt`, comment prefixes, etc.), use the factory:
 
 ```ts
-import { createLoadServerCodeSource } from '@mui/internal-docs-infra/pipeline/loadServerCodeSource';
+import { createLoadServerCodeSource } from '@fairgarden/docs/pipeline/loadServerCodeSource';
 
 const customLoadSource = createLoadServerCodeSource({
   storeAt: 'canonical',
@@ -34,7 +34,7 @@ URLs are read with `readFile`. `file://` URLs (including Windows drive letters) 
 
 ### `resolveImports`: filesystem-backed module resolution
 
-Imports are resolved through `resolveImportResultWithFs` (from `@mui/internal-docs-infra/pipeline/loadServerCodeMeta`), which walks the real filesystem to mirror Node/TypeScript module resolution: extension probing (`.ts`, `.tsx`, `.js`, `.jsx`, `.css`, ...), `index.*` lookup inside directories, and absolute-URL output suitable for recursive loading.
+Imports are resolved through `resolveImportResultWithFs` (from `@fairgarden/docs/pipeline/loadServerCodeMeta`), which walks the real filesystem to mirror Node/TypeScript module resolution: extension probing (`.ts`, `.tsx`, `.js`, `.jsx`, `.css`, ...), `index.*` lookup inside directories, and absolute-URL output suitable for recursive loading.
 
 ## When to Use
 
@@ -63,6 +63,6 @@ import { TypesLoadServerCodeSource } from './types';
 - [`loadIsomorphicCodeVariant`](../load-isomorphic-code-variant/page.mdx) - For recursively loading code with dependencies
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['loadSource', 'filesystem', 'module resolution', 'fs'],
   });

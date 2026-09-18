@@ -1,13 +1,13 @@
 'use client';
 import * as React from 'react';
-import { useStream } from '@mui/internal-docs-infra/useStream';
-import type { StreamSource } from '@mui/internal-docs-infra/useStream';
+import { useStream } from '@fairgarden/docs/useStream';
+import type { StreamSource } from '@fairgarden/docs/useStream';
 import {
   CoordinatedLazy,
   useCoordinatedContent,
   useCoordinatedFallback,
-} from '@mui/internal-docs-infra/CoordinatedLazy';
-import { decompressString } from '@mui/internal-docs-infra/pipeline/hastUtils';
+} from '@fairgarden/docs/CoordinatedLazy';
+import { decompressString } from '@fairgarden/docs/pipeline/hastUtils';
 import { Replayable } from '@/components/Replayable/Replayable';
 import { ChunkRow, DOCUMENT, Totals, byteLength, compressLines, linesText } from '../proseComments';
 import type { Line } from '../proseComments';

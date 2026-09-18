@@ -1,4 +1,4 @@
 import { createTypes } from '@/functions/createTypes';
-import { syncTypes } from '@mui/internal-docs-infra/pipeline/syncTypes';
+import { syncTypes } from '@fairgarden/docs/pipeline/syncTypes';
 
 export const TypesSyncTypes = createTypes(import.meta.url, syncTypes);

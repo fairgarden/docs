@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import { Checkbox } from '@base-ui/react/checkbox';
-import type { ContentProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { useCode } from '@mui/internal-docs-infra/useCode';
-import { useScrollAnchor } from '@mui/internal-docs-infra/useScrollAnchor';
+import type { ContentProps } from '@fairgarden/docs/CodeHighlighter/types';
+import { useCode } from '@fairgarden/docs/useCode';
+import { useScrollAnchor } from '@fairgarden/docs/useScrollAnchor';
 import { CodeBlockHeader, CodeBlockHeaderLabel } from '../CodeBlockHeader';
 import { CodeSource } from '../CodeSource';
 import styles from '../CodeContent.module.css';

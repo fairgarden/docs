@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { CoordinatedLazy, useCoordinatedFallback } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { CoordinatedLazy, useCoordinatedFallback } from '@fairgarden/docs/CoordinatedLazy';
 import { Replayable } from '@/components/Replayable/Replayable';
 import { CommentLayer } from './CommentLayer';
 import { DocumentView } from './DocumentView';

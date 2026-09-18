@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
-import { useCoordinated } from '@mui/internal-docs-infra/useCoordinated';
-import { useScrollAnchor } from '@mui/internal-docs-infra/useScrollAnchor';
+import { useCoordinated } from '@fairgarden/docs/useCoordinated';
+import { useScrollAnchor } from '@fairgarden/docs/useScrollAnchor';
 import styles from './AnchorPairing.module.css';
 
 type Detail = 'summary' | 'expanded' | 'verbose';

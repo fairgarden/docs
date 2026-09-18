@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { CodeProviderLazy } from '@mui/internal-docs-infra/CodeProvider';
-import { createEnhanceCodeEmphasis } from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
+import { CodeProviderLazy } from '@fairgarden/docs/CodeProvider';
+import { createEnhanceCodeEmphasis } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 
 const sourceEnhancers = [
   createEnhanceCodeEmphasis({ paddingFrameMaxSize: 2, focusFramesMaxSize: 18 }),

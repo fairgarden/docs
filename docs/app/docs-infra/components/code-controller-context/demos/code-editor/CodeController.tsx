@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { CodeControllerContext } from '@mui/internal-docs-infra/CodeControllerContext';
-import type { CodeControllerProps } from '@mui/internal-docs-infra/CodeControllerContext';
-import { useCrossTabState } from '@mui/internal-docs-infra/useCrossTabState';
-import type { ControlledCode } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import { CodeControllerContext } from '@fairgarden/docs/CodeControllerContext';
+import type { CodeControllerProps } from '@fairgarden/docs/CodeControllerContext';
+import { useCrossTabState } from '@fairgarden/docs/useCrossTabState';
+import type { ControlledCode } from '@fairgarden/docs/CodeHighlighter/types';
 
 export function CodeController({ children, url }: CodeControllerProps) {
   // @focus-start @padding 1

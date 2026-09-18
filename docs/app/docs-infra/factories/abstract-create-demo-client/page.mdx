@@ -41,7 +41,7 @@ export const createDemoClient = (url: string, meta?: CreateDemoClientMeta) => {
 To implement a demo client factory, use the `abstractCreateDemoClient` utilities:
 
 ```ts
-import { createDemoClientFactory } from '@mui/internal-docs-infra/abstractCreateDemoClient';
+import { createDemoClientFactory } from '@fairgarden/docs/abstractCreateDemoClient';
 import { DemoController } from './DemoController';
 
 /**
@@ -116,7 +116,7 @@ const context = {
 
 ```ts
 // createDemoClient.ts - Define your client factory
-import { createDemoClientFactory } from '@mui/internal-docs-infra/abstractCreateDemoClient';
+import { createDemoClientFactory } from '@fairgarden/docs/abstractCreateDemoClient';
 import { DemoController } from './DemoController';
 
 export const createDemoClient = createDemoClientFactory({

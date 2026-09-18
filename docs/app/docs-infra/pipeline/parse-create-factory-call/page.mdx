@@ -7,7 +7,7 @@ It is the shared primitive that powers all of the docs-infra server loaders ([`l
 ## Basic Usage
 
 ```ts
-import { parseCreateFactoryCall } from '@mui/internal-docs-infra/pipeline/parseCreateFactoryCall';
+import { parseCreateFactoryCall } from '@fairgarden/docs/pipeline/parseCreateFactoryCall';
 
 const source = `
   import Button from './Button';
@@ -98,7 +98,7 @@ factory?.options; // { name: 'My demo', skipPrecompute: true }
 `parseCreateFactoryCall` doesn't care where the source came from — it accepts `file://`, `http://`, and `https://` URLs and uses WHATWG `URL` resolution for the latter. That makes it the natural building block for a [`CodeProvider`](../../components/code-provider/) that fetches demos from GitHub or any other HTTP source:
 
 ```ts
-import { parseCreateFactoryCall } from '@mui/internal-docs-infra/pipeline/parseCreateFactoryCall';
+import { parseCreateFactoryCall } from '@fairgarden/docs/pipeline/parseCreateFactoryCall';
 
 async function loadDemoVariants(remoteUrl: string) {
   const source = await fetch(remoteUrl).then((response) => response.text());
@@ -124,7 +124,7 @@ See the [GitHub fetch demo](../../components/code-provider/page.mdx#advanced-fea
 import {
   parseCreateFactoryCall,
   replacePrecomputeValue,
-} from '@mui/internal-docs-infra/pipeline/parseCreateFactoryCall';
+} from '@fairgarden/docs/pipeline/parseCreateFactoryCall';
 
 const factory = await parseCreateFactoryCall(source, 'file:///src/demo.ts');
 const updated = replacePrecomputeValue(

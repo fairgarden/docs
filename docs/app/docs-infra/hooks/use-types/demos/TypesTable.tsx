@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useTypes } from '@mui/internal-docs-infra/useTypes';
+import { useTypes } from '@fairgarden/docs/useTypes';
 import type {
   TypesTableProps as BaseTypesTableProps,
   EnhancedComponentTypeMeta,
@@ -12,7 +12,7 @@ import type {
   EnhancedRawTypeMeta,
   EnhancedRawEnumMember,
   EnhancedTypesMeta,
-} from '@mui/internal-docs-infra/useTypes';
+} from '@fairgarden/docs/useTypes';
 import { Table } from '@/components/Table';
 import { CurrentTypesTableIdProvider } from '@/components/TypesTableContext';
 import styles from './TypesTable.module.css';

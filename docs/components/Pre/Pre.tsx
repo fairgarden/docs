@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
-import type { CodeHighlighterProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
+import type { CodeHighlighterProps } from '@fairgarden/docs/CodeHighlighter/types';
 import { CodeContent } from '../CodeContent';
 
 type PreProps = {

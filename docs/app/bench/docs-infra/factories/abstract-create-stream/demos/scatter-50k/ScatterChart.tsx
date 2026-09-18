@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CoordinatedLazy } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { CoordinatedLazy } from '@fairgarden/docs/CoordinatedLazy';
 import { computeCoarse, computeDetail } from '../scatterData';
 import { ScatterFallback } from '../ScatterFallback';
 import { ScatterDetail } from '../ScatterDetail';

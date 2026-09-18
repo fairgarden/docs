@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createStreamFactory } from '@mui/internal-docs-infra/abstractCreateStream';
+import { createStreamFactory } from '@fairgarden/docs/abstractCreateStream';
 import { ScatterChartLoading } from '../scatterParts';
 import ScatterChart from './ScatterChart';
 

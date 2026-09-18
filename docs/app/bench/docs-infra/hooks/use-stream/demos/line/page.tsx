@@ -1,8 +1,8 @@
 'use client';
 import * as React from 'react';
-import { useStream } from '@mui/internal-docs-infra/useStream';
-import type { StreamSource } from '@mui/internal-docs-infra/useStream';
-import { CoordinatedLazy } from '@mui/internal-docs-infra/CoordinatedLazy';
+import { useStream } from '@fairgarden/docs/useStream';
+import type { StreamSource } from '@fairgarden/docs/useStream';
+import { CoordinatedLazy } from '@fairgarden/docs/CoordinatedLazy';
 
 const TOTAL = 100_000;
 const CHUNK_SIZE = 1000;

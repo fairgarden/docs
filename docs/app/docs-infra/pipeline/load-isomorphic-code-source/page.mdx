@@ -20,7 +20,7 @@ It handles everything that does not depend on the runtime: parsing imports and c
 ## Usage
 
 ```ts
-import { createLoadIsomorphicCodeSource } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeSource';
+import { createLoadIsomorphicCodeSource } from '@fairgarden/docs/pipeline/loadIsomorphicCodeSource';
 
 const loadSource = createLoadIsomorphicCodeSource({
   fetchSource: async (url) => (await fetch(url)).text(),
@@ -335,6 +335,6 @@ import { TypesLoadIsomorphicCodeSource } from './types';
 - [`resolveImportResult`](../loader-utils/page.mdx#resolveimportresult) - Reference resolver used by `loadServerCodeSource`
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['loadSource', 'fetchSource', 'resolveImports', 'storeAt', 'import parsing'],
   });

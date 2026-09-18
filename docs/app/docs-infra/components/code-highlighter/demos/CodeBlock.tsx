@@ -1,8 +1,8 @@
 import 'server-only';
 
 import * as React from 'react';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
-import { createParseSource } from '@mui/internal-docs-infra/pipeline/parseSource';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
+import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
 
 import { CodeContent } from './CodeContent';
 

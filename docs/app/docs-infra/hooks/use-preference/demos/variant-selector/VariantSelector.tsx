@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { usePreference } from '@mui/internal-docs-infra/usePreference';
+import { usePreference } from '@fairgarden/docs/usePreference';
 import styles from './VariantSelector.module.css';
 
 export function VariantSelector() {

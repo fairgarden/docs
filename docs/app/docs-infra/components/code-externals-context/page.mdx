@@ -16,7 +16,7 @@ The `CodeExternalsContext` is a simple React context that provides access to ext
 The primary way to access externals is through the `useCodeExternals` hook:
 
 ```tsx
-import { useCodeExternals } from '@mui/internal-docs-infra/CodeExternalsContext';
+import { useCodeExternals } from '@fairgarden/docs/CodeExternalsContext';
 
 function DemoComponent() {
   const externalsContext = useCodeExternals();
@@ -117,7 +117,7 @@ When building live demo components that execute code dynamically, externals prov
 
 import * as React from 'react';
 import { Button } from '@mui/material';
-import { CodeExternalsContext } from '@mui/internal-docs-infra/CodeExternalsContext';
+import { CodeExternalsContext } from '@fairgarden/docs/CodeExternalsContext';
 
 // This would typically be created by abstractCreateDemoClient
 const externals = {
@@ -142,7 +142,7 @@ export { DemoProvider };
 
 import * as React from 'react';
 import { useRunner } from 'react-runner';
-import { useCodeExternals } from '@mui/internal-docs-infra/CodeExternalsContext';
+import { useCodeExternals } from '@fairgarden/docs/CodeExternalsContext';
 
 function LiveCodeRunner({ code }: { code: string }) {
   const externalsContext = useCodeExternals();
@@ -280,6 +280,6 @@ The context works seamlessly with the docs-infra build system:
 - **[`CodeHighlighter`](../code-highlighter/page.mdx)**: Main component for code highlighting and demos
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['externals', 'live demo', 'react-runner', 'scope', 'dependencies'],
   });

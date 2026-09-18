@@ -3,7 +3,7 @@ import {
   withDocsInfra,
   getDocsInfraMdxOptions,
   withDeploymentConfig,
-} from '@mui/internal-docs-infra/withDocsInfra';
+} from '@fairgarden/docs/withDocsInfra';
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = bundleAnalyzer({

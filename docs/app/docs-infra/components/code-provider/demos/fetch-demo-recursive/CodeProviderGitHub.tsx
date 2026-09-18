@@ -1,26 +1,26 @@
 'use client';
 
 import * as React from 'react';
-import { CodeProvider } from '@mui/internal-docs-infra/CodeProvider';
+import { CodeProvider } from '@fairgarden/docs/CodeProvider';
 import type {
   Code,
   LoadCodeMeta,
   LoadSource,
-} from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { parseCreateFactoryCall } from '@mui/internal-docs-infra/pipeline/parseCreateFactoryCall';
+} from '@fairgarden/docs/CodeHighlighter/types';
+import { parseCreateFactoryCall } from '@fairgarden/docs/pipeline/parseCreateFactoryCall';
 import {
   IGNORE_COMMENT_PREFIXES,
   getFileNameFromUrl,
   resolveImportResult,
   resolveModulePath,
-} from '@mui/internal-docs-infra/pipeline/loaderUtils';
-import type { DirectoryReader } from '@mui/internal-docs-infra/pipeline/loaderUtils';
-import { createLoadIsomorphicCodeSource } from '@mui/internal-docs-infra/pipeline/loadIsomorphicCodeSource';
+} from '@fairgarden/docs/pipeline/loaderUtils';
+import type { DirectoryReader } from '@fairgarden/docs/pipeline/loaderUtils';
+import { createLoadIsomorphicCodeSource } from '@fairgarden/docs/pipeline/loadIsomorphicCodeSource';
 import {
   enhanceCodeEmphasis,
   EMPHASIS_COMMENT_PREFIX,
   FOCUS_COMMENT_PREFIX,
-} from '@mui/internal-docs-infra/pipeline/enhanceCodeEmphasis';
+} from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 import { buildGitHubUrl, createGitHubCache, parseGitHubUrl } from '../github';
 import type { GitHubCache } from '../github';
 

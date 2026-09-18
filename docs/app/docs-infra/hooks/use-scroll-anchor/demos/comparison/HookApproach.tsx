@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useScrollAnchor } from '@mui/internal-docs-infra/useScrollAnchor';
+import { useScrollAnchor } from '@fairgarden/docs/useScrollAnchor';
 import { ANIMATION_DURATION, Timeline } from './Timeline';
 
 // "useScrollAnchor hook" — pin an explicit anchor element you choose, even

@@ -23,8 +23,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@mui/internal-docs-infra": ["../packages/docs-infra/src"],
-      "@mui/internal-docs-infra/*": ["../packages/docs-infra/src/*"]
+      "@fairgarden/docs": ["../packages/docs/src"],
+      "@fairgarden/docs/*": ["../packages/docs/src/*"]
     }
   },
   "include": [
@@ -38,7 +38,7 @@
   "exclude": ["node_modules"],
   "references": [
     {
-      "path": "../packages/docs-infra/tsconfig.build.json"
+      "path": "../packages/docs/tsconfig.build.json"
     }
   ]
 }

@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useStream } from '@mui/internal-docs-infra/useStream';
+import { useStream } from '@fairgarden/docs/useStream';
 import { Replayable } from '@/components/Replayable/Replayable';
 import { CHARTS, ChartCard, SETTLE_MS, TOTAL, source } from './barChart';
 import type { Bar } from './barChart';

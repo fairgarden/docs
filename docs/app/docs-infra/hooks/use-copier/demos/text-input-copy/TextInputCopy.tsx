@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useCopier } from '@mui/internal-docs-infra/useCopier';
+import { useCopier } from '@fairgarden/docs/useCopier';
 import styles from './TextInputCopy.module.css';
 
 export function TextInputCopy() {

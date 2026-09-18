@@ -1,6 +1,6 @@
 'use client';
 
-import { createDemoClientFactory } from '@mui/internal-docs-infra/abstractCreateDemoClient';
+import { createDemoClientFactory } from '@fairgarden/docs/abstractCreateDemoClient';
 import { DemoController } from './DemoController';
 
 /**

@@ -1,4 +1,4 @@
 import { createTypes } from '@/functions/createTypes';
-import { abstractCreateDemoClient } from '@mui/internal-docs-infra/abstractCreateDemoClient';
+import { abstractCreateDemoClient } from '@fairgarden/docs/abstractCreateDemoClient';
 
 export const TypesAbstractCreateDemoClient = createTypes(import.meta.url, abstractCreateDemoClient);

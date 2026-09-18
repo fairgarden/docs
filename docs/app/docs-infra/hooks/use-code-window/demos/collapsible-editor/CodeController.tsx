@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { CodeControllerContext } from '@mui/internal-docs-infra/CodeControllerContext';
-import type { ControlledCode } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import { CodeControllerContext } from '@fairgarden/docs/CodeControllerContext';
+import type { ControlledCode } from '@fairgarden/docs/CodeHighlighter/types';
 
 /**
  * Minimal controlled-code provider so the collapsible block below becomes

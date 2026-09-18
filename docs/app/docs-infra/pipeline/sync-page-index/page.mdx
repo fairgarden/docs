@@ -31,7 +31,7 @@ The `syncPageIndex` function:
 ## Basic Usage
 
 ```ts
-import { syncPageIndex } from '@mui/internal-docs-infra/pipeline/syncPageIndex';
+import { syncPageIndex } from '@fairgarden/docs/pipeline/syncPageIndex';
 
 await syncPageIndex({
   pagePath: './app/components/button/page.mdx',
@@ -305,7 +305,7 @@ await syncPageIndex({
 Parses a markdown index file and extracts page metadata:
 
 ```ts
-import { markdownToMetadata } from '@mui/internal-docs-infra/pipeline/syncPageIndex';
+import { markdownToMetadata } from '@fairgarden/docs/pipeline/syncPageIndex';
 
 const result = await markdownToMetadata(markdownContent);
 // result.title - Index title
@@ -318,7 +318,7 @@ const result = await markdownToMetadata(markdownContent);
 Merges new page metadata into existing markdown:
 
 ```ts
-import { mergeMetadataMarkdown } from '@mui/internal-docs-infra/pipeline/syncPageIndex';
+import { mergeMetadataMarkdown } from '@fairgarden/docs/pipeline/syncPageIndex';
 
 const updatedMarkdown = await mergeMetadataMarkdown(existingMarkdown, newMetadata, options);
 ```

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { SearchResult } from '@mui/internal-docs-infra/useSearch/types';
+import type { SearchResult } from '@fairgarden/docs/useSearch/types';
 import { FileText, Blocks, Package, Heading2, Heading3 } from 'lucide-react';
 import styles from './SearchItem.module.css';
 

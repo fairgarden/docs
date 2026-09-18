@@ -1,4 +1,4 @@
 import { createTypes } from '@/functions/createTypes';
-import { createSitemap } from '@mui/internal-docs-infra/createSitemap';
+import { createSitemap } from '@fairgarden/docs/createSitemap';
 
 export const TypesCreateSitemap = createTypes(import.meta.url, createSitemap);

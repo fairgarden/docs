@@ -29,7 +29,7 @@ The `enhanceCodeTypes` plugin scans syntax-highlighted code for type names and c
 
 ## Installation
 
-This plugin is part of `@mui/internal-docs-infra` and doesn't need separate installation.
+This plugin is part of `@fairgarden/docs` and doesn't need separate installation.
 
 ---
 
@@ -41,7 +41,7 @@ This plugin is part of `@mui/internal-docs-infra` and doesn't need separate inst
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeStringify from 'rehype-stringify';
-import enhanceCodeTypes from '@mui/internal-docs-infra/pipeline/enhanceCodeTypes';
+import enhanceCodeTypes from '@fairgarden/docs/pipeline/enhanceCodeTypes';
 
 const linkMap = {
   js: {
@@ -69,7 +69,7 @@ console.log(String(result));
 This plugin is typically used with [`abstractCreateTypes`](../../factories/abstract-create-types/page.mdx) to link type references to their documentation:
 
 ```typescript
-import enhanceCodeTypes from '@mui/internal-docs-infra/pipeline/enhanceCodeTypes';
+import enhanceCodeTypes from '@fairgarden/docs/pipeline/enhanceCodeTypes';
 
 // The linkMap is automatically generated from your type exports,
 // scoped by platform (js or css)

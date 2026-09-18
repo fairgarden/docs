@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { Popover } from '@base-ui/react/popover';
-import { useTypeProp } from '@mui/internal-docs-infra/useType';
-import type { TypePropRefProps } from '@mui/internal-docs-infra/useType';
+import { useTypeProp } from '@fairgarden/docs/useType';
+import type { TypePropRefProps } from '@fairgarden/docs/useType';
 import { PopoverArrow } from '@/components/PopoverArrow/PopoverArrow';
 import {
   getHrefTargetId,

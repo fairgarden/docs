@@ -22,8 +22,8 @@ import 'server-only'; // Omit if factories will be imported in client components
 import {
   createTypesFactory,
   createMultipleTypesFactory,
-} from '@mui/internal-docs-infra/abstractCreateTypes';
-import type { AbstractCreateTypesOptions } from '@mui/internal-docs-infra/abstractCreateTypes';
+} from '@fairgarden/docs/abstractCreateTypes';
+import type { AbstractCreateTypesOptions } from '@fairgarden/docs/abstractCreateTypes';
 
 import { TypesTable } from './TypesTable';
 import { mdxComponents } from '@/mdx-components';
@@ -402,8 +402,8 @@ type CreateMultipleTypes = (
 Only needed when `createTypesFactory` or `createMultipleTypesFactory` don't provide enough flexibility:
 
 ```typescript
-import { abstractCreateTypes } from '@mui/internal-docs-infra/abstractCreateTypes';
-import type { TypesTableMeta } from '@mui/internal-docs-infra/abstractCreateTypes';
+import { abstractCreateTypes } from '@fairgarden/docs/abstractCreateTypes';
+import type { TypesTableMeta } from '@fairgarden/docs/abstractCreateTypes';
 import { MyTypesTable } from './MyTypesTable';
 
 export function createMyTypes(url: string, typeDef: object, meta?: TypesTableMeta) {
@@ -420,8 +420,8 @@ export function createMyTypes(url: string, typeDef: object, meta?: TypesTableMet
 For even more flexibility, you can create a factory function that uses TypeScript generics so the loader can extract type information from the generic parameter instead of runtime arguments:
 
 ```typescript
-import { abstractCreateTypes } from '@mui/internal-docs-infra/abstractCreateTypes';
-import type { TypesTableMeta } from '@mui/internal-docs-infra/abstractCreateTypes';
+import { abstractCreateTypes } from '@fairgarden/docs/abstractCreateTypes';
+import type { TypesTableMeta } from '@fairgarden/docs/abstractCreateTypes';
 import { MyTypesTable } from './MyTypesTable';
 
 export function createTypes<TComponent extends object>(url: string, meta?: TypesTableMeta) {

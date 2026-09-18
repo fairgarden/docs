@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useScrollAnchor } from '@mui/internal-docs-infra/useScrollAnchor';
+import { useScrollAnchor } from '@fairgarden/docs/useScrollAnchor';
 import { Chat } from './Chat';
 import { useStreamedHistory } from './useStreamedHistory';
 import styles from './Safari.module.css';

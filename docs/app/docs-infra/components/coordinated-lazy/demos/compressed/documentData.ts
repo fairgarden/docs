@@ -1,4 +1,4 @@
-import { compressString } from '@mui/internal-docs-infra/pipeline/hastUtils';
+import { compressString } from '@fairgarden/docs/pipeline/hastUtils';
 
 export interface Comment {
   author: string;

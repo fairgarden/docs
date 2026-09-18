@@ -20,8 +20,8 @@ Given the controlled `code` (keyed by variant), the hook:
 ```tsx
 'use client';
 
-import { useDemoController } from '@mui/internal-docs-infra/useDemoController';
-import { CodeControllerContext } from '@mui/internal-docs-infra/CodeControllerContext';
+import { useDemoController } from '@fairgarden/docs/useDemoController';
+import { CodeControllerContext } from '@fairgarden/docs/CodeControllerContext';
 
 function DemoController({ children }: { children: React.ReactNode }) {
   const value = useDemoController();
@@ -71,7 +71,7 @@ A live demo executes edited source in the browser, so the demo's own dependencie
 ```tsx filename=createDemoClient.ts
 'use client';
 
-import { createDemoClientFactory } from '@mui/internal-docs-infra/abstractCreateDemoClient';
+import { createDemoClientFactory } from '@fairgarden/docs/abstractCreateDemoClient';
 import { DemoController } from './DemoController';
 
 export const createDemoClient = createDemoClientFactory({
@@ -120,6 +120,6 @@ import { TypesUseDemoController } from './types';
 - [`useCode`](../use-code/page.mdx) — the lower-level editing hook a code-only controller integrates with.
 
 export const metadata =
-  /** @type {import('@mui/internal-docs-infra/createSitemap/types').NextMetadata} */ ({
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
     keywords: ['live demo', 'live editing', 'editable code', 'playground', 'demo controller'],
   });

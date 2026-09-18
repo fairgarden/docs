@@ -1,0 +1,1323 @@
+import { describe, it, expect, vi } from 'vitest';
+import type { Configuration as WebpackConfig } from 'webpack';
+import type { NextConfig } from 'next';
+import { withDocsInfra, getDocsInfraMdxOptions } from './withDocsInfra';
+
+type WebpackConfigContext = Parameters<NonNullable<NextConfig['webpack']>>[1];
+
+// Helper to create the expected updateParentIndex options
+const defaultUpdateParentIndex = {
+  baseDir: process.cwd(),
+  indexFileName: 'page.mdx',
+  markerDir: '.next/cache/docs-infra/types-index-updates',
+  onlyUpdateIndexes: true,
+  errorIfOutOfDate: Boolean(process.env.CI),
+  cacheDir: '.next/cache/docs-infra',
+};
+
+describe('withDocsInfra', () => {
+  describe('basic configuration', () => {
+    it('should add default page extensions', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      expect(result.pageExtensions).toEqual(['js', 'jsx', 'md', 'mdx', 'ts', 'tsx']);
+    });
+
+    it('should enable export output by default', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      expect(result.output).toBe('export');
+    });
+
+    it('should allow disabling export output', () => {
+      const plugin = withDocsInfra({ enableExportOutput: false });
+      const result = plugin({});
+
+      expect(result.output).toBeUndefined();
+    });
+
+    it('should add additional page extensions', () => {
+      const plugin = withDocsInfra({ additionalPageExtensions: ['vue', 'svelte'] });
+      const result = plugin({});
+
+      expect(result.pageExtensions).toEqual([
+        'js',
+        'jsx',
+        'md',
+        'mdx',
+        'ts',
+        'tsx',
+        'vue',
+        'svelte',
+      ]);
+    });
+
+    it('should preserve existing configuration', () => {
+      const plugin = withDocsInfra();
+      const existingConfig: NextConfig = {
+        env: { CUSTOM_VAR: 'value' },
+        experimental: { allowDevelopmentBuild: true },
+      };
+      const result = plugin(existingConfig);
+
+      expect(result.env).toEqual({ CUSTOM_VAR: 'value' });
+      expect(result.experimental).toEqual({ allowDevelopmentBuild: true });
+    });
+  });
+
+  describe('turbopack configuration', () => {
+    it('should add default demo patterns to turbopack rules', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      expect(result.turbopack?.rules).toEqual({
+        './app/**/demos/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './demo-data/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: {} },
+            },
+          ],
+        },
+        './app/**/types.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+              options: {
+                performance: {},
+                socketDir: '.next/docs-infra',
+                cacheDir: '.next/cache/docs-infra',
+                updateParentIndex: defaultUpdateParentIndex,
+              },
+            },
+          ],
+        },
+        './app/sitemap/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedSitemap',
+              options: { performance: {}, cacheDir: '.next/cache/docs-infra' },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should add additional demo patterns to turbopack rules', () => {
+      const plugin = withDocsInfra({
+        additionalDemoPatterns: {
+          index: ['./app/**/demos/*/demo-*/index.ts'],
+          client: ['./app/**/demos/*/demo-*/client.ts'],
+        },
+      });
+      const result = plugin({});
+
+      expect(result.turbopack?.rules).toEqual({
+        './app/**/demos/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './demo-data/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: {} },
+            },
+          ],
+        },
+        './app/**/types.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+              options: {
+                performance: {},
+                socketDir: '.next/docs-infra',
+                cacheDir: '.next/cache/docs-infra',
+                updateParentIndex: defaultUpdateParentIndex,
+              },
+            },
+          ],
+        },
+        './app/sitemap/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedSitemap',
+              options: { performance: {}, cacheDir: '.next/cache/docs-infra' },
+            },
+          ],
+        },
+        './app/**/demos/*/demo-*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/demo-*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: {} },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should merge with additional turbopack rules', () => {
+      const plugin = withDocsInfra({
+        additionalTurbopackRules: {
+          './custom/**/*.ts': {
+            loaders: ['custom-loader'],
+          },
+        },
+      });
+      const result = plugin({});
+
+      expect(result.turbopack?.rules).toEqual({
+        './app/**/demos/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './demo-data/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: {} },
+            },
+          ],
+        },
+        './app/**/types.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+              options: {
+                performance: {},
+                socketDir: '.next/docs-infra',
+                cacheDir: '.next/cache/docs-infra',
+                updateParentIndex: defaultUpdateParentIndex,
+              },
+            },
+          ],
+        },
+        './app/sitemap/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedSitemap',
+              options: { performance: {}, cacheDir: '.next/cache/docs-infra' },
+            },
+          ],
+        },
+        './custom/**/*.ts': {
+          loaders: ['custom-loader'],
+        },
+      });
+    });
+
+    it('should preserve existing turbopack rules', () => {
+      const plugin = withDocsInfra();
+      const existingConfig: NextConfig = {
+        turbopack: {
+          rules: {
+            './existing/**/*.ts': {
+              loaders: ['existing-loader'],
+            },
+          },
+        },
+      };
+      const result = plugin(existingConfig);
+
+      expect(result.turbopack?.rules).toEqual({
+        './existing/**/*.ts': {
+          loaders: ['existing-loader'],
+        },
+        './app/**/demos/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './demo-data/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: {} },
+            },
+          ],
+        },
+        './app/**/types.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+              options: {
+                performance: {},
+                socketDir: '.next/docs-infra',
+                cacheDir: '.next/cache/docs-infra',
+                updateParentIndex: defaultUpdateParentIndex,
+              },
+            },
+          ],
+        },
+        './app/sitemap/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedSitemap',
+              options: { performance: {}, cacheDir: '.next/cache/docs-infra' },
+            },
+          ],
+        },
+      });
+    });
+  });
+
+  describe('webpack configuration', () => {
+    const mockDefaultLoaders = {
+      babel: {
+        test: /\.(js|jsx|ts|tsx)$/,
+        use: 'babel-loader',
+      },
+    };
+
+    const mockWebpackOptions = {
+      buildId: 'test-build',
+      dev: false,
+      isServer: false,
+      config: {},
+      defaultLoaders: mockDefaultLoaders,
+      dir: '/tmp',
+      totalPages: 10,
+    } as unknown as WebpackConfigContext;
+
+    it('should add default webpack rules for demo patterns', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      expect(webpackResult.module?.rules).toHaveLength(5);
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]demos[/\\\\][^/\\\\]+[/\\\\]index\\.ts$'),
+        use: [
+          mockDefaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: { performance: {}, output: 'hastCompressed' },
+          },
+        ],
+      });
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]demos[/\\\\][^/\\\\]+[/\\\\]client\\.ts$'),
+        use: [
+          mockDefaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+            options: { performance: {} },
+          },
+        ],
+      });
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]app[/\\\\].*[/\\\\]types\\.ts$'),
+        use: [
+          mockDefaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+            options: {
+              performance: {},
+              socketDir: '.next/docs-infra',
+              cacheDir: '.next/cache/docs-infra',
+              updateParentIndex: defaultUpdateParentIndex,
+            },
+          },
+        ],
+      });
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]sitemap[/\\\\]index\\.ts$'),
+        use: [
+          mockDefaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedSitemap',
+            options: { performance: {}, cacheDir: '.next/cache/docs-infra' },
+          },
+        ],
+      });
+    });
+
+    it('should add webpack rules for additional demo patterns', () => {
+      const plugin = withDocsInfra({
+        additionalDemoPatterns: {
+          index: ['./app/**/demos/*/demo-*/index.ts'],
+          client: ['./app/**/demos/*/demo-*/client.ts'],
+        },
+      });
+      const result = plugin({});
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      // Should have 5 default rules (demos, demo-data, client, types, sitemap) + 2 additional rules = 7 total
+      expect(webpackResult.module?.rules).toHaveLength(7);
+
+      // Check for demo-* patterns - look for converted regex patterns
+      const demoIndexRule = webpackResult.module?.rules?.find((rule: any) => {
+        const source = rule.test?.source || rule.test?.toString();
+        return (
+          source &&
+          source.includes('demo-') &&
+          !source.includes('demo-data') &&
+          source.includes('index')
+        );
+      });
+      const demoClientRule = webpackResult.module?.rules?.find((rule: any) => {
+        const source = rule.test?.source || rule.test?.toString();
+        return (
+          source &&
+          source.includes('demo-') &&
+          !source.includes('demo-data') &&
+          source.includes('client')
+        );
+      });
+
+      expect(demoIndexRule).toBeDefined();
+      expect(demoClientRule).toBeDefined();
+    });
+
+    it('should handle webpack config without module', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      const mockWebpackConfig: WebpackConfig = {};
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      expect(webpackResult.module).toBeDefined();
+      expect(webpackResult.module?.rules).toBeDefined();
+      expect(webpackResult.module?.rules).toHaveLength(5);
+    });
+
+    it('should call existing webpack function if provided', () => {
+      const existingWebpackFn = vi.fn((config) => ({ ...config, custom: true }) as any);
+      const plugin = withDocsInfra();
+      const result = plugin({
+        webpack: existingWebpackFn,
+      });
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      expect(existingWebpackFn).toHaveBeenCalledWith(mockWebpackConfig, mockWebpackOptions);
+      expect((webpackResult as any).custom).toBe(true);
+    });
+
+    it('should preserve existing webpack rules', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      const existingRule = {
+        test: /\.css$/,
+        use: 'css-loader',
+      };
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [existingRule],
+        },
+      };
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      expect(webpackResult.module?.rules).toContain(existingRule);
+      expect(webpackResult.module?.rules).toHaveLength(6); // 1 existing + 5 new
+    });
+  });
+
+  describe('pattern conversion', () => {
+    it('should convert glob patterns to webpack regex correctly', () => {
+      const plugin = withDocsInfra({
+        additionalDemoPatterns: {
+          index: ['./app/**/demos/*/demo-*/index.ts'],
+        },
+      });
+      const result = plugin({});
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const mockWebpackOptions = {
+        buildId: 'test-build',
+        dev: false,
+        isServer: false,
+        config: {},
+        defaultLoaders: {
+          babel: {
+            test: /\.(js|jsx|ts|tsx)$/,
+            use: 'babel-loader',
+          },
+        },
+      } as unknown as WebpackConfigContext;
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      const demoRule = webpackResult.module?.rules?.find((rule: any) => {
+        const source = rule.test?.source || rule.test?.toString();
+        return (
+          source &&
+          source.includes('demo-') &&
+          !source.includes('demo-data') &&
+          source.includes('index')
+        );
+      }) as any;
+
+      expect(demoRule).toBeDefined();
+
+      // Test that the regex works correctly for the expected patterns
+      const testPaths = [
+        '/app/components/demos/Button/demo-variant/index.ts',
+        '/app/docs/demos/forms/demo-validation/index.ts',
+        '/app/demos/simple/demo-basic/index.ts',
+      ];
+
+      const wrongPaths = [
+        '/app/components/demos/Button/index.ts', // Missing demo-*
+        '/app/components/demos/Button/demo-variant/client.ts', // Wrong file type
+        '/app/components/demos/Button/demo-variant/index.js', // Wrong extension
+      ];
+
+      testPaths.forEach((path) => {
+        expect(demoRule.test.test(path)).toBe(true);
+      });
+
+      wrongPaths.forEach((path) => {
+        expect(demoRule.test.test(path)).toBe(false);
+      });
+    });
+  });
+
+  describe('equivalent to original configuration', () => {
+    it('should produce equivalent output to the original next.config.mjs structure', () => {
+      // Test the configuration that matches the original next.config.mjs
+      const plugin = withDocsInfra({
+        additionalDemoPatterns: {
+          index: ['./app/**/demos/*/demo-*/index.ts'],
+          client: ['./app/**/demos/*/demo-*/client.ts'],
+        },
+      });
+      const result = plugin({});
+
+      // Check turbopack rules match original
+      expect(result.turbopack?.rules).toEqual({
+        './app/**/demos/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './demo-data/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: {} },
+            },
+          ],
+        },
+        './app/**/types.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+              options: {
+                performance: {},
+                socketDir: '.next/docs-infra',
+                cacheDir: '.next/cache/docs-infra',
+                updateParentIndex: defaultUpdateParentIndex,
+              },
+            },
+          ],
+        },
+        './app/sitemap/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedSitemap',
+              options: { performance: {}, cacheDir: '.next/cache/docs-infra' },
+            },
+          ],
+        },
+        './app/**/demos/*/demo-*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: {}, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/demo-*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: {} },
+            },
+          ],
+        },
+      });
+
+      // Test webpack function produces equivalent rules
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const mockWebpackOptions = {
+        buildId: 'test-build',
+        dev: false,
+        isServer: false,
+        config: {},
+        defaultLoaders: {
+          babel: {
+            test: /\.(js|jsx|ts|tsx)$/,
+            use: 'babel-loader',
+          },
+        },
+      } as unknown as WebpackConfigContext;
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      // Should have 7 rules total: 5 default (demos, demo-data, client, types, sitemap) + 2 additional demo patterns
+      expect(webpackResult.module?.rules).toHaveLength(7);
+
+      // Check for the original patterns
+      const originalDemoIndexRule = webpackResult.module?.rules?.find((rule: any) => {
+        const source = rule.test?.source || rule.test?.toString();
+        return (
+          source &&
+          source.includes('demo-') &&
+          !source.includes('demo-data') &&
+          source.includes('index')
+        );
+      });
+      const originalDemoClientRule = webpackResult.module?.rules?.find((rule: any) => {
+        const source = rule.test?.source || rule.test?.toString();
+        return (
+          source &&
+          source.includes('demo-') &&
+          !source.includes('demo-data') &&
+          source.includes('client')
+        );
+      });
+
+      expect(originalDemoIndexRule).toBeDefined();
+      expect(originalDemoClientRule).toBeDefined();
+    });
+  });
+
+  describe('performance options', () => {
+    it('should pass performance options to turbopack loaders', () => {
+      const performanceOptions = {
+        logging: true,
+        notableMs: 500,
+        showWrapperMeasures: true,
+      };
+
+      const plugin = withDocsInfra({ performance: performanceOptions });
+      const result = plugin({});
+
+      expect(result.turbopack?.rules).toEqual({
+        './app/**/demos/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: performanceOptions, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './demo-data/*/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+              options: { performance: performanceOptions, output: 'hastCompressed' },
+            },
+          ],
+        },
+        './app/**/demos/*/client.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+              options: { performance: performanceOptions },
+            },
+          ],
+        },
+        './app/**/types.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+              options: {
+                performance: performanceOptions,
+                socketDir: '.next/docs-infra',
+                cacheDir: '.next/cache/docs-infra',
+                updateParentIndex: defaultUpdateParentIndex,
+              },
+            },
+          ],
+        },
+        './app/sitemap/index.ts': {
+          loaders: [
+            {
+              loader: '@fairgarden/docs/pipeline/loadPrecomputedSitemap',
+              options: { performance: performanceOptions, cacheDir: '.next/cache/docs-infra' },
+            },
+          ],
+        },
+      });
+    });
+
+    it('should pass performance options to webpack loaders', () => {
+      const performanceOptions = {
+        logging: true,
+        notableMs: 1000,
+        showWrapperMeasures: false,
+      };
+
+      const plugin = withDocsInfra({ performance: performanceOptions });
+      const result = plugin({});
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const mockWebpackOptions = {
+        buildId: 'test-build',
+        dev: false,
+        isServer: false,
+        config: {},
+        defaultLoaders: {
+          babel: {
+            test: /\.(js|jsx|ts|tsx)$/,
+            use: 'babel-loader',
+          },
+        },
+        dir: '/tmp',
+        totalPages: 10,
+      } as unknown as WebpackConfigContext;
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]demos[/\\\\][^/\\\\]+[/\\\\]index\\.ts$'),
+        use: [
+          mockWebpackOptions.defaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: { performance: performanceOptions, output: 'hastCompressed' },
+          },
+        ],
+      });
+
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]demos[/\\\\][^/\\\\]+[/\\\\]client\\.ts$'),
+        use: [
+          mockWebpackOptions.defaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+            options: { performance: performanceOptions },
+          },
+        ],
+      });
+
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]app[/\\\\].*[/\\\\]types\\.ts$'),
+        use: [
+          mockWebpackOptions.defaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+            options: {
+              performance: performanceOptions,
+              socketDir: '.next/docs-infra',
+              cacheDir: '.next/cache/docs-infra',
+              updateParentIndex: defaultUpdateParentIndex,
+            },
+          },
+        ],
+      });
+    });
+
+    it('should pass performance options to additional demo patterns', () => {
+      const performanceOptions = {
+        logging: false,
+        notableMs: 200,
+      };
+
+      const plugin = withDocsInfra({
+        performance: performanceOptions,
+        additionalDemoPatterns: {
+          index: ['./app/**/demos/*/demo-*/index.ts'],
+          client: ['./app/**/demos/*/demo-*/client.ts'],
+        },
+      });
+      const result = plugin({});
+
+      // Check turbopack rules include performance options
+      expect(result.turbopack?.rules?.['./app/**/demos/*/demo-*/index.ts']).toEqual({
+        loaders: [
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: { performance: performanceOptions, output: 'hastCompressed' },
+          },
+        ],
+      });
+
+      expect(result.turbopack?.rules?.['./app/**/demos/*/demo-*/client.ts']).toEqual({
+        loaders: [
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighterClient',
+            options: { performance: performanceOptions },
+          },
+        ],
+      });
+
+      // Check webpack rules include performance options
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const mockWebpackOptions = {
+        buildId: 'test-build',
+        dev: false,
+        isServer: false,
+        config: {},
+        defaultLoaders: {
+          babel: {
+            test: /\.(js|jsx|ts|tsx)$/,
+            use: 'babel-loader',
+          },
+        },
+        dir: '/tmp',
+        totalPages: 10,
+      } as unknown as WebpackConfigContext;
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      // Should have 7 rules total: 5 default (demos, demo-data, client, types, sitemap) + 2 additional demo patterns
+      expect(webpackResult.module?.rules).toHaveLength(7);
+
+      // Check that additional patterns have performance options
+      const additionalIndexRule = webpackResult.module?.rules?.find((rule: any) => {
+        const source = rule.test?.source || rule.test?.toString();
+        return (
+          source &&
+          source.includes('demo-') &&
+          !source.includes('demo-data') &&
+          source.includes('index')
+        );
+      }) as any;
+
+      const additionalClientRule = webpackResult.module?.rules?.find((rule: any) => {
+        const source = rule.test?.source || rule.test?.toString();
+        return (
+          source &&
+          source.includes('demo-') &&
+          !source.includes('demo-data') &&
+          source.includes('client')
+        );
+      }) as any;
+
+      expect(additionalIndexRule?.use[1]?.options).toEqual({
+        performance: performanceOptions,
+        output: 'hastCompressed',
+      });
+      expect(additionalClientRule?.use[1]?.options).toEqual({ performance: performanceOptions });
+    });
+
+    it('should handle undefined performance options gracefully', () => {
+      const plugin = withDocsInfra(); // No performance options provided
+      const result = plugin({});
+
+      expect(result.turbopack?.rules?.['./app/**/demos/*/index.ts']).toEqual({
+        loaders: [
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: { performance: {}, output: 'hastCompressed' },
+          },
+        ],
+      });
+    });
+  });
+
+  describe('emphasis options', () => {
+    it('should pass demoEmphasisOptions to demo code highlighter loaders', () => {
+      const demoEmphasisOptions = {
+        paddingFrameMaxSize: 2,
+        focusFramesMaxSize: 18,
+      };
+
+      const plugin = withDocsInfra({ demoEmphasisOptions });
+      const result = plugin({});
+
+      expect(result.turbopack?.rules?.['./app/**/demos/*/index.ts']).toEqual({
+        loaders: [
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: {
+              performance: {},
+              output: 'hastCompressed',
+              emphasisOptions: demoEmphasisOptions,
+            },
+          },
+        ],
+      });
+    });
+
+    it('should pass codeBlockEmphasisOptions to turbopack types loader options', () => {
+      const codeBlockEmphasisOptions = {
+        paddingFrameMaxSize: 8,
+        focusFramesMaxSize: 36,
+      };
+
+      const plugin = withDocsInfra({ codeBlockEmphasisOptions });
+      const result = plugin({});
+
+      expect(result.turbopack?.rules?.['./app/**/types.ts']).toEqual({
+        loaders: [
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+            options: {
+              performance: {},
+              socketDir: '.next/docs-infra',
+              cacheDir: '.next/cache/docs-infra',
+              updateParentIndex: defaultUpdateParentIndex,
+              codeBlockEmphasisOptions,
+            },
+          },
+        ],
+      });
+    });
+
+    it('should pass codeBlockEmphasisOptions to webpack types loader options', () => {
+      const codeBlockEmphasisOptions = {
+        paddingFrameMaxSize: 8,
+        focusFramesMaxSize: 36,
+      };
+
+      const plugin = withDocsInfra({ codeBlockEmphasisOptions });
+      const result = plugin({});
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const mockWebpackOptions = {
+        buildId: 'test-build',
+        dev: false,
+        isServer: false,
+        config: {},
+        defaultLoaders: {
+          babel: {
+            test: /\.(js|jsx|ts|tsx)$/,
+            use: 'babel-loader',
+          },
+        },
+        dir: '/tmp',
+        totalPages: 10,
+      } as unknown as WebpackConfigContext;
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]app[/\\\\].*[/\\\\]types\\.ts$'),
+        use: [
+          mockWebpackOptions.defaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+            options: {
+              performance: {},
+              socketDir: '.next/docs-infra',
+              cacheDir: '.next/cache/docs-infra',
+              updateParentIndex: defaultUpdateParentIndex,
+              codeBlockEmphasisOptions,
+            },
+          },
+        ],
+      });
+    });
+  });
+
+  describe('demo page generation', () => {
+    const mockWebpackOptions = {
+      buildId: 'test-build',
+      dev: false,
+      isServer: false,
+      config: {},
+      defaultLoaders: {
+        babel: {
+          test: /\.(js|jsx|ts|tsx)$/,
+          use: 'babel-loader',
+        },
+      },
+      dir: '/tmp',
+      totalPages: 10,
+    } as unknown as WebpackConfigContext;
+
+    it('marks the turbopack demo index rule with requirePage when requireDemoPage is set', () => {
+      const plugin = withDocsInfra({ requireDemoPage: true });
+      const result = plugin({});
+
+      expect(result.turbopack?.rules?.['./app/**/demos/*/index.ts']).toEqual({
+        loaders: [
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: {
+              performance: {},
+              output: 'hastCompressed',
+              requirePage: true,
+            },
+          },
+        ],
+      });
+    });
+
+    it('marks the webpack demo index rule with requirePage when requireDemoPage is set', () => {
+      const plugin = withDocsInfra({ requireDemoPage: true });
+      const result = plugin({});
+
+      const webpackResult = result.webpack!({ module: { rules: [] } }, mockWebpackOptions);
+
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]demos[/\\\\][^/\\\\]+[/\\\\]index\\.ts$'),
+        use: [
+          mockWebpackOptions.defaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: {
+              performance: {},
+              output: 'hastCompressed',
+              requirePage: true,
+            },
+          },
+        ],
+      });
+    });
+
+    it('does not mark the demo-data rule with requirePage', () => {
+      const plugin = withDocsInfra({ requireDemoPage: true });
+      const result = plugin({});
+
+      expect(result.turbopack?.rules?.['./demo-data/*/index.ts']).toEqual({
+        loaders: [
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedCodeHighlighter',
+            options: {
+              performance: {},
+              output: 'hastCompressed',
+            },
+          },
+        ],
+      });
+    });
+
+    it('omits requirePage from demo loader options by default', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      const options = (
+        result.turbopack?.rules?.['./app/**/demos/*/index.ts'] as { loaders: { options: object }[] }
+      ).loaders[0].options;
+      expect(options).not.toHaveProperty('requirePage');
+    });
+  });
+
+  describe('ordering options', () => {
+    it('should not include ordering in loader options when not provided', () => {
+      const plugin = withDocsInfra();
+      const result = plugin({});
+
+      const typesRule = result.turbopack?.rules?.['./app/**/types.ts'] as any;
+      expect(typesRule.loaders[0].options).not.toHaveProperty('ordering');
+    });
+
+    it('should pass ordering to turbopack types loader options', () => {
+      const ordering = {
+        props: ['children', 'className', '__EVERYTHING_ELSE__'],
+      };
+
+      const plugin = withDocsInfra({ ordering });
+      const result = plugin({});
+
+      const typesRule = result.turbopack?.rules?.['./app/**/types.ts'] as any;
+      expect(typesRule.loaders[0].options.ordering).toEqual(ordering);
+    });
+
+    it('should pass ordering to webpack types loader options', () => {
+      const ordering = {
+        namespaceParts: ['Root', 'Trigger', '__EVERYTHING_ELSE__'],
+      };
+
+      const plugin = withDocsInfra({ ordering });
+      const result = plugin({});
+
+      const mockWebpackConfig: WebpackConfig = {
+        module: {
+          rules: [],
+        },
+      };
+
+      const mockWebpackOptions = {
+        buildId: 'test-build',
+        dev: false,
+        isServer: false,
+        config: {},
+        defaultLoaders: {
+          babel: {
+            test: /\.(js|jsx|ts|tsx)$/,
+            use: 'babel-loader',
+          },
+        },
+        dir: '/tmp',
+        totalPages: 10,
+      } as unknown as WebpackConfigContext;
+
+      const webpackResult = result.webpack!(mockWebpackConfig, mockWebpackOptions);
+
+      expect(webpackResult.module?.rules).toContainEqual({
+        test: new RegExp('[/\\\\]app[/\\\\].*[/\\\\]types\\.ts$'),
+        use: [
+          mockWebpackOptions.defaultLoaders.babel,
+          {
+            loader: '@fairgarden/docs/pipeline/loadPrecomputedTypes',
+            options: {
+              performance: {},
+              socketDir: '.next/docs-infra',
+              cacheDir: '.next/cache/docs-infra',
+              updateParentIndex: defaultUpdateParentIndex,
+              ordering,
+            },
+          },
+        ],
+      });
+    });
+
+    it('should not include ordering in non-types loader options', () => {
+      const ordering = {
+        namespaceParts: ['Root', '__EVERYTHING_ELSE__'],
+      };
+
+      const plugin = withDocsInfra({ ordering });
+      const result = plugin({});
+
+      const demoRule = result.turbopack?.rules?.['./app/**/demos/*/index.ts'] as any;
+      expect(demoRule.loaders[0].options).not.toHaveProperty('ordering');
+
+      const clientRule = result.turbopack?.rules?.['./app/**/demos/*/client.ts'] as any;
+      expect(clientRule.loaders[0].options).not.toHaveProperty('ordering');
+
+      const sitemapRule = result.turbopack?.rules?.['./app/sitemap/index.ts'] as any;
+      expect(sitemapRule.loaders[0].options).not.toHaveProperty('ordering');
+    });
+  });
+});
+
+describe('getDocsInfraMdxOptions', () => {
+  it('should return default MDX options when no custom options provided', () => {
+    const result = getDocsInfraMdxOptions({ errorIfIndexOutOfDate: false });
+
+    expect(result.remarkPlugins).toEqual([
+      ['remark-gfm'],
+      [
+        '@fairgarden/docs/pipeline/transformMarkdownMetadata',
+        {
+          extractToIndex: {
+            include: ['app', 'src/app'],
+            exclude: [],
+            baseDir: process.cwd(),
+            cacheDir: '.next/cache/docs-infra',
+            markerDir: '.next/cache/docs-infra/index-updates',
+            errorIfOutOfDate: false,
+          },
+        },
+      ],
+      ['@fairgarden/docs/pipeline/transformMarkdownRelativePaths'],
+      ['@fairgarden/docs/pipeline/transformMarkdownBlockquoteCallouts'],
+      ['@fairgarden/docs/pipeline/transformMarkdownCode'],
+      ['@fairgarden/docs/pipeline/transformMarkdownMetaLinks'],
+    ]);
+
+    expect(result.rehypePlugins).toEqual([
+      ['@fairgarden/docs/pipeline/transformHtmlCodeBlock'],
+      ['@fairgarden/docs/pipeline/transformHtmlCodeInline'],
+      ['@fairgarden/docs/pipeline/enhanceCodeInline'],
+    ]);
+  });
+
+  it('should add additional plugins to defaults', () => {
+    const result = getDocsInfraMdxOptions({
+      additionalRemarkPlugins: [['remark-emoji']],
+      additionalRehypePlugins: [['rehype-highlight']],
+      errorIfIndexOutOfDate: false,
+    });
+
+    expect(result.remarkPlugins).toEqual([
+      ['remark-gfm'],
+      [
+        '@fairgarden/docs/pipeline/transformMarkdownMetadata',
+        {
+          extractToIndex: {
+            include: ['app', 'src/app'],
+            exclude: [],
+            baseDir: process.cwd(),
+            cacheDir: '.next/cache/docs-infra',
+            markerDir: '.next/cache/docs-infra/index-updates',
+            errorIfOutOfDate: false,
+          },
+        },
+      ],
+      ['@fairgarden/docs/pipeline/transformMarkdownRelativePaths'],
+      ['@fairgarden/docs/pipeline/transformMarkdownBlockquoteCallouts'],
+      ['@fairgarden/docs/pipeline/transformMarkdownCode'],
+      ['@fairgarden/docs/pipeline/transformMarkdownMetaLinks'],
+      ['remark-emoji'],
+    ]);
+
+    expect(result.rehypePlugins).toEqual([
+      ['@fairgarden/docs/pipeline/transformHtmlCodeBlock'],
+      ['@fairgarden/docs/pipeline/transformHtmlCodeInline'],
+      ['@fairgarden/docs/pipeline/enhanceCodeInline'],
+      ['rehype-highlight'],
+    ]);
+  });
+
+  it('should pass codeBlockEmphasisOptions to transformHtmlCodeBlock', () => {
+    const codeBlockEmphasisOptions = {
+      paddingFrameMaxSize: 8,
+      focusFramesMaxSize: 36,
+    };
+
+    const result = getDocsInfraMdxOptions({
+      codeBlockEmphasisOptions,
+      errorIfIndexOutOfDate: false,
+    });
+
+    expect(result.rehypePlugins).toEqual([
+      ['@fairgarden/docs/pipeline/transformHtmlCodeBlock', codeBlockEmphasisOptions],
+      ['@fairgarden/docs/pipeline/transformHtmlCodeInline'],
+      ['@fairgarden/docs/pipeline/enhanceCodeInline'],
+    ]);
+  });
+
+  it('should override defaults when explicit plugins provided', () => {
+    const customRemarkPlugins: Array<string | [string, ...any[]]> = [
+      ['remark-gfm'],
+      ['custom-remark-plugin'],
+    ];
+    const customRehypePlugins: Array<string | [string, ...any[]]> = [['custom-rehype-plugin']];
+
+    const result = getDocsInfraMdxOptions({
+      remarkPlugins: customRemarkPlugins,
+      rehypePlugins: customRehypePlugins,
+    });
+
+    expect(result.remarkPlugins).toEqual(customRemarkPlugins);
+    expect(result.rehypePlugins).toEqual(customRehypePlugins);
+  });
+
+  it('should handle mixed custom and additional plugins', () => {
+    const result = getDocsInfraMdxOptions({
+      remarkPlugins: [['custom-remark-plugin']],
+      additionalRehypePlugins: [['rehype-highlight']],
+    });
+
+    // remarkPlugins should override defaults
+    expect(result.remarkPlugins).toEqual([['custom-remark-plugin']]);
+
+    // rehypePlugins should be defaults + additional
+    expect(result.rehypePlugins).toEqual([
+      ['@fairgarden/docs/pipeline/transformHtmlCodeBlock'],
+      ['@fairgarden/docs/pipeline/transformHtmlCodeInline'],
+      ['@fairgarden/docs/pipeline/enhanceCodeInline'],
+      ['rehype-highlight'],
+    ]);
+  });
+});

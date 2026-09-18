@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import type { ContentLoadingProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
-import { useCodeFallback } from '@mui/internal-docs-infra/CodeHighlighter';
-import { generateFileSlug } from '@mui/internal-docs-infra/pipeline/loaderUtils';
+import type { ContentLoadingProps } from '@fairgarden/docs/CodeHighlighter/types';
+import { useCodeFallback } from '@fairgarden/docs/CodeHighlighter';
+import { generateFileSlug } from '@fairgarden/docs/pipeline/loaderUtils';
 import { Tabs } from '@/components/Tabs';
 import { CodeActionsMenu } from '../../../components/code-highlighter/demos/CodeActionsMenu';
 import { CodeBlockHeader } from '../../../components/code-highlighter/demos/CodeBlockHeader';

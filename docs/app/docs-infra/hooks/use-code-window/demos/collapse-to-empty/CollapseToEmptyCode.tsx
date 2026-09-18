@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Code as CodeType } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import type { Code as CodeType } from '@fairgarden/docs/CodeHighlighter/types';
 import { Code } from '../Code';
 
 const source = `import { defineConfig } from 'some-bundler';

@@ -33,7 +33,7 @@ The easiest way to configure this loader is with the [`withDocsInfra`](../with-d
 
 ```javascript
 // next.config.js
-import { withDocsInfra } from '@mui/internal-docs-infra/withDocsInfra';
+import { withDocsInfra } from '@fairgarden/docs/withDocsInfra';
 
 export default withDocsInfra({
   // Automatically includes:
@@ -55,14 +55,14 @@ const nextConfig = {
   turbopack: {
     rules: {
       './app/sitemap/index.ts': {
-        loaders: ['@mui/internal-docs-infra/pipeline/loadPrecomputedSitemap'],
+        loaders: ['@fairgarden/docs/pipeline/loadPrecomputedSitemap'],
       },
     },
   },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     config.module.rules.push({
       test: /\/sitemap\/index\.ts$/,
-      use: [defaultLoaders.babel, '@mui/internal-docs-infra/pipeline/loadPrecomputedSitemap'],
+      use: [defaultLoaders.babel, '@fairgarden/docs/pipeline/loadPrecomputedSitemap'],
     });
 
     return config;

@@ -31,7 +31,7 @@ Both panes below share one channel key, so editing either keeps them in sync as 
 ```tsx
 'use client';
 
-import { useCrossTabState } from '@mui/internal-docs-infra/useCrossTabState';
+import { useCrossTabState } from '@fairgarden/docs/useCrossTabState';
 
 function SharedNotepad() {
   const [text, setText] = useCrossTabState('notepad', '');
@@ -83,7 +83,7 @@ function SharedNotepad({ id }: { id: string }) {
 When the state doesn't live in a `useState` — it comes from a reducer, an external store, or a controller with its own setter — use the lower-level **`useCrossTabMirror(key, value, applyRemote)`**. It doesn't own any state; it broadcasts the `value` you pass whenever it changes, and calls `applyRemote` with values received from other tabs. (`useCrossTabState` is a thin wrapper over it: a `useState` plus `useCrossTabMirror(key, value, setValue)`.)
 
 ```tsx
-import { useCrossTabMirror } from '@mui/internal-docs-infra/useCrossTabState';
+import { useCrossTabMirror } from '@fairgarden/docs/useCrossTabState';
 
 function Counter() {
   const [count, dispatch] = React.useReducer(reducer, 0);

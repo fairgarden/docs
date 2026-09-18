@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useCodeWindow } from '@mui/internal-docs-infra/useCodeWindow';
+import { useCodeWindow } from '@fairgarden/docs/useCodeWindow';
 import styles from './CollapsibleSnippet.module.css';
 
 const longSource = `function quickSort(arr) {

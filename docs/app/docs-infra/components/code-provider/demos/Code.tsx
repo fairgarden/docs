@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CodeHighlighter } from '@mui/internal-docs-infra/CodeHighlighter';
+import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
 
 import { CodeContent } from '../../code-highlighter/demos/CodeContent';
 

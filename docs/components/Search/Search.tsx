@@ -2,8 +2,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { useSearch } from '@mui/internal-docs-infra/useSearch';
-import type { SearchResult, Sitemap } from '@mui/internal-docs-infra/useSearch/types';
+import { useSearch } from '@fairgarden/docs/useSearch';
+import type { SearchResult, Sitemap } from '@fairgarden/docs/useSearch/types';
 import type { Autocomplete } from '@base-ui/react/autocomplete';
 import { SearchButton } from './SearchButton';
 import { SearchDialog } from './SearchDialog';
