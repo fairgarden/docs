@@ -117,17 +117,38 @@
   background-color: #fbf7fe;
   border-bottom: 1px solid color(display-p3 0.86 0.774 0.942);
   border-bottom: 1px solid #e0c4f4;
-  padding-left: 70px;
+  padding-left: 65px;
 }
 
-.header a,
-.header a:visited {
-  font-size: 1.5rem;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.75rem;
   font-weight: bold;
+  z-index: 1001;
+}
+
+.brand,
+.brand:visited {
   color: color(display-p3 0.234 0.132 0.363);
   color: #402060;
   text-decoration: none;
-  z-index: 1001;
+}
+
+.brand span {
+  padding-top: 4px;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo > img {
+  height: 40px;
+  width: 40px;
 }
 
 .headerContainer {

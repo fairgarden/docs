@@ -8,7 +8,6 @@ import { CodeComponentsProvider } from '@/code-components';
 import styles from '../layout.module.css';
 import { sitemap } from '../sitemap';
 import { Search } from '../search';
-import Notice from '../notice.mdx';
 
 export const metadata: Metadata = {
   title: 'FairGarden Docs',
@@ -27,16 +26,18 @@ export default function RootLayout({
           <div className={styles.root}>
             <div className={styles.header}>
               <div className={styles.headerContainer}>
-                <Link href="/docs-infra">FairGarden Docs</Link>
+                <Link href="/docs-infra" className={styles.brand}>
+                  <div className={styles.logo}>
+                    <img src="/logo.svg" alt="FairGarden Docs Logo" />
+                  </div>
+                  <span>FairGarden Docs</span>
+                </Link>
                 <Search enableKeyboardShortcut containedScroll />
               </div>
             </div>
             <div className={styles.contentWrapper}>
               <Navigation sitemap={sitemap} />
               <div className={styles.container}>
-                <div className={styles.notice}>
-                  <Notice />
-                </div>
                 <div className={styles.content}>{children}</div>
               </div>
             </div>
