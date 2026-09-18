@@ -1,8 +1,0 @@
-{
-  "name": "wildcard-cascade",
-  "exports": {
-    "./foo/*": "./foo/*.js",
-    "./foo/bar/*": null,
-    "./foo/bar/baz/*": "./foo/bar/baz/*.js"
-  }
-}

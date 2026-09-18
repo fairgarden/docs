@@ -1,9 +1,0 @@
-{
-  "name": "wildcard-conditions",
-  "exports": {
-    "./*": {
-      "types": "./lib/*.d.ts",
-      "default": "./lib/*.js"
-    }
-  }
-}

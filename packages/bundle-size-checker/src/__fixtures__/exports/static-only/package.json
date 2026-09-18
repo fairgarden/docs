@@ -1,8 +1,0 @@
-{
-  "name": "static-only",
-  "exports": {
-    ".": "./index.js",
-    "./utils": "./utils.js",
-    "./package.json": "./package.json"
-  }
-}

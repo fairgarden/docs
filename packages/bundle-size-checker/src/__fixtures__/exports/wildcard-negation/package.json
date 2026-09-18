@@ -1,7 +1,0 @@
-{
-  "name": "wildcard-negation",
-  "exports": {
-    "./*": "./lib/*.js",
-    "./internal/*": null
-  }
-}

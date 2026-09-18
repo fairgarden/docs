@@ -1,29 +1,10 @@
-# MUI Public
+# FairGarden Docs
 
-Mono-repository for the MUI organization with code that can be public.\
-See https://github.com/mui/mui-private for code that needs to be private.
+Build-time optimized documentation infrastructure for React and Next.js sites.
 
 ## Documentation
 
-You can [read the Infra documentation here](./docs/README.md).
-
-## Applications
-
-### Frontend Public
-
-- URL: [frontend-public.mui.com](https://frontend-public.mui.com/)
-- Source: `/apps/code-infra-dashboard/`
-- Hosting: https://dashboard.render.com/web/srv-d5fq2j0gjchc73e9st5g
-- [Docs](./apps/code-infra-dashboard/#readme)
-
-### MUI Internal
-
-- URL: [mui-internal.netlify.app](https://mui-internal.netlify.app)
-- Source: `/docs/`
-- Hosting: https://app.netlify.com/projects/mui-internal/overview
-- [Docs](./docs/#readme)
-- Website for MUI internal packages, e.g. hosts docs-infra.
-  This is equivalent to https://backoffice.mui.com/ but for public logic.
+You can [read the documentation here](./docs/README.md).
 
 ## Packages
 
@@ -32,25 +13,7 @@ You can [read the Infra documentation here](./docs/README.md).
 - Source: `/packages/docs-infra/`
 - [Docs](./packages/docs-infra/README.md)
 
-### [code-infra](./packages/code-infra/)
+## Original Repository
 
-- Source: `/packages/code-infra/`
-- [Docs](./packages/code-infra/README.md)
-
-## Versioning
-
-Steps:
-
-1. Checkout latest master
-1. Run `pnpm release:prepare`
-1. Run `pnpm release:version`
-1. Open PR with the changes
-
-## Publishing
-
-Steps:
-
-1. Merge versioning PR
-1. Checkout release commit on master
-1. Run `pnpm release:prepare`
-1. Run `pnpm release:publish`
+This project was hard forked from mui/mui-public commit [7bd5e10f792e3f2188188e22f06b1ae7ddfb58ca](https://github.com/mui/mui-public/commit/7bd5e10f792e3f2188188e22f06b1ae7ddfb58ca) (July 6th 2026).
+This project is MIT licensed. All work prior to July 6th 2026 is owned by [`Material-UI SAS`](https://mui.com).
