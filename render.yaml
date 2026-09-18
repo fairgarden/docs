@@ -1,0 +1,37 @@
+previews:
+  generation: automatic
+  expireAfterDays: 6
+
+services:
+  - type: web
+    name: code-infra-dashboard
+    runtime: node
+    rootDir: apps/code-infra-dashboard
+    buildCommand: |
+      # Required per https://github.com/pnpm/pnpm/issues/9029#issuecomment-2629866277
+      npm install -g corepack@latest
+
+      corepack enable
+      pnpm --version
+      pnpm install --frozen-lockfile
+      pnpm build
+    startCommand: pnpm start
+    plan: starter
+    region: virginia
+    previews:
+      plan: starter
+    domains:
+      - frontend-public.mui.com
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: QR_CODE_SECRET
+        generateValue: true
+      - fromGroup: code-infra-dashboard AWS user
+      - fromGroup: X-license-code-infra
+      - fromGroup: CircleCI API token
+      - fromGroup: GitHub public
+      - fromGroup: Code Infra GH App
+      - fromGroup: MUI Store database
+      - fromGroup: HiBob
+      - fromGroup: code-infra-dashboard-zendesk

@@ -1,0 +1,103 @@
+'use client';
+
+import * as React from 'react';
+import type { ContentProps } from '@mui/internal-docs-infra/CodeHighlighter/types';
+import { useCode } from '@mui/internal-docs-infra/useCode';
+import { useScrollAnchor } from '@mui/internal-docs-infra/useScrollAnchor';
+import { Tabs } from '@/components/Tabs';
+import { CodeActionsMenu } from './CodeActionsMenu';
+import { CodeBlockHeader, CodeBlockHeaderLabel } from './CodeBlockHeader';
+import { CodeSource } from './CodeSource';
+import styles from './CodeContent.module.css';
+
+const variantNames: Record<string, string | undefined> = {
+  CssModules: 'CSS Modules',
+};
+
+export function CodeContent(props: ContentProps<object>) {
+  // @focus-start
+  const code = useCode(props, {
+    preClassName: styles.codeBlock,
+    transformDelay: 350,
+    variantSwapDelay: 350,
+  });
+
+  // Scroll-anchor session for the JS/TS transform swap. Keeps the toggle
+  // (or the action-menu trigger that fronts it) pinned under the user's
+  // pointer while the code height changes during the swap.
+  const { containerRef: transformAnchorRef, anchorScroll: anchorTransformScroll } =
+    useScrollAnchor<HTMLDivElement>();
+
+  const hasJsTransform = code.availableTransforms.includes('js');
+  const isJsSelected = code.selectedTransform === 'js';
+
+  const toggleJs = React.useCallback(
+    (enabled: boolean, anchorEl: HTMLElement | null) => {
+      if (anchorEl) {
+        anchorTransformScroll(anchorEl, 700);
+      }
+      code.selectTransform(enabled ? 'js' : null);
+    },
+    [code, anchorTransformScroll],
+  );
+
+  const tabs = React.useMemo(
+    () => code.files.map(({ name, slug }) => ({ id: name, name, slug })),
+    [code.files],
+  );
+  const variants = React.useMemo(
+    () =>
+      code.variants.map((variant) => ({ value: variant, label: variantNames[variant] || variant })),
+    [code.variants],
+  );
+
+  const hasTabs = tabs.length > 1;
+
+  return (
+    <div>
+      {code.allFilesSlugs.map(({ slug }) => (
+        <span key={slug} id={slug} />
+      ))}
+      <div ref={transformAnchorRef} className={styles.container}>
+        <CodeBlockHeader
+          roundedTop
+          pending={code.pendingTransform}
+          menu={
+            <CodeActionsMenu
+              inline={!hasTabs}
+              onCopy={code.copy}
+              onCopyMarkdown={hasTabs ? code.copyMarkdown : undefined}
+              fileUrl={code.selectedFileUrl}
+              fileName={code.selectedFileName}
+              fileSlug={code.selectedFileSlug}
+              jsTransform={
+                hasJsTransform ? { enabled: isJsSelected, onToggle: toggleJs } : undefined
+              }
+              variants={
+                variants.length > 1
+                  ? {
+                      items: variants,
+                      selected: code.selectedVariant,
+                      onChange: code.selectVariant,
+                    }
+                  : undefined
+              }
+            />
+          }
+        >
+          {hasTabs ? (
+            <Tabs
+              tabs={tabs}
+              selectedTabId={code.selectedFileName}
+              onTabSelect={code.selectFileName}
+            />
+          ) : (
+            <CodeBlockHeaderLabel>{code.selectedFileName}</CodeBlockHeaderLabel>
+          )}
+        </CodeBlockHeader>
+        <CodeSource className={styles.code}>{code.selectedFile}</CodeSource>
+      </div>
+    </div>
+  );
+  // @focus-end
+}

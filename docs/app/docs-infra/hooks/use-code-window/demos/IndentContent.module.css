@@ -1,0 +1,282 @@
+.container {
+  border: 1px solid #d0cdd7;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.code {
+  padding: 10px 0 0;
+}
+
+.code:has(> pre > code:not([data-collapsible])):not(
+    :has(> pre > code:not([data-collapsible]) > .frame[data-frame-type='highlighted-unfocused'])
+  ) {
+  margin-bottom: 10px;
+}
+
+.toggle {
+  display: none;
+  width: 100%;
+  padding: 6px;
+  border: none;
+  border-top: 1px solid #d0cdd7;
+  border-radius: 0 0 7px 7px;
+  background: #f5f3f8;
+  color: #65636d;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-geist-mono);
+}
+
+/* Only show the toggle when the code block has collapsible frames */
+.code:has(> pre > code[data-collapsible]) + .toggle {
+  display: block;
+}
+
+.toggle:hover {
+  background: #eae7ef;
+}
+
+/* Pre element — `pre` qualifier needed to override layout's `.content pre { overflow-x: auto }`.
+   Typography (tab-size, margin) and the frame/line styling live in `CodeSource`;
+   this block owns only the collapse choreography and the indent shift below. */
+pre.codeBlock {
+  /* Expand stagger: when the focused region opens, frames directly bordering it
+     grow at full speed while frames farther out wait out the first third — the
+     bordering frames push them off-screen — then cover their height in the
+     remaining two thirds. `--frame-expand-duration` is the single knob; the
+     delayed frames still finish on time (delay + stagger duration = total). */
+  --frame-expand-duration: 0.3s;
+  --frame-expand-stagger-delay: calc(var(--frame-expand-duration) / 3);
+  --frame-expand-stagger-duration: calc(
+    var(--frame-expand-duration) - var(--frame-expand-stagger-delay)
+  );
+  padding: 6px 0;
+}
+
+/* Only collapsible code blocks disable horizontal scroll so the fade overlay
+   can clip cleanly; non-collapsible blocks keep the layout's default
+   `overflow-x: auto`. The `>` combinator and `code` tag qualifier keep the
+   `:has()` scan limited to a single direct child. */
+pre.codeBlock:has(> code[data-collapsible]) {
+  overflow-x: hidden;
+}
+
+/* Fade overlay at the bottom of truncated code blocks.
+   Anchored to the non-scrolling `.code` wrapper rather than the `pre`
+   itself: an absolutely positioned overlay inside the horizontally-
+   scrolling `pre` would scroll with its content, leaving a gap on the
+   right when scrolled. Anchoring to the wrapper pins `right: 0` to the
+   visible viewport edge.
+   Uses ::after + transform so the animation is GPU-accelerated. The
+   wrapper's `overflow-y: clip` clips the translated pseudo-element.
+   The explicit `> pre.codeBlock > code > .frame` child path bounds the
+   `:has()` scan to a fixed depth instead of walking the whole subtree. */
+pre.codeBlock:has(> code > :global(.frame[data-frame-truncated='visible'])) {
+  padding-bottom: 0;
+}
+
+.code:has(> pre.codeBlock > code > :global(.frame[data-frame-truncated='visible'])) {
+  position: relative;
+  overflow-y: clip;
+}
+
+.code:has(> pre.codeBlock > code > :global(.frame[data-frame-truncated='visible']))::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 0.8));
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.expanded.code:has(> pre.codeBlock > code > :global(.frame[data-frame-truncated='visible']))
+  > pre.codeBlock {
+  padding-bottom: 6px;
+}
+
+.expanded.code:has(
+    > pre.codeBlock > code > :global(.frame[data-frame-truncated='visible'])
+  )::after {
+  transform: translateY(100%);
+}
+
+.expanded pre.codeBlock {
+  overflow-x: auto;
+}
+
+/* ---- Collapsible frame behavior (no padding, just highlighted vs normal) ----
+   Frame/line *appearance* (backgrounds, rounding, highlight emphasis) lives in
+   `CodeSource`; the rules below own only the collapse/expand *behavior* and the
+   indent shift, scoped under `.codeBlock` (the `<pre>`). */
+
+/* Normal frames and unfocused highlighted/focus frames are hidden by default.
+   `visibility: hidden` removes the frames from the a11y tree, focus order, and
+   prevents `contenteditable` caret placement while collapsed. `visibility` has
+   built-in transition semantics that keep the element visible during the
+   collapse animation and only flip to hidden at the end. */
+.codeBlock :global(.frame:not([data-frame-type])),
+.codeBlock :global(.frame[data-frame-type='highlighted-unfocused']),
+.codeBlock :global(.frame[data-frame-type='focus-unfocused']) {
+  max-height: 0;
+  overflow: hidden;
+  overflow-anchor: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    max-height 0.3s cubic-bezier(0.5, 0, 0, 1),
+    opacity 0.2s ease 0.1s,
+    visibility 0.3s;
+}
+
+@supports (interpolate-size: allow-keywords) {
+  .codeBlock :global(.frame:not([data-frame-type])),
+  .codeBlock :global(.frame[data-frame-type='highlighted-unfocused']),
+  .codeBlock :global(.frame[data-frame-type='focus-unfocused']) {
+    interpolate-size: allow-keywords;
+    max-height: unset;
+    height: 0;
+    overflow: clip;
+    transition:
+      height 0.3s ease,
+      opacity 0.3s ease,
+      visibility 0.3s;
+  }
+}
+
+/* Highlighted-unfocused keeps its background visible — only animate height */
+.codeBlock :global(.frame[data-frame-type='highlighted-unfocused']) {
+  opacity: 1;
+}
+
+/* When expanded, show all frames */
+.expanded .codeBlock :global(.frame:not([data-frame-type])),
+.expanded .codeBlock :global(.frame[data-frame-type='highlighted-unfocused']),
+.expanded .codeBlock :global(.frame[data-frame-type='focus-unfocused']) {
+  max-height: 2220px;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    max-height 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.15s ease,
+    visibility 0s;
+}
+
+@supports (interpolate-size: allow-keywords) {
+  .expanded .codeBlock :global(.frame:not([data-frame-type])),
+  .expanded .codeBlock :global(.frame[data-frame-type='highlighted-unfocused']),
+  .expanded .codeBlock :global(.frame[data-frame-type='focus-unfocused']) {
+    max-height: unset;
+    height: auto;
+    overflow: clip;
+    transition:
+      height var(--frame-expand-stagger-duration) ease var(--frame-expand-stagger-delay),
+      opacity 0.3s ease,
+      visibility 0s;
+  }
+
+  /* Frames directly bordering the focused region run at full speed with no delay.
+     `:has(+ visible)` catches the hidden frame above the region; `visible + frame`
+     catches the one below. "Visible" is any typed frame except the hidden
+     `-unfocused` overflow variants. These bordering frames push the delayed far
+     frames off-screen during the first third before those start growing. */
+  .expanded
+    .codeBlock
+    :global(
+      .frame:is(
+          :not([data-frame-type]),
+          [data-frame-type='highlighted-unfocused'],
+          [data-frame-type='focus-unfocused']
+        ):has(
+          + .frame[data-frame-type]:not(
+              [data-frame-type='highlighted-unfocused'],
+              [data-frame-type='focus-unfocused']
+            )
+        )
+    ),
+  .expanded
+    .codeBlock
+    :global(
+      .frame[data-frame-type]:not(
+          [data-frame-type='highlighted-unfocused'],
+          [data-frame-type='focus-unfocused']
+        )
+        + .frame:is(
+          :not([data-frame-type]),
+          [data-frame-type='highlighted-unfocused'],
+          [data-frame-type='focus-unfocused']
+        )
+    ) {
+    transition:
+      height var(--frame-expand-duration) ease,
+      opacity 0.3s ease,
+      visibility 0s;
+  }
+}
+
+/* ---- Indent shifting: move highlighted/focus frame left by its indent level ---- */
+/* Uses transform instead of margin-left to avoid layout reflow during height transitions */
+
+.codeBlock :global(.frame[data-frame-type='highlighted']),
+.codeBlock :global(.frame[data-frame-type='focus']) {
+  transition: transform 0.3s ease;
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='1']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='1']) {
+  transform: translateX(-2ch);
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='2']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='2']) {
+  transform: translateX(-4ch);
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='3']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='3']) {
+  transform: translateX(-6ch);
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='4']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='4']) {
+  transform: translateX(-8ch);
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='5']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='5']) {
+  transform: translateX(-10ch);
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='6']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='6']) {
+  transform: translateX(-12ch);
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='7']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='7']) {
+  transform: translateX(-14ch);
+}
+
+.codeBlock :global(.frame[data-frame-type='highlighted'][data-frame-indent='8']),
+.codeBlock :global(.frame[data-frame-type='focus'][data-frame-indent='8']) {
+  transform: translateX(-16ch);
+}
+
+/* Reset indent shift when expanded */
+.expanded .codeBlock :global(.frame[data-frame-type='highlighted']),
+.expanded .codeBlock :global(.frame[data-frame-type='focus']) {
+  transform: translateX(0);
+}
+
+/* Invisible in-flow anchor so native fragment links can scroll to a file slug
+   and clear the sticky header — pure CSS, no scroll script. A `display: none`
+   anchor has no layout box, so the browser cannot scroll to it. */
+.fileRefs {
+  display: block;
+  height: 0;
+  scroll-margin-top: 16px;
+}

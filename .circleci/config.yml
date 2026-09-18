@@ -1,0 +1,147 @@
+version: 2.1
+
+orbs:
+  code-infra: https://raw.githubusercontent.com/mui/mui-public/refs/heads/master/.circleci/orbs/code-infra.yml
+
+parameters:
+  workflow:
+    description: The name of the workflow to run
+    type: string
+    default: pipeline
+
+default-job: &default-job
+  working_directory: /tmp/mui
+  executor: code-infra/mui-node
+  resource_class: medium
+
+default-context: &default-context
+  context:
+    - org-global
+
+jobs:
+  checkout:
+    <<: *default-job
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - run:
+          name: Should not have any git not staged
+          command: git add -A && git diff --exit-code --staged
+  test_lint:
+    <<: *default-job
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - run:
+          name: Docs Infra Build
+          command: pnpm docs:lib
+      - code-infra/eslint
+      - code-infra/stylelint
+  docs_validate:
+    <<: *default-job
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - run:
+          name: Build docs-infra package
+          command: pnpm docs:lib
+      - run:
+          name: Validate the documentation files
+          command: pnpm docs:validate
+  test_static:
+    <<: *default-job
+    # The `medium` executor (4 GB) OOM-kills Node's default heap during the
+    # `pnpm dedupe --check` and `pnpm typescript` steps. Raise the old-space
+    # limit job-wide (the dedupe step comes from the orb, so it can't take a
+    # step-level override here), leaving headroom for the OS and non-heap memory.
+    environment:
+      NODE_OPTIONS: --max-old-space-size=3072
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - code-infra/check-static-changes
+      - run:
+          # make sure the netlify ignore command has the correct dependencies
+          name: '`pnpm update-netlify-ignore` changes committed?'
+          command: pnpm code-infra netlify-ignore @apps/code-infra-dashboard --check
+      - run:
+          name: Tests TypeScript
+          command: pnpm typescript
+  test_unit:
+    <<: *default-job
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - run:
+          name: 'Run tests'
+          command: pnpm test
+  test_package:
+    <<: *default-job
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - run:
+          name: Build packages
+          command: pnpm release:build
+      - code-infra/upload-size-snapshot
+
+  test_benchmark:
+    <<: *default-job
+    executor:
+      name: code-infra/mui-node-browser
+      playwright-img-version: 'v1.61.1-noble'
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - run:
+          name: Build packages
+          command: pnpm release:build
+      - run:
+          name: Run benchmarks
+          environment:
+            BENCHMARK_UPLOAD: 'true'
+          command: pnpm -F ./test/performance benchmark
+
+  test_browser:
+    <<: *default-job
+    executor:
+      name: code-infra/mui-node-browser
+      playwright-img-version: 'v1.61.1-noble'
+    # `medium` (4 GB) intermittently OOM-kills the Playwright server when
+    # all three browsers (chromium/firefox/webkit) are driving tests at
+    # once. `medium+` (6 GB) gives enough headroom without paying for
+    # `large`.
+    resource_class: medium+
+    steps:
+      - checkout
+      - code-infra/install-deps
+      - run:
+          name: Build packages
+          command: pnpm release:build
+      - run:
+          name: Run browser tests
+          command: pnpm test:browser:unconfined
+
+workflows:
+  version: 2
+  pipeline:
+    when:
+      equal: [pipeline, << pipeline.parameters.workflow >>]
+    jobs:
+      - checkout:
+          <<: *default-context
+      - test_lint:
+          <<: *default-context
+      - docs_validate:
+          <<: *default-context
+          name: 'Validating Docs'
+      - test_static:
+          <<: *default-context
+      - test_unit:
+          <<: *default-context
+      - test_package:
+          <<: *default-context
+      - test_benchmark:
+          <<: *default-context
+      - test_browser:
+          <<: *default-context

@@ -1,0 +1,61 @@
+.trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.fallback {
+  color: inherit !important;
+}
+
+.fallback:visited {
+  color: inherit !important;
+}
+
+.popup {
+  overflow: visible;
+}
+
+.content {
+  --popup-frame-inset: 18px;
+
+  box-sizing: border-box;
+  background: var(--color-background, white);
+  border: 1px solid var(--color-border, #d0cdd7);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  max-inline-size: min(600px, var(--available-width));
+  max-block-size: min(400px, var(--available-height));
+}
+
+.scrollArea {
+  max-inline-size: calc(min(600px, var(--available-width)) - var(--popup-frame-inset));
+  max-block-size: calc(min(400px, var(--available-height)) - var(--popup-frame-inset));
+  overflow: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.link {
+  font-size: 0.875rem;
+}
+
+.close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 4px;
+}

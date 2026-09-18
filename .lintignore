@@ -1,0 +1,11 @@
+.cache
+.claude/worktrees
+/.git
+build
+node_modules
+pnpm-lock.yaml
+.next
+docs/export
+
+__fixtures__
+*.tsbuildinfo

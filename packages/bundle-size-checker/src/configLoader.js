@@ -1,0 +1,293 @@
+/**
+ * Utility to load the bundle-size-checker configuration
+ */
+
+import path from 'node:path';
+import envCi from 'env-ci';
+import * as module from 'node:module';
+import * as url from 'node:url';
+import micromatch from 'micromatch';
+import { findExportedPaths } from './findExportedPaths.js';
+
+/**
+ * @typedef {import('./types.js').BundleSizeCheckerConfigObject} BundleSizeCheckerConfigObject
+ * @typedef {import('./types.js').UploadConfig} UploadConfig
+ * @typedef {import('./types.js').NormalizedUploadConfig} NormalizedUploadConfig
+ * @typedef {import('./types.js').EntryPoint} EntryPoint
+ * @typedef {import('./types.js').ObjectEntry} ObjectEntry
+ * @typedef {import('./types.js').NormalizedBundleSizeCheckerConfig} NormalizedBundleSizeCheckerConfig
+ */
+
+/**
+ * Attempts to load and parse a single config file
+ * @param {string} configPath - Path to the configuration file
+ * @returns {Promise<BundleSizeCheckerConfigObject | null>} The parsed config or null if file doesn't exist
+ * @throws {Error} If the file exists but has invalid format
+ */
+async function loadConfigFile(configPath) {
+  try {
+    // Dynamic import for ESM
+    const configUrl = new URL(`file://${configPath}`);
+    const { default: config } = await import(configUrl.href);
+
+    /** @type {BundleSizeCheckerConfigObject | null} */
+    let resolvedConfig = null;
+    // Handle configs that might be Promise-returning functions
+    if (config instanceof Promise) {
+      resolvedConfig = await config;
+    } else if (typeof config === 'function') {
+      resolvedConfig = await config();
+    } else {
+      // Handle plain config objects
+      resolvedConfig = config;
+    }
+
+    return resolvedConfig;
+  } catch (/** @type {any} */ error) {
+    if (error.code === 'ERR_MODULE_NOT_FOUND') {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Validates and normalizes an upload configuration object
+ * @param {UploadConfig} uploadConfig - The upload configuration to normalize
+ * @param {Object} ciInfo - CI environment information
+ * @param {string} [ciInfo.branch] - Branch name from CI environment
+ * @param {boolean} [ciInfo.isPr] - Whether this is a pull request from CI environment
+ * @param {string} [ciInfo.prBranch] - PR branch name from CI environment
+ * @param {string} [ciInfo.slug] - Repository slug from CI environment
+ * @param {string} [ciInfo.pr] - Pull request number from CI environment
+ * @returns {NormalizedUploadConfig} - Normalized upload config
+ * @throws {Error} If required fields are missing
+ */
+export function applyUploadConfigDefaults(uploadConfig, ciInfo) {
+  const { slug, branch: ciBranch, isPr, prBranch, pr } = ciInfo;
+
+  // Get repo from config or environment
+  const repo = uploadConfig.repo || slug;
+  if (!repo) {
+    throw new Error(
+      'Missing required field: upload.repo. Please specify a repository (e.g., "mui/material-ui").',
+    );
+  }
+
+  // Get branch from config or environment
+  const branch = uploadConfig.branch || (isPr ? prBranch : ciBranch);
+  if (!branch) {
+    throw new Error('Missing required field: upload.branch. Please specify a branch name.');
+  }
+
+  const apiUrl =
+    uploadConfig.apiUrl || process.env.CI_REPORT_API_URL || 'https://frontend-public.mui.com';
+
+  // Return the normalized config
+  /** @type {NormalizedUploadConfig} */
+  const result = {
+    repo,
+    branch,
+    isPullRequest:
+      uploadConfig.isPullRequest !== undefined
+        ? Boolean(uploadConfig.isPullRequest)
+        : Boolean(isPr),
+    apiUrl,
+  };
+
+  // Add PR number from CI environment if available
+  if (pr) {
+    result.prNumber = String(pr);
+  }
+
+  return result;
+}
+
+/**
+ * Checks if the given import source is a top-level package
+ * @param {string} importSrc - The import source string
+ * @returns {boolean} - True if it's a top-level package, false otherwise
+ */
+function isPackageTopLevel(importSrc) {
+  const parts = importSrc.split('/');
+  return parts.length === 1 || (parts.length === 2 && parts[0].startsWith('@'));
+}
+
+/**
+ * Normalizes entries to ensure they have a consistent format and ids are unique
+ * @param {EntryPoint[]} entries - The array of entries from the config
+ * @param {string} configPath - The path to the configuration file
+ * @returns {Promise<ObjectEntry[]>} - Normalized entries with uniqueness enforced
+ */
+async function normalizeEntries(entries, configPath) {
+  const usedIds = new Set();
+
+  const result = (
+    await Promise.all(
+      entries.map(async (entry) => {
+        if (typeof entry === 'string') {
+          entry = { id: entry };
+        }
+
+        entry = { ...entry };
+
+        if (!entry.id) {
+          throw new Error('Object entries must have an id property');
+        }
+
+        if (!entry.code && !entry.import) {
+          // Transform string entries into object entries
+          const [importSrc, importName] = entry.id.split('#');
+          entry.import = importSrc;
+          if (importName) {
+            entry.importedNames = [importName];
+          }
+          if (isPackageTopLevel(entry.import) && !entry.importedNames) {
+            entry.track = true;
+          }
+        }
+
+        if (entry.expand) {
+          if (!entry.import || !isPackageTopLevel(entry.import)) {
+            throw new Error(
+              `Entry "${entry.id}": expand can only be used with top-level package imports`,
+            );
+          }
+          if (!module.findPackageJSON) {
+            throw new Error(
+              "Your Node.js version doesn't support `module.findPackageJSON`, which is required to expand entries.",
+            );
+          }
+          const pkgJson = module.findPackageJSON(entry.import, url.pathToFileURL(configPath));
+          if (!pkgJson) {
+            throw new Error(`Can't find package.json for entry "${entry.id}".`);
+          }
+          const exportedPaths = await findExportedPaths(pkgJson);
+
+          const excludePatterns =
+            typeof entry.expand === 'object' && entry.expand.exclude ? entry.expand.exclude : [];
+
+          const expandedEntries = [];
+          for (const exportPath of exportedPaths) {
+            if (exportPath === './package.json') {
+              continue;
+            }
+            const subpath = exportPath === '.' ? '.' : exportPath.slice(2);
+            if (excludePatterns.length > 0 && micromatch.isMatch(subpath, excludePatterns)) {
+              continue;
+            }
+            const importSrc = entry.import + exportPath.slice(1);
+            expandedEntries.push({
+              id: importSrc,
+              import: importSrc,
+              track: isPackageTopLevel(importSrc),
+            });
+          }
+          return expandedEntries;
+        }
+
+        return [entry];
+      }),
+    )
+  ).flat();
+
+  for (const entry of result) {
+    if (entry.id.startsWith('_')) {
+      throw new Error(
+        `Entry id "${entry.id}" must not start with "_". Ids starting with "_" are reserved for internal metadata.`,
+      );
+    }
+    if (usedIds.has(entry.id)) {
+      throw new Error(`Duplicate entry id found: "${entry.id}". Entry ids must be unique.`);
+    }
+    usedIds.add(entry.id);
+  }
+
+  return result;
+}
+
+/**
+ * Apply default values to the configuration using CI environment
+ * @param {BundleSizeCheckerConfigObject} config - The loaded configuration
+ * @param {string} configPath - The path to the configuration file
+ * @returns {Promise<NormalizedBundleSizeCheckerConfig>} Configuration with defaults applied
+ * @throws {Error} If required fields are missing
+ */
+async function applyConfigDefaults(config, configPath) {
+  // Get environment CI information
+  /** @type {{ branch?: string, isPr?: boolean, prBranch?: string, slug?: string}} */
+  const ciInfo = envCi();
+
+  // Basic validation to ensure entries have the required structure
+  // More detailed validation will be done in the worker
+  for (const entry of config.entrypoints) {
+    if (typeof entry !== 'string' && (!entry || typeof entry !== 'object')) {
+      throw new Error('Each entry must be either a string or an object');
+    }
+  }
+
+  // Clone the config to avoid mutating the original
+  /** @type {NormalizedBundleSizeCheckerConfig} */
+  const result = {
+    entrypoints: await normalizeEntries(config.entrypoints, configPath),
+    upload: null, // Default to disabled
+    comment: config.comment !== undefined ? config.comment : true, // Default to enabled
+    replace: config.replace || {}, // String replacements, default to empty object
+  };
+
+  // Handle different types of upload value
+  if (typeof config.upload === 'boolean') {
+    // If upload is false, leave as null
+    if (config.upload === false) {
+      return result;
+    }
+
+    // If upload is true, create empty object and apply defaults
+    if (!ciInfo.slug) {
+      throw new Error(
+        'Upload enabled but repository not found in CI environment. Please specify upload.repo in config.',
+      );
+    }
+
+    if (!ciInfo.branch && !(ciInfo.isPr && ciInfo.prBranch)) {
+      throw new Error(
+        'Upload enabled but branch not found in CI environment. Please specify upload.branch in config.',
+      );
+    }
+
+    // Apply defaults to an empty object
+    result.upload = applyUploadConfigDefaults({}, ciInfo);
+  } else if (config.upload) {
+    // It's an object, apply defaults
+    result.upload = applyUploadConfigDefaults(config.upload, ciInfo);
+  }
+
+  return result;
+}
+
+/**
+ * Attempts to load the config file from the given directory
+ * @param {string} rootDir - The directory to search for the config file
+ * @returns {Promise<NormalizedBundleSizeCheckerConfig>} A promise that resolves to the normalized config object
+ */
+export async function loadConfig(rootDir) {
+  const configPaths = [
+    path.join(rootDir, 'bundle-size-checker.config.js'),
+    path.join(rootDir, 'bundle-size-checker.config.mjs'),
+  ];
+
+  for (const configPath of configPaths) {
+    // eslint-disable-next-line no-await-in-loop
+    const config = await loadConfigFile(configPath);
+    if (config) {
+      // Apply defaults and return the config
+      return applyConfigDefaults(config, configPath);
+    }
+  }
+
+  // Error out if no config file exists
+  throw new Error(
+    'No bundle-size-checker configuration file found. Please create a bundle-size-checker.config.js or bundle-size-checker.config.mjs file in your project root.',
+  );
+}

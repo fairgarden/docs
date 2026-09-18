@@ -1,0 +1,452 @@
+import * as os from 'node:os';
+import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
+import { describe, it, expect, vi } from 'vitest';
+import type { TestCase } from 'vitest/node';
+import type { RenderEvent, IterationData } from './types';
+import { generateReportFromIterations, BenchmarkReporter } from './reporter';
+import * as uploadModule from './upload';
+
+function event(
+  id: string,
+  phase: RenderEvent['phase'],
+  startTime: number,
+  actualDuration: number,
+): RenderEvent {
+  return { id, phase, startTime, actualDuration };
+}
+
+function iteration(renders: RenderEvent[]): IterationData {
+  return { renders };
+}
+
+describe('generateReportFromIterations', () => {
+  it('returns empty renders for empty input', () => {
+    expect(generateReportFromIterations([])).toEqual({
+      iterations: 0,
+      totalDuration: 0,
+      renders: [],
+      metrics: {},
+    });
+  });
+
+  it('returns empty renders for inconsistent iteration lengths', () => {
+    const iterations = [
+      iteration([event('App', 'mount', 0, 10)]),
+      iteration([event('App', 'mount', 0, 10), event('App', 'update', 15, 5)]),
+    ];
+    expect(generateReportFromIterations(iterations)).toEqual({
+      iterations: 2,
+      totalDuration: 0,
+      renders: [],
+      metrics: {},
+    });
+  });
+
+  it('handles a single iteration with a single render', () => {
+    const iterations = [iteration([event('App', 'mount', 100, 10)])];
+    const report = generateReportFromIterations(iterations);
+
+    expect(report.iterations).toBe(1);
+    expect(report.totalDuration).toBe(10);
+    expect(report.renders).toHaveLength(1);
+    expect(report.renders[0]).toEqual(
+      expect.objectContaining({
+        id: 'App',
+        phase: 'mount',
+        startTime: 0,
+        actualDuration: 10,
+      }),
+    );
+  });
+
+  it('averages durations across iterations', () => {
+    const iterations = [
+      iteration([event('App', 'mount', 0, 10)]),
+      iteration([event('App', 'mount', 0, 20)]),
+      iteration([event('App', 'mount', 0, 30)]),
+    ];
+    const report = generateReportFromIterations(iterations);
+
+    expect(report.renders[0].actualDuration).toBe(20);
+  });
+
+  it('computes start times from mean gaps between renders', () => {
+    // Two renders per iteration, with a gap between them
+    // Iteration 1: render0 at 0 for 10ms, render1 at 15 for 5ms (gap = 5ms)
+    // Iteration 2: render0 at 0 for 10ms, render1 at 13 for 5ms (gap = 3ms)
+    const iterations = [
+      iteration([event('App', 'mount', 0, 10), event('App', 'update', 15, 5)]),
+      iteration([event('App', 'mount', 0, 10), event('App', 'update', 13, 5)]),
+    ];
+    const report = generateReportFromIterations(iterations);
+
+    expect(report.renders[0].startTime).toBe(0);
+    expect(report.renders[0].actualDuration).toBe(10);
+    // mean gap = (5 + 3) / 2 = 4
+    // startTime[1] = 0 + 10 + 4 = 14
+    expect(report.renders[1].startTime).toBe(14);
+    expect(report.renders[1].actualDuration).toBe(5);
+  });
+
+  it('produces non-overlapping renders', () => {
+    const iterations = [
+      iteration([
+        event('A', 'mount', 0, 10),
+        event('B', 'mount', 12, 8),
+        event('A', 'update', 25, 5),
+      ]),
+      iteration([
+        event('A', 'mount', 0, 12),
+        event('B', 'mount', 14, 6),
+        event('A', 'update', 22, 7),
+      ]),
+    ];
+    const report = generateReportFromIterations(iterations);
+
+    for (let i = 1; i < report.renders.length; i += 1) {
+      const prevEnd = report.renders[i - 1].startTime + report.renders[i - 1].actualDuration;
+      expect(report.renders[i].startTime).toBeGreaterThanOrEqual(prevEnd);
+    }
+  });
+
+  it('removes IQR outliers from durations', () => {
+    // 4 normal values + 1 extreme outlier
+    const iterations = [
+      iteration([event('App', 'mount', 0, 10)]),
+      iteration([event('App', 'mount', 0, 10)]),
+      iteration([event('App', 'mount', 0, 10)]),
+      iteration([event('App', 'mount', 0, 10)]),
+      iteration([event('App', 'mount', 0, 1000)]),
+    ];
+    const report = generateReportFromIterations(iterations);
+
+    // Outlier (1000) should be removed, mean should be 10
+    expect(report.renders[0].actualDuration).toBe(10);
+    expect(report.renders[0].outliers).toBe(1);
+  });
+
+  it('does not aggregate metrics from iterations (paint flows through benchmarkMetrics)', () => {
+    const iterations = [
+      iteration([event('App', 'mount', 0, 10)]),
+      iteration([event('App', 'mount', 0, 12)]),
+    ];
+    const report = generateReportFromIterations(iterations);
+
+    expect(report.metrics).toEqual({});
+  });
+});
+
+function mockTestCase(options: {
+  fullName: string;
+  meta: Record<string, unknown>;
+  state: string;
+  errors?: Array<{ message: string }>;
+}) {
+  return {
+    fullName: options.fullName,
+    meta: () => options.meta,
+    result: () => ({
+      state: options.state,
+      errors: options.errors,
+    }),
+  } as unknown as TestCase;
+}
+
+describe('BenchmarkReporter', () => {
+  describe('onTestCaseResult', () => {
+    it('surfaces failure even when iterations exist', () => {
+      const reporter = new BenchmarkReporter({
+        outputPath: path.join(os.tmpdir(), 'benchmark-test-results.json'),
+      });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const iterations = [
+        iteration([event('App', 'mount', 0, 10)]),
+        iteration([event('App', 'mount', 0, 12)]),
+      ];
+
+      reporter.onTestCaseResult(
+        mockTestCase({
+          fullName: 'my benchmark',
+          meta: { benchmarkIterations: iterations, benchmarkName: 'my benchmark' },
+          state: 'failed',
+          errors: [{ message: 'Iteration 1 render events differ from iteration 0' }],
+        }),
+      );
+
+      const output = consoleSpy.mock.calls.map((call) => call[0]).join('\n');
+
+      // Should still generate the report
+      expect(output).toContain('my benchmark');
+
+      consoleSpy.mockRestore();
+    });
+
+    it('sets hasFailures when a test case fails', async () => {
+      const uploadSpy = vi.spyOn(uploadModule, 'uploadCiReport').mockResolvedValue();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const reporter = new BenchmarkReporter({
+        upload: true,
+        outputPath: path.join(os.tmpdir(), 'benchmark-test-results.json'),
+      });
+      const iterations = [
+        iteration([event('App', 'mount', 0, 10)]),
+        iteration([event('App', 'mount', 0, 12)]),
+      ];
+
+      reporter.onTestCaseResult(
+        mockTestCase({
+          fullName: 'my benchmark',
+          meta: { benchmarkIterations: iterations, benchmarkName: 'my benchmark' },
+          state: 'failed',
+          errors: [{ message: 'something went wrong' }],
+        }),
+      );
+
+      await reporter.onTestRunEnd();
+
+      expect(uploadSpy).not.toHaveBeenCalled();
+      const output = consoleSpy.mock.calls.map((call) => call[0]).join('\n');
+      expect(output).toContain('Skipping upload');
+
+      consoleSpy.mockRestore();
+      uploadSpy.mockRestore();
+    });
+
+    it('uploads when all test cases pass', async () => {
+      const uploadSpy = vi.spyOn(uploadModule, 'uploadCiReport').mockResolvedValue();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const reporter = new BenchmarkReporter({
+        upload: true,
+        outputPath: path.join(os.tmpdir(), 'benchmark-test-results.json'),
+      });
+      const iterations = [
+        iteration([event('App', 'mount', 0, 10)]),
+        iteration([event('App', 'mount', 0, 12)]),
+      ];
+
+      reporter.onTestCaseResult(
+        mockTestCase({
+          fullName: 'my benchmark',
+          meta: { benchmarkIterations: iterations, benchmarkName: 'my benchmark' },
+          state: 'passed',
+        }),
+      );
+
+      await reporter.onTestRunEnd();
+
+      expect(uploadSpy).toHaveBeenCalledOnce();
+
+      consoleSpy.mockRestore();
+      uploadSpy.mockRestore();
+    });
+
+    it('prints in green for passing benchmarks with iterations', () => {
+      const reporter = new BenchmarkReporter({
+        outputPath: path.join(os.tmpdir(), 'benchmark-test-results.json'),
+      });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const iterations = [
+        iteration([event('App', 'mount', 0, 10)]),
+        iteration([event('App', 'mount', 0, 12)]),
+      ];
+
+      reporter.onTestCaseResult(
+        mockTestCase({
+          fullName: 'my benchmark',
+          meta: { benchmarkIterations: iterations, benchmarkName: 'my benchmark' },
+          state: 'passed',
+        }),
+      );
+
+      const output = consoleSpy.mock.calls.map((call) => call[0]).join('\n');
+
+      expect(output).toContain('my benchmark');
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('custom metrics', () => {
+    it('merges aggregated custom metrics into the report and hoists definitions', async () => {
+      const outputPath = path.join(os.tmpdir(), `benchmark-custom-metrics-${process.pid}.json`);
+      const reporter = new BenchmarkReporter({ outputPath });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      reporter.onTestCaseResult(
+        mockTestCase({
+          fullName: 'custom only',
+          meta: {
+            benchmarkName: 'custom only',
+            benchmarkMetrics: {
+              fib_duration: {
+                kind: 'scalar',
+                config: {
+                  name: 'fib_duration',
+                  format: { maximumFractionDigits: 3 },
+                  alarm: { direction: 'lowerIsBetter', warn: 0.1, error: 0.25 },
+                },
+                series: { '': { mean: 1.5, stdDev: 0.1, outliers: 0, count: 50 } },
+              },
+              fib_phase: {
+                kind: 'scalar',
+                config: { name: 'fib_phase' },
+                series: {
+                  small: { mean: 0.2, stdDev: 0.01, outliers: 0, count: 50 },
+                  large: { mean: 3.4, stdDev: 0.2, outliers: 1, count: 50 },
+                },
+              },
+            },
+          },
+          state: 'passed',
+        }),
+      );
+
+      await reporter.onTestRunEnd();
+      const written = JSON.parse(await fs.readFile(outputPath, 'utf8'));
+
+      // Metric-only test still produces an entry; iteration count derived from samples.
+      expect(written.report['custom only'].iterations).toBe(50);
+      expect(written.report['custom only'].renders).toEqual([]);
+
+      // Base series keyed by name; sub-series keyed `name#id`.
+      expect(written.report['custom only'].metrics).toMatchObject({
+        fib_duration: { mean: 1.5, stdDev: 0.1, outliers: 0 },
+        'fib_phase#small': { mean: 0.2 },
+        'fib_phase#large': { mean: 3.4, outliers: 1 },
+      });
+
+      // The sample count must not leak into the per-entry metric stats.
+      expect(written.report['custom only'].metrics.fib_duration).not.toHaveProperty('count');
+
+      // Config is hoisted once, keyed by metric name.
+      expect(written.metricDefinitions).toMatchObject({
+        fib_duration: {
+          kind: 'scalar',
+          alarm: { direction: 'lowerIsBetter', warn: 0.1, error: 0.25 },
+        },
+        fib_phase: { kind: 'scalar' },
+      });
+
+      await fs.rm(outputPath, { force: true });
+      consoleSpy.mockRestore();
+    });
+
+    it('merges custom metrics alongside React render iterations', () => {
+      const reporter = new BenchmarkReporter({
+        outputPath: path.join(os.tmpdir(), `benchmark-combined-${process.pid}.json`),
+      });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      reporter.onTestCaseResult(
+        mockTestCase({
+          fullName: 'combined',
+          meta: {
+            benchmarkName: 'combined',
+            benchmarkIterations: [
+              iteration([event('App', 'mount', 0, 10)]),
+              iteration([event('App', 'mount', 0, 12)]),
+            ],
+            benchmarkMetrics: {
+              clicks: {
+                kind: 'discrete',
+                config: { name: 'clicks', format: { maximumFractionDigits: 0 } },
+                series: { '': { mean: 3, stdDev: 0, outliers: 0, count: 2 } },
+              },
+            },
+          },
+          state: 'passed',
+        }),
+      );
+
+      const output = consoleSpy.mock.calls.map((call) => call[0]).join('\n');
+      // Both the React render table and the custom metric are printed.
+      expect(output).toContain('combined');
+      expect(output).toContain('clicks');
+
+      consoleSpy.mockRestore();
+    });
+
+    function metricCase(testName: string, metricName: string, alarm: unknown) {
+      return mockTestCase({
+        fullName: testName,
+        meta: {
+          benchmarkName: testName,
+          benchmarkMetrics: {
+            [metricName]: {
+              kind: 'scalar',
+              config: { name: metricName, alarm },
+              series: { '': { mean: 1, stdDev: 0, outliers: 0, count: 1 } },
+            },
+          },
+        },
+        state: 'passed',
+      });
+    }
+
+    it('allows reusing a metric name across benchmarks with identical config', () => {
+      const reporter = new BenchmarkReporter({
+        outputPath: path.join(os.tmpdir(), `benchmark-reuse-${process.pid}.json`),
+      });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      reporter.onTestCaseResult(metricCase('a', 'shared', { error: 0.2 }));
+      expect(() =>
+        reporter.onTestCaseResult(metricCase('b', 'shared', { error: 0.2 })),
+      ).not.toThrow();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('throws when a metric name is reused with conflicting config across benchmarks', () => {
+      const reporter = new BenchmarkReporter({
+        outputPath: path.join(os.tmpdir(), `benchmark-conflict-${process.pid}.json`),
+      });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      reporter.onTestCaseResult(metricCase('a', 'shared', { error: 0.2 }));
+      expect(() => reporter.onTestCaseResult(metricCase('b', 'shared', { error: 0.9 }))).toThrow(
+        /conflicting/,
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('does not flag the same config written with a different key order', () => {
+      const reporter = new BenchmarkReporter({
+        outputPath: path.join(os.tmpdir(), `benchmark-order-${process.pid}.json`),
+      });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      reporter.onTestCaseResult(
+        metricCase('a', 'shared', { direction: 'lowerIsBetter', error: 0.2 }),
+      );
+      expect(() =>
+        reporter.onTestCaseResult(
+          metricCase('b', 'shared', { error: 0.2, direction: 'lowerIsBetter' }),
+        ),
+      ).not.toThrow();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('resets between runs so an edited config does not conflict on watch reload', () => {
+      const reporter = new BenchmarkReporter({
+        outputPath: path.join(os.tmpdir(), `benchmark-reload-${process.pid}.json`),
+      });
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      reporter.onTestCaseResult(metricCase('a', 'shared', { error: 0.2 }));
+      reporter.onTestRunStart(); // simulate a watch re-run
+      expect(() =>
+        reporter.onTestCaseResult(metricCase('a', 'shared', { error: 0.9 })),
+      ).not.toThrow();
+
+      consoleSpy.mockRestore();
+    });
+  });
+});

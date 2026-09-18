@@ -1,0 +1,152 @@
+# Transform Typescript To Javascript
+
+The `transformTypescriptToJavascript` utility transforms TypeScript/TSX code into JavaScript/JSX using [Sucrase](https://sucrase.io/), preserving formatting and automatically generating JavaScript variants for documentation and demos.
+
+## Features
+
+- Removes TypeScript types and decorators while preserving React JSX
+- Handles both `.ts` → `.js` and `.tsx` → `.jsx` transformations
+- Preserves line numbers so source maps and diff tooling stay aligned
+- Removes TypeScript-specific comments that reference removed constructs
+- Supports TSX with React components
+
+## Usage
+
+```ts
+import transformTypescriptToJavascript from '@mui/internal-docs-infra/pipeline/transformTypescriptToJavascript';
+
+// Transform TypeScript to JavaScript
+const result = await transformTypescriptToJavascript(
+  'const x: number = 1;\ninterface Props { name: string; }',
+  'example.ts',
+);
+
+// Returns:
+// {
+//   js: {
+//     source: 'const x = 1;\n',
+//     fileName: 'example.js'
+//   }
+// }
+```
+
+## Transformer Configuration
+
+The utility is also available as a source transformer for automatic processing:
+
+```ts
+import { TypescriptToJavascriptTransformer } from '@mui/internal-docs-infra/pipeline/transformTypescriptToJavascript';
+
+// Transformer configuration
+// {
+//   extensions: ['ts', 'tsx'],
+//   transformer: transformTypescriptToJavascript
+// }
+```
+
+## Advanced Configuration
+
+The underlying `removeTypes` function is exposed for callers that only
+need the raw Sucrase strip without the transformer wrapper:
+
+```ts
+import { removeTypes } from '@mui/internal-docs-infra/pipeline/transformTypescriptToJavascript/removeTypes';
+
+const stripped = await removeTypes(code, 'file.ts');
+```
+
+The filename's extension (`.ts` vs `.tsx`) decides whether JSX parsing
+is enabled. Output is line-aligned with the input — type-only lines
+are replaced with empty strings rather than removed.
+
+## How It Works
+
+Sucrase runs a single pass over the source, rewriting it in place to
+strip TypeScript syntax (types, interfaces, enums, decorators,
+`import type`, etc.) while leaving every other token \u2014 including JSX
+\u2014 untouched. Type-only lines are emitted as empty strings rather than
+removed, so the output keeps the same line count as the input.
+
+### Line preservation and source comments
+
+The transformer never drops lines: type-only lines (interfaces, type
+aliases, import-type statements, etc.) are replaced with **empty strings**
+so the output keeps the same line count as the input. This matters for
+source comments such as `// @focus` and `// @padding-*` markers \u2014 the
+runtime detects collapsed empty lines and shifts any comments attached to
+surviving lines onto their new positions automatically. As a result this
+transformer does not need to (and does not) return its own `comments` map.
+
+Source transformers that **add** lines or completely rewrite the file
+cannot rely on this automatic shift and must return an explicit
+`comments` map alongside each transformed source. See
+[Transform Generation](../load-isomorphic-code-variant/page.mdx#transform-generation)
+for details.
+
+The collapsed empty lines render as `<span class="collapse" data-lines={n}>`
+placeholders that animate from the height of the wiped lines down to zero
+on first paint (see
+[Styling the collapsed-lines placeholder](../load-isomorphic-code-variant/page.mdx#styling-the-collapsed-lines-placeholder)).
+To keep that motion from displacing visible code on TS → JS switches,
+make sure your `@focus` region **excludes** lines this transformer is
+likely to wipe (top-of-file `type`/`interface` declarations,
+`import type` statements, etc.) so they collapse inside a hidden frame.
+
+## Supported Features
+
+### TypeScript Constructs Removed
+
+- Type annotations (`: string`, `: number`, etc.)
+- Interface declarations
+- Type aliases
+- Import type statements
+- Declare statements
+- Decorators (with legacy support)
+
+### Preserved Features
+
+- All JavaScript functionality
+- React JSX (in `.tsx` files)
+- Comments
+- Original line numbers and code structure
+
+## File Extension Mapping
+
+- `*.ts` files → `*.js` files
+- `*.tsx` files → `*.jsx` files
+
+## Example Transformations
+
+```ts
+// Input (TypeScript)
+interface ButtonProps {
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+const Button: React.FC<ButtonProps> = ({ onClick, children }) => {
+  return <button onClick={onClick}>{children}</button>;
+};
+
+// Output (JavaScript)
+const Button = ({ onClick, children }) => {
+  return <button onClick={onClick}>{children}</button>;
+};
+```
+
+## When to Use
+
+- When implementing automatic TypeScript → JavaScript code generation
+- When building documentation that shows both TS and JS versions
+- When creating demos that need to support both TypeScript and JavaScript users
+- As part of source transformers in [`CodeHighlighter`](../../components/code-highlighter/page.mdx)
+
+## Related
+
+- [`CodeHighlighter`](../../components/code-highlighter/page.mdx) - Uses this transformer for variant generation
+- [Sucrase](https://sucrase.io/) - Underlying transformation engine
+- [`CodeProvider`](../../components/code-provider/page.mdx) - Framework for code transformations
+
+## Implementation Notes
+
+Sucrase is a single-pass, allocation-light TypeScript/JSX stripper. It produces output equivalent to Babel's TypeScript plugin for the supported subset, while being significantly smaller and faster — important when transforming many demo files at build time.

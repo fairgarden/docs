@@ -1,0 +1,124 @@
+import { formatMs, formatDiffMs, formatMetricDiff, percentFormatter } from '@/utils/formatters';
+import type {
+  BenchmarkComparisonReport,
+  ComparisonEntry,
+  DiffValue,
+} from './compareBenchmarkReports';
+
+// Only error-level alarms surface in the PR comment; warnings stay on the dashboard.
+const isAlarmed = (metric: ComparisonEntry): boolean => metric.diff.severity === 'error';
+
+export interface BuildMarkdownReportOptions {
+  maxRows?: number;
+  reportUrl?: string;
+}
+
+const SEVERITY_PREFIX: Record<string, string> = {
+  error: '🔺',
+  warning: '⚠️',
+  success: '▼',
+};
+
+function formatDiff(diff: DiffValue, unit: 'ms' | 'count'): string {
+  const prefix = SEVERITY_PREFIX[diff.severity] ?? '';
+
+  if (unit === 'ms') {
+    if (diff.absoluteDiff === 0) {
+      return '';
+    }
+    const value = formatDiffMs(diff.absoluteDiff);
+    const pct = percentFormatter.format(diff.relativeDiff);
+    return ` ${prefix}${value}<sup>(${pct})</sup>`;
+  }
+
+  const sign = diff.absoluteDiff >= 0 ? '+' : '';
+  return ` <sup>(${prefix}${sign}${diff.absoluteDiff})</sup>`;
+}
+
+export function buildBenchmarkMarkdownReport(
+  report: BenchmarkComparisonReport,
+  options?: BuildMarkdownReportOptions,
+): string {
+  const maxRows = options?.maxRows ?? 5;
+  const reportUrl = options?.reportUrl;
+
+  const lines: string[] = [];
+
+  // Totals summary
+  if (report.hasBase) {
+    const totalParts = [
+      `**Total duration:** ${formatMs(report.totals.duration.current ?? 0)}${formatDiff(report.totals.duration, 'ms')}`,
+      `**Renders:** ${report.totals.renderCount.current ?? 0}${formatDiff(report.totals.renderCount, 'count')}`,
+    ];
+    lines.push(totalParts.join(' | '));
+    lines.push('');
+  }
+
+  const significant = report.entries.filter(
+    (entry) =>
+      entry.duration.severity !== 'neutral' ||
+      (entry.renderCount?.severity ?? 'neutral') !== 'neutral' ||
+      entry.duration.current === null ||
+      entry.duration.base === null ||
+      entry.metrics.some(isAlarmed),
+  );
+
+  const detailsLink = reportUrl ? `[details](${reportUrl})` : '';
+  const suffix = detailsLink ? ` — ${detailsLink}` : '';
+
+  if (report.hasBase && significant.length === 0) {
+    lines.push(`*No significant changes${suffix}*`);
+    return lines.join('\n');
+  }
+
+  // Table header
+  lines.push('| Test | Duration | Renders |');
+  lines.push('|:-----|----------:|--------:|');
+
+  const visibleEntries = significant.slice(0, maxRows);
+  const hiddenSignificant = significant.length - visibleEntries.length;
+  const hiddenWithinNoise = report.entries.length - significant.length;
+
+  for (const entry of visibleEntries) {
+    const renderCount = entry.renders.filter((r) => !r.removed).length;
+
+    if (entry.duration.current === null) {
+      lines.push(`| ~~${entry.name}~~ (removed) | \u2014 | \u2014 |`);
+      continue;
+    }
+
+    const duration = `${formatMs(entry.duration.current)}${report.hasBase ? formatDiff(entry.duration, 'ms') : ''}`;
+    const renders = `${renderCount}${report.hasBase && entry.renderCount ? formatDiff(entry.renderCount, 'count') : ''}`;
+    lines.push(`| ${entry.name} | ${duration} | ${renders} |`);
+  }
+
+  lines.push('');
+  if (hiddenSignificant > 0) {
+    const noiseSuffix = hiddenWithinNoise > 0 ? ` (+${hiddenWithinNoise} within noise)` : '';
+    lines.push(`*…and ${hiddenSignificant} more${noiseSuffix}${suffix}*`);
+  } else if (hiddenWithinNoise > 0) {
+    const label = hiddenWithinNoise === 1 ? 'test' : 'tests';
+    lines.push(`*${hiddenWithinNoise} ${label} within noise${suffix}*`);
+  } else if (detailsLink) {
+    lines.push(detailsLink);
+  }
+
+  // Error-level metric alarms across all tests (independent of the test-table row cap).
+  const alarms = report.entries.flatMap((entry) =>
+    entry.metrics.filter(isAlarmed).map((metric) => ({ test: entry.name, metric })),
+  );
+  if (alarms.length > 0) {
+    lines.push('');
+    lines.push('**Metric alarms**');
+    lines.push('');
+    lines.push('| Test | Metric | Change |');
+    lines.push('|:-----|:-------|-------:|');
+    for (const { test, metric } of alarms) {
+      const prefix = SEVERITY_PREFIX[metric.diff.severity] ?? '';
+      const change = `${prefix} ${formatMetricDiff(metric.diff.absoluteDiff, metric.format)}`;
+      lines.push(`| ${test} | ${metric.name} | ${change} |`);
+    }
+  }
+
+  return lines.join('\n');
+}

@@ -1,0 +1,39 @@
+.container {
+  margin: 10px 0;
+  border: 1px solid #d0cdd7;
+  border-radius: 8px;
+}
+
+.demoSection {
+  position: relative;
+  border-radius: 7px 7px 0 0;
+}
+
+.demoSurface {
+  padding: 24px;
+  position: relative;
+}
+
+.codeSection {
+  border-top: 1px solid #d0cdd7;
+}
+
+.code {
+  padding: 10px 0;
+}
+
+/* Frame / line / highlight styling now lives in the shared `CodeSource`
+   component; this block keeps only the pre's resting padding (passed to
+   `useCode` as `preClassName`). */
+.codeBlock {
+  padding: 6px 0;
+}
+
+/* Invisible in-flow anchor so native fragment links can scroll to a file slug
+   and clear the sticky header — pure CSS, no scroll script. A `display: none`
+   anchor has no layout box, so the browser cannot scroll to it. */
+.fileRefs {
+  display: block;
+  height: 0;
+  scroll-margin-top: 16px;
+}
