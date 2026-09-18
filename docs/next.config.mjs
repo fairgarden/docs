@@ -26,7 +26,6 @@ const withMDX = createMDX({
         'app/docs-infra/patterns',
         'app/docs-infra/pipeline',
         'app/docs-infra/conventions',
-        'app/code-infra',
       ],
     },
   }),

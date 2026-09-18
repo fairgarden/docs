@@ -11,8 +11,8 @@ import { Search } from '../search';
 import Notice from '../notice.mdx';
 
 export const metadata: Metadata = {
-  title: 'MUI Docs Infra Documentation',
-  description: 'How to use the MUI Docs-Infra package',
+  title: 'FairGarden Docs',
+  description: 'How to use the FairGarden Docs package',
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
           <div className={styles.root}>
             <div className={styles.header}>
               <div className={styles.headerContainer}>
-                <Link href="/docs-infra">MUI Docs Infra</Link>
+                <Link href="/docs-infra">FairGarden Docs</Link>
                 <Search enableKeyboardShortcut containedScroll />
               </div>
             </div>

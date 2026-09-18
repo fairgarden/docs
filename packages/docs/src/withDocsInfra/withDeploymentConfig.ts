@@ -30,11 +30,10 @@ if (process.env.CONTEXT === 'production' || process.env.CONTEXT === 'branch-depl
   DEPLOY_ENV = 'production';
 }
 
-// Default and pre-release branches are NEVER a production environment; they are used for staging.
-const STAGING_BRANCHES = ['main', 'master', 'next'];
+// The 'master' and 'next' branches are NEVER a production environment. We use these branches for staging.
 if (
   (process.env.CONTEXT === 'production' || process.env.CONTEXT === 'branch-deploy') &&
-  STAGING_BRANCHES.includes(process.env.HEAD ?? '')
+  (process.env.HEAD === 'master' || process.env.HEAD === 'next')
 ) {
   DEPLOY_ENV = 'staging';
 }

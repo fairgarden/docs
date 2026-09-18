@@ -88,34 +88,8 @@ const config = defineConfig(
     },
   },
   {
-    files: [`apps/**/*${EXTENSION_TS}`],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-    },
-  },
-  {
     files: ['renovate/**/*.json'],
     language: 'json/jsonc',
-  },
-  {
-    files: [`packages/babel-*/**/*${EXTENSION_TS}`],
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-    },
-  },
-  {
-    files: [`packages/bundle-size-checker/**/*${EXTENSION_TS}`],
-    rules: {
-      // Allow .js file extensions in import statements for ESM compatibility
-      'import/extensions': [
-        'error',
-        'ignorePackages',
-        {
-          js: 'always',
-          mjs: 'always',
-        },
-      ],
-    },
   },
 );
 

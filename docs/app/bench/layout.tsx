@@ -5,8 +5,8 @@ import { BenchProvider } from '@/components/BenchProvider';
 import styles from '../layout.module.css';
 
 export const metadata: Metadata = {
-  title: 'MUI Infra Benchmarks',
-  description: 'Performance demos for MUI Infra packages',
+  title: 'FairGarden Docs Benchmarks',
+  description: 'Performance demos for FairGarden Docs packages',
   robots: { index: false, follow: false },
 };
 

@@ -79,16 +79,21 @@ The build tooling comes from `@mui/internal-code-infra`:
 - `pnpm code-infra --help` -- Show available CLI commands
 - `pnpm code-infra build` -- Build a specific package
 - `pnpm code-infra list-workspaces` -- List all workspace packages
-- `pnpm code-infra publish` -- Publish packages to npm
-- `pnpm code-infra publish-canary` -- Publish canary versions
+
+Do **not** use `code-infra`'s `publish`, `publish-canary` or `publish-new-package`
+commands. They call `getRepositoryInfo()`, which hardcodes a check that the git
+remote lives under the `mui` GitHub organization and throws `Failed to find
+correct remote(s)` here. Publishing is handled by this repo's own workflow instead.
 
 The library ships its own CLI too, run through `pnpm docs:infra` (see `packages/docs/src/cli`).
 
 ### Build and Release Process
 
-- **Version packages**: All the package versions are auto-managed by canary publishing.
 - **Build packages**: `pnpm release:build` -- builds all packages in `/packages/*`
-- **Publishing**: `.github/workflows/publish.yml` publishes to npm. It runs the canary flow on every push to `main` and on a nightly schedule; the stable flow is `workflow_dispatch` only.
+- **Publishing**: `.github/workflows/publish.yml` owns both flows and uses plain `npm publish` from `packages/docs/build`.
+  - **Canary**: every push to `main` (excluding renovate) and a nightly schedule. Publishes `<next patch>-canary.<run number>` to the `canary` dist tag, stamping `gitSha` into the manifest so a run whose commit was already published is skipped.
+  - **Stable**: `workflow_dispatch` only. Reads the version from `packages/docs/package.json` — bump it in a PR first — then publishes, pushes a `v<version>` tag and creates a GitHub release with generated notes.
+- **Authentication**: npm OIDC trusted publishing, so no npm token is stored. A brand new package must be published once from a workstation (`pnpm -F @fairgarden/docs release`) before a trusted publisher can be configured for it on npmjs.com.
 
 ## Troubleshooting
 

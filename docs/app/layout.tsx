@@ -22,8 +22,8 @@ const jetBrainsMono = JetBrains_Mono({
 const fontClassNames = [googleSans.variable, jetBrainsMono.variable].join(' ');
 
 export const metadata: Metadata = {
-  title: 'MUI Infra Documentation',
-  description: 'How to use the MUI Infra packages',
+  title: 'FairGarden Docs',
+  description: 'How to use the FairGarden Docs packages',
 };
 
 export default function RootLayout({

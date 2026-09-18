@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import styles from '../layout.module.css';
 
 export const metadata: Metadata = {
-  title: 'MUI Infra Documentation',
-  description: 'How to use the MUI Infra packages',
+  title: 'FairGarden Docs',
+  description: 'How to use the FairGarden Docs packages',
 };
 
 export default function Layout({

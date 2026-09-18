@@ -86,7 +86,9 @@ jobs:
       - name: Cache Next.js build
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
-          path: docs/export/cache
+          # Next keeps its build cache in `.next/cache` even though `distDir`
+          # sends the build output to `export/`.
+          path: docs/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('docs/**/*.[jt]s', 'docs/**/*.[jt]sx', 'docs/**/*.json', 'docs/**/*.md', 'docs/**/*.mdx') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
