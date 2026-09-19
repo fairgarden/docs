@@ -1,0 +1,82 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--size-4);
+  margin-top: var(--size-7);
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--size-5);
+  border: var(--border-size-1) solid var(--purple-6);
+  border-radius: var(--radius-3);
+  background-color: var(--purple-1);
+  transition:
+    background-color 0.2s var(--ease-3),
+    border-color 0.2s var(--ease-3);
+}
+
+.card:has(p:last-child > a):hover {
+  border-color: var(--purple-8);
+  background-color: var(--purple-3);
+}
+
+.card:has(a:focus-visible) {
+  outline: var(--border-size-2) solid var(--purple-9);
+  outline-offset: var(--border-size-2);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: var(--size-8);
+  height: var(--size-8);
+  margin-bottom: var(--size-4);
+  border-radius: var(--radius-3);
+  background-color: var(--purple-4);
+  color: var(--purple-11);
+}
+
+.icon svg {
+  width: var(--size-5);
+  height: var(--size-5);
+}
+
+.grid .card h3 {
+  margin: 0 0 var(--size-2);
+  font-size: var(--font-size-3);
+  line-height: var(--font-lineheight-1);
+  color: var(--purple-12);
+}
+
+.grid .card p {
+  max-width: none;
+  margin: 0 0 var(--size-3);
+  font-size: var(--font-size-1);
+  line-height: var(--font-lineheight-3);
+  color: var(--mauve-11);
+}
+
+/* The closing link sits at the bottom of the card and stretches over it,
+   so the whole card is the target. */
+.grid .card p:last-child {
+  margin: auto 0 0;
+  padding-top: var(--size-2);
+}
+
+.grid .card p:last-child > a,
+.grid .card p:last-child > a:visited {
+  font-weight: var(--font-weight-6);
+  color: var(--purple-11);
+  text-decoration: none;
+  outline: none;
+}
+
+.grid .card p:last-child > a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}

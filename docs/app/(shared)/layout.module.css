@@ -1,0 +1,98 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: var(--purple-2);
+  border-bottom: var(--border-size-1) solid var(--purple-6);
+}
+
+.headerInner {
+  display: flex;
+  align-items: center;
+  gap: var(--size-5);
+  box-sizing: content-box;
+  max-width: var(--landing-width);
+  height: 60px;
+  margin-inline: auto;
+  padding-inline: var(--landing-gutter);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--size-1);
+  margin-right: auto;
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-7);
+  font-variation-settings: 'GRAD' 100;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.root .brand,
+.root .brand:visited {
+  color: var(--purple-12);
+}
+
+.brand img {
+  width: 36px;
+  height: 36px;
+}
+
+.brand span {
+  padding-top: var(--size-1);
+}
+
+.nav {
+  display: none;
+  align-items: center;
+  gap: var(--size-5);
+}
+
+.root .nav a,
+.root .nav a:visited {
+  color: var(--purple-11);
+  font-variation-settings: 'GRAD' 100;
+  text-decoration: none;
+}
+
+.root .nav a:hover {
+  text-decoration: underline;
+}
+
+.root .nav a:focus-visible,
+.root .brand:focus-visible {
+  outline: var(--border-size-2) solid var(--purple-9);
+  outline-offset: var(--size-1);
+  border-radius: var(--radius-2);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* A standalone demo route renders a bare demo, which gets the reading width of a docs page. */
+.main > :global(.demo) {
+  max-width: 832px;
+  margin-inline: auto;
+  padding: var(--size-5) var(--landing-gutter);
+}
+
+@media (min-width: 720px) {
+  .brand {
+    font-size: 1.75rem;
+  }
+
+  .brand img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .nav {
+    display: flex;
+  }
+}

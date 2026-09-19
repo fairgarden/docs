@@ -1,0 +1,110 @@
+.root {
+  padding: var(--size-fluid-5) var(--landing-gutter);
+}
+
+.root[data-landing-tone='tint'] {
+  border-block: var(--border-size-1) solid var(--purple-4);
+  background-color: var(--purple-2);
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--size-7);
+  align-items: center;
+  max-width: var(--landing-width);
+  margin-inline: auto;
+}
+
+.copy,
+.media {
+  min-width: 0;
+}
+
+/* Only the copy's own markdown is styled here. Headings arrive wrapped in an anchor. */
+.root .copy > a > h2 {
+  margin: 0 0 var(--size-3);
+  font-size: var(--font-size-fluid-2);
+  line-height: var(--font-lineheight-1);
+  color: var(--purple-12);
+  text-wrap: balance;
+}
+
+.copy > p {
+  margin: 0 0 var(--size-3);
+  font-size: var(--font-size-2);
+  line-height: var(--font-lineheight-3);
+}
+
+/* A paragraph that follows a block, such as a code fence, needs room above it. */
+.copy > :not(p, a) + p {
+  margin-top: var(--size-4);
+}
+
+/* The paragraph straight after the heading is the lede. */
+.root .copy > a:first-child + p {
+  font-size: var(--font-size-3);
+  color: var(--mauve-11);
+}
+
+.root .copy > p > a,
+.root .copy > p > a:visited {
+  color: var(--purple-11);
+}
+
+/* `.root .copy` outranks the site-wide `.body ul` spacing. */
+.root .copy > ul {
+  display: grid;
+  gap: var(--size-2);
+  margin: var(--size-4) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.copy > ul > li {
+  position: relative;
+  padding-left: var(--size-5);
+  line-height: var(--font-lineheight-3);
+}
+
+.copy > ul > li::before {
+  content: '';
+  position: absolute;
+  top: 0.55em;
+  left: 0;
+  width: var(--size-2);
+  height: var(--size-2);
+  border-radius: var(--radius-1);
+  background-color: var(--purple-9);
+}
+
+/* A demo's actions menu hangs off its right edge, so narrow screens keep a gutter for it. */
+.media:has(> :global(.demo)) {
+  padding-right: var(--size-4);
+}
+
+/* Anything else, such as a types table, scrolls sideways instead of overflowing. */
+.media:not(:has(> :global(.demo))) {
+  overflow-x: auto;
+}
+
+/* The exhibit sits on the page background even when the band is tinted. */
+.root[data-landing-tone='tint'] .media > * {
+  border-radius: 8px;
+  background-color: var(--purple-1);
+}
+
+@media (min-width: 1000px) {
+  .inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--size-9);
+  }
+
+  .root[data-reverse] .copy {
+    order: 2;
+  }
+
+  .media:has(> :global(.demo)) {
+    padding-right: 0;
+  }
+}

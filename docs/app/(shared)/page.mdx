@@ -1,3 +1,416 @@
+import { DemoHero } from '@/components/Landing';
+import { DemoPetalSlider } from './demos/petal-slider';
+
+<DemoHero demo={<DemoPetalSlider />}>
+
 # FairGarden Docs
 
-Read more about the library [here](../lib/page.mdx).
+Build-time optimized documentation infrastructure for React and Next.js. Live demos, API references and search are computed once in your build, so readers get plain HTML that enhances itself.
+
+[Get started](../lib/page.mdx) [How it works](../lib/overview/architecture/page.mdx) [GitHub](https://github.com/fairgarden/docs)
+
+```bash variant=pnpm
+pnpm install @fairgarden/docs
+```
+
+```bash variant=yarn
+yarn add @fairgarden/docs
+```
+
+```bash variant=npm
+npm install @fairgarden/docs
+```
+
+</DemoHero>
+
+[See Demo](./demos/petal-slider/)
+
+import { LandingStats } from '@/components/Landing';
+
+<LandingStats>
+
+## Measured on real documentation
+
+These patterns were first applied to the Base UI docs, which this package was originally developed to power. Profiling the change showed:
+
+- **−58%** HTML parse time, from 18.4&nbsp;ms to 7.8&nbsp;ms
+- **−37%** HTML and CSS render time, from 43&nbsp;ms to 27&nbsp;ms
+- **−23%** Largest Contentful Paint on a page with six demos
+- **0&nbsp;s** Total Blocking Time, with no long tasks
+
+[Read how the numbers were measured](../lib/patterns/prop-compression/page.mdx#measured-impact)
+
+</LandingStats>
+
+import { LandingFeatures } from '@/components/Landing';
+
+<LandingFeatures>
+
+## Everything a docs site needs, computed ahead of time
+
+Syntax highlighters are large and TypeScript parsing is slow, so both run in your bundler and ship their results as JSON. Every piece is a separate import, so you can adopt them one at a time.
+
+<LandingFeatures.Item icon="demo">
+
+### Live demos with real source
+
+One `createDemo` call renders a component beside its highlighted source, with a tab for every file it imports and an optional TypeScript to JavaScript toggle.
+
+[Explore the Code Highlighter](../lib/components/code-highlighter/page.mdx)
+
+</LandingFeatures.Item>
+<LandingFeatures.Item icon="types">
+
+### API reference from TypeScript
+
+Props, defaults and JSDoc descriptions are extracted from your types at build time, and committed as a `types.md` you can review in a pull request.
+
+[Explore type extraction](../lib/factories/abstract-create-types/page.mdx)
+
+</LandingFeatures.Item>
+<LandingFeatures.Item icon="search">
+
+### Search without a server
+
+Titles, sections, props and exports are collected from your pages at compile time, then indexed and queried in the browser with Orama. Press ⌘K or Ctrl+K to try it.
+
+[Explore search](../lib/hooks/use-search/page.mdx)
+
+</LandingFeatures.Item>
+<LandingFeatures.Item icon="build">
+
+### Highlighting with no runtime
+
+Code is highlighted once by the bundler and shipped as compressed HAST. A precomputed block downloads no highlighter and no grammars.
+
+[Explore the HAST pattern](../lib/patterns/hast/page.mdx)
+
+</LandingFeatures.Item>
+<LandingFeatures.Item icon="edit">
+
+### Live editing
+
+Readers can edit a demo and watch it re-render. Transpiling runs in a Web Worker, and a broken edit keeps the last good preview on screen.
+
+[Explore live demos](../lib/hooks/use-demo-controller/page.mdx)
+
+</LandingFeatures.Item>
+<LandingFeatures.Item icon="settle">
+
+### Pages that settle once
+
+Deferred content swaps in together instead of as a cascade of layout shifts, and large content streams in progressively.
+
+[Explore coordinated streaming](../lib/patterns/coordinated-streaming/page.mdx)
+
+</LandingFeatures.Item>
+
+</LandingFeatures>
+
+import { LandingSteps } from '@/components/Landing';
+
+<LandingSteps tone="tint">
+
+## One line in, a full demo out
+
+The demo at the top of this page is the file below. `createDemo` needs only the module URL and a component. A build-time loader follows the imports, highlights every file, can derive the JavaScript version, and writes the result back into the call, so the page renders from data instead of running a highlighter.
+
+```ts filename=index.ts
+// What you write
+import { createDemo } from '../createDemo';
+import { PetalSlider } from './PetalSlider';
+
+export const DemoPetalSlider = createDemo(import.meta.url, PetalSlider);
+```
+
+```ts filename=index.ts
+// What the bundler receives (simplified)
+export const DemoPetalSlider = createDemo(
+  import.meta.url,
+  PetalSlider,
+  // @highlight-start
+  {
+    precompute: {
+      Default: {
+        fileName: 'PetalSlider.tsx',
+        source: { hastCompressed: '…' },
+        extraFiles: {
+          'PetalSlider.module.css': { source: { hastCompressed: '…' } },
+        },
+        transforms: {
+          js: { fileName: 'PetalSlider.jsx', hasDelta: true },
+        },
+      },
+    },
+  },
+  // @highlight-end
+);
+```
+
+1. **Bind your UI once.** `createDemoFactory({ DemoContent })` turns your own components into the `createDemo` that every demo calls.
+2. **Write one line per demo.** `import.meta.url` is the identity, so names, slugs and file links come from the folder structure.
+3. **Let the loader do the work.** `withFairGardenDocs` registers webpack and Turbopack loaders that highlight, transform and cache each demo by its dependencies, and hot reload it when one of them changes.
+4. **Render from JSON.** At runtime the page only converts precomputed HAST into React elements.
+
+[Read the architecture](../lib/overview/architecture/page.mdx)
+
+</LandingSteps>
+
+import { DemoFeature } from '@/components/Landing';
+import { TypesFlower } from './types';
+
+<DemoFeature media={<TypesFlower />}>
+
+## Your TypeScript is the API reference
+
+Pass a component, hook or function to `createTypes`. Its props, types and JSDoc comments become the reference shown here, extracted while the site builds.
+
+```ts filename=types.ts
+import { createTypes } from '@/functions/createTypes';
+import { Flower } from './Flower';
+
+export const TypesFlower = createTypes(import.meta.url, Flower);
+```
+
+- Documents components, hooks, functions and classes
+- Picks up data attributes and CSS variables from enums
+- Writes a `types.md` next to the page, so API changes show up in code review
+
+[Explore type extraction](../lib/factories/abstract-create-types/page.mdx)
+
+</DemoFeature>
+
+[See Types](./types.md)
+
+import { DemoLiveGarden } from './demos/live-garden';
+
+<DemoFeature media={<DemoLiveGarden />} tone="tint" reverse>
+
+## Let readers change the code
+
+Any demo can be editable. Change a `petals` value or a `color` in this one, and the garden re-renders as you type.
+
+- Source is transpiled off the main thread, in a Web Worker shared by the page
+- A broken edit keeps the last good preview, with the error beside it
+- The editing engine loads on demand, so read-only blocks never ship it
+
+[Explore live demos](../lib/hooks/use-demo-controller/page.mdx)
+
+</DemoFeature>
+
+[See Demo](./demos/live-garden/)
+
+import { LandingColumns } from '@/components/Landing';
+
+<LandingColumns collapsible>
+
+## Point at the lines that matter
+
+Mark lines with comments in your source. The first block is the file as written. The second is what readers get: the comments are gone, the marked line is highlighted, and everything outside the focused region folds away until they expand it.
+
+```tsx filename=Garden.tsx displayComments initialExpanded
+// What you write
+import * as React from 'react';
+import { Flower } from './Flower';
+import { PetalInput } from './PetalInput';
+import styles from './Garden.module.css';
+
+interface GardenProps {
+  /** Petal count each flower starts with. */
+  defaultPetals?: number;
+}
+
+export function Garden({ defaultPetals = 8 }: GardenProps) {
+  const [petals, setPetals] = React.useState(defaultPetals);
+  const reset = () => setPetals(defaultPetals);
+
+  return (
+    <section className={styles.root}>
+      <h2 className={styles.title}>Garden</h2>
+      {/* @focus-start @padding 1 */}
+      <div className={styles.bed}>
+        <Flower petals={petals} /> {/* @highlight */}
+        <Flower petals={petals} color="plum" />
+      </div>
+      <PetalInput value={petals} onChange={setPetals} />
+      {/* @focus-end */}
+      <button type="button" className={styles.reset} onClick={reset}>
+        Reset
+      </button>
+    </section>
+  );
+}
+```
+
+```tsx filename=Garden.tsx
+// What readers see
+import * as React from 'react';
+import { Flower } from './Flower';
+import { PetalInput } from './PetalInput';
+import styles from './Garden.module.css';
+
+interface GardenProps {
+  /** Petal count each flower starts with. */
+  defaultPetals?: number;
+}
+
+export function Garden({ defaultPetals = 8 }: GardenProps) {
+  const [petals, setPetals] = React.useState(defaultPetals);
+  const reset = () => setPetals(defaultPetals);
+
+  return (
+    <section className={styles.root}>
+      <h2 className={styles.title}>Garden</h2>
+      {/* @focus-start @padding 1 */}
+      <div className={styles.bed}>
+        <Flower petals={petals} /> {/* @highlight */}
+        <Flower petals={petals} color="plum" />
+      </div>
+      <PetalInput value={petals} onChange={setPetals} />
+      {/* @focus-end */}
+      <button type="button" className={styles.reset} onClick={reset}>
+        Reset
+      </button>
+    </section>
+  );
+}
+```
+
+[Explore code emphasis](../lib/pipeline/enhance-code-emphasis/page.mdx) and [the collapsing window](../lib/hooks/use-code-window/page.mdx).
+
+</LandingColumns>
+
+import { LandingSection } from '@/components/Landing';
+
+<LandingSection tone="tint" narrow>
+
+## Every file, readable by crawlers
+
+Highlighted code is mostly `<span>` markup, and it outweighs the code it colors several times over. Ship that for every file of every demo and a page outgrows a crawler's budget, so the choice becomes bloat or only the visible tab. Here the HTML carries code as plain text in `<pre><code>`, and the highlighted version swaps in after hydration, as each block nears the viewport.
+
+| Initial HTML      | Plain text | Highlighted |
+| :---------------- | :--------- | :---------- |
+| A 27-line demo    | 1.33 KB    | 4.79 KB     |
+| A very large file | 49 KB      | 203 KB      |
+
+That leaves room for every file and every variant of a demo, so search engines and AI agents can read all of it. Opt in with [`fallbackUsesExtraFiles`](../lib/components/code-highlighter/page.mdx#demo-fallback-all-files) and [`fallbackUsesAllVariants`](../lib/components/code-highlighter/page.mdx#demo-fallback-all-variants). View this page's source to check: both files of the demo at the top are there as plain text, including the stylesheet behind its second tab.
+
+[Read the semantic HTML convention](../lib/conventions/semantic-html/page.mdx) or [see where the sizes come from](../lib/patterns/prop-compression/page.mdx#size-comparison).
+
+</LandingSection>
+
+<LandingSection narrow>
+
+## Still just markdown
+
+Every page is an MDX file that reads fine on GitHub. A demo is described in a sentence, imported directly above where it is used, and followed by a link to its source. On the site the demo renders in place and the link disappears.
+
+```mdx filename=page.mdx
+Drag the slider and the flower redraws with that many petals.
+
+import { DemoPetalSlider } from './demos/petal-slider';
+
+<DemoPetalSlider />
+
+[See Demo](./demos/petal-slider/)
+```
+
+Links point at real files, so they work on GitHub and in your editor, and become clean URLs when the site builds.
+
+[Read the markdown-first convention](../lib/conventions/markdown-first/page.mdx) or [read this page on GitHub](<https://github.com/fairgarden/docs/blob/main/docs/app/(shared)/page.mdx>).
+
+</LandingSection>
+
+import { LandingLinks } from '@/components/Landing';
+
+<LandingLinks tone="tint">
+
+## Explore the documentation
+
+Everything is documented with the library itself, from the first `createDemo` call to the internals of the loaders.
+
+- [Architecture](../lib/overview/architecture/page.mdx)
+
+  System design, data flows and the decisions behind them.
+
+- [Components](../lib/components/page.mdx)
+
+  `CodeHighlighter`, `CodeProvider` and the contexts around them.
+
+- [Hooks](../lib/hooks/page.mdx)
+
+  `useCode`, `useDemo`, `useTypes`, `useSearch` and friends.
+
+- [Factories](../lib/factories/page.mdx)
+
+  `createDemo`, `createTypes` and `createSitemap`, bound to your UI.
+
+- [Pipeline](../lib/pipeline/page.mdx)
+
+  Loaders, transformers and enhancers that run at build time.
+
+- [Patterns](../lib/patterns/page.mdx)
+
+  Built factories, prop compression and coordinated streaming.
+
+- [Conventions](../lib/conventions/page.mdx)
+
+  Markdown first, semantic HTML and predictable file names.
+
+- [Commands](../lib/commands/page.mdx)
+
+  The CLI that keeps generated files honest in CI.
+
+</LandingLinks>
+
+import { LandingFaq } from '@/components/Landing';
+
+<LandingFaq>
+
+## Questions
+
+### Does it work with Turbopack?
+
+Yes. `withFairGardenDocs` registers every loader as both a Turbopack rule and a webpack loader. The Turbopack loaders need Next.js 15.5 or later.
+
+### What ends up in the browser?
+
+For a precomputed block, the plain text of the code in the HTML and a compressed highlighted tree that is decoded when the block is about to be seen. Grammars, the editing engine and transforms are fetched only by blocks that need them.
+
+### Can I bring my own design?
+
+Yes. Hooks such as `useDemo` and `useCode` return state and rendered nodes, and you write the markup and CSS. Your components are bound once in a factory, so every demo picks up a change.
+
+### Do I have to precompute everything?
+
+No. The same components can load and highlight code at build time, on the server in a React Server Component, or in the browser through `CodeProvider`.
+
+### Does build-time work slow down development?
+
+No. The loaders track every file a demo imports, the TypeScript sources behind an API table and the markdown behind search, so an edit hot reloads like any other change. Results are cached by file contents, and a worker keeps the TypeScript language service warm between files.
+
+### Is it stable?
+
+It has been in development since June 2025, first to power Base UI's documentation. The package ships `0.x` releases so that breaking changes can keep improving the developer experience on the way to a stable `1.0.0`.
+
+</LandingFaq>
+
+import { LandingCta } from '@/components/Landing';
+
+<LandingCta>
+
+## Start with one demo
+
+Install the package, wrap your Next.js config, and turn a single component into a demo. The rest can follow.
+
+[Read the docs](../lib/page.mdx) [Set up Next.js](../lib/pipeline/with-fairgarden-docs/page.mdx)
+
+</LandingCta>
+
+import { LandingFooter } from '@/components/Landing';
+
+<LandingFooter>
+
+Released under the [MIT License](https://github.com/fairgarden/docs/blob/main/LICENSE). First built in June 2025 to power Base UI's documentation, and hard forked from [mui/mui-public](https://github.com/mui/mui-public) in July 2026.
+
+</LandingFooter>

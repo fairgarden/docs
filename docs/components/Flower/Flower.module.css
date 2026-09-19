@@ -1,0 +1,56 @@
+.root {
+  --petal: var(--purple-9);
+  --center: var(--amber-9);
+
+  display: block;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.plum {
+  --petal: var(--plum-9);
+}
+
+.crimson {
+  --petal: var(--crimson-9);
+}
+
+.amber {
+  --petal: var(--amber-9);
+  --center: var(--purple-11);
+}
+
+/* Spokes rotate around the SVG origin, which the viewBox puts at the center,
+   so a changed petal count re-fans the existing petals instead of redrawing. */
+.spoke {
+  transition: transform 0.3s var(--ease-3);
+}
+
+/* Overlapping petals darken where they meet, which keeps the shape flat but
+   readable without a stroke. */
+.petal {
+  fill: var(--petal);
+  fill-opacity: 0.82;
+  animation: petal-grow 0.3s var(--ease-out-3) backwards;
+}
+
+.center {
+  fill: var(--center);
+}
+
+@keyframes petal-grow {
+  from {
+    transform: scale(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spoke {
+    transition: none;
+  }
+
+  .petal {
+    animation: none;
+  }
+}

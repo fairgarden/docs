@@ -208,7 +208,10 @@ export const transformMarkdownCode: Plugin<[TransformMarkdownCodeOptions?]> = (o
   const { defaultInlineCodeLanguage = 'tsx' } = options;
 
   return (tree) => {
-    const processedIndices = new Set<number>();
+    // Indices are only meaningful within one parent, so track them per parent. A single
+    // document-wide set would make a processed block hide the blocks that sit at the
+    // same position inside other parents (blockquotes, list items, MDX JSX elements).
+    const processedIndicesByParent = new WeakMap<Parent, Set<number>>();
 
     // First pass: handle inline code with language suffixes
     visit(tree, 'inlineCode', (node: InlineCode) => {
@@ -243,15 +246,19 @@ export const transformMarkdownCode: Plugin<[TransformMarkdownCodeOptions?]> = (o
         return;
       }
 
-      // Skip if already processed
-      if (processedIndices.has(index)) {
-        return;
-      }
-
       const parentNode = parent as Parent;
 
       // Look for code blocks with variant metadata or options
       if (node.type === 'code') {
+        // Only parents that hold a code block get a set of processed indices.
+        const processedIndices = processedIndicesByParent.get(parentNode) ?? new Set<number>();
+        processedIndicesByParent.set(parentNode, processedIndices);
+
+        // Skip if already processed
+        if (processedIndices.has(index)) {
+          return;
+        }
+
         const codeNode = node as Code;
 
         // Check if variant metadata is in meta field or lang field (when no language is specified)

@@ -561,6 +561,58 @@ const test = require('hello');
       expect(result).toMatch(/data-variant="es6"/);
       expect(result).toMatch(/data-variant="commonjs"/);
     });
+
+    it('should transform code blocks at the same position inside different parents', () => {
+      // Both code blocks are the first child of their own blockquote.
+      const markdown = `
+> \`\`\`ts filename=first.ts
+> const first = 1;
+> \`\`\`
+
+> \`\`\`ts filename=second.ts
+> const second = 2;
+> \`\`\`
+`;
+
+      const result = e2eProcessor.processSync(markdown).toString();
+
+      const filenames = Array.from(
+        result.matchAll(/<dt><code>([^<]+)<\/code><\/dt>/g),
+        (match) => match[1],
+      );
+      expect(filenames).toEqual(['first.ts', 'second.ts']);
+    });
+
+    it('should transform code blocks that follow a variant group inside a different parent', () => {
+      // The variant group collapses the first two children of its blockquote, which must not
+      // mark the first two children of the next blockquote as processed.
+      const markdown = `
+> \`\`\`bash variant=npm
+> npm install @fairgarden/docs
+> \`\`\`
+> \`\`\`bash variant=pnpm
+> pnpm install @fairgarden/docs
+> \`\`\`
+
+> \`\`\`ts filename=first.ts
+> const first = 1;
+> \`\`\`
+>
+> \`\`\`ts filename=second.ts
+> const second = 2;
+> \`\`\`
+`;
+
+      const result = e2eProcessor.processSync(markdown).toString();
+
+      expect((result.match(/<section>/g) || []).length).toBe(1);
+
+      const filenames = Array.from(
+        result.matchAll(/<dt><code>([^<]+)<\/code><\/dt>/g),
+        (match) => match[1],
+      );
+      expect(filenames).toEqual(['first.ts', 'second.ts']);
+    });
   });
 
   describe('Inline Code Language Hints', () => {

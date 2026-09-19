@@ -9,8 +9,14 @@ export default createRemarkConfig({
     },
     {
       // TODO @dav-is: replace `[//]: # 'comment'` idiom with `<!-- comment -->` and drop these overrides.
-      files: 'docs/app/lib/**',
+      files: ['docs/app/lib/**', 'docs/app/(shared)/**'],
       rules: { 'no-empty-url': false, 'no-unused-definitions': false },
+    },
+    {
+      // The landing page keeps its h1 inside the hero wrapper, which lays the title out
+      // beside the featured demo. It is still the first heading a markdown reader sees.
+      files: 'docs/app/(shared)/page.mdx',
+      rules: { 'mui-first-block-heading': false },
     },
     {
       // Include partials (re-export wrappers, banners) intentionally have no h1.

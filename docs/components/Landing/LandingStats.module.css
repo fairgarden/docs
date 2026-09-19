@@ -1,0 +1,36 @@
+/* `section.root` outranks the site-wide `.body ul` spacing. */
+section.root ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: var(--size-7) var(--size-5);
+  margin: var(--size-7) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.root li {
+  padding-left: var(--size-4);
+  border-left: var(--border-size-2) solid var(--purple-8);
+  font-size: var(--font-size-1);
+  line-height: var(--font-lineheight-3);
+  color: var(--mauve-11);
+}
+
+/* The figure keeps the body typeface and its proportional digits. */
+.root li strong {
+  display: block;
+  margin-bottom: var(--size-1);
+  font-size: var(--font-size-7);
+  font-weight: var(--font-weight-6);
+  line-height: var(--font-lineheight-0);
+  color: var(--purple-12);
+}
+
+.root[data-landing-tone='solid'] li {
+  border-left-color: var(--purple-9);
+  color: var(--purple-5);
+}
+
+.root[data-landing-tone='solid'] li strong {
+  color: #fff;
+}
