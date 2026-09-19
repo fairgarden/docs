@@ -33,9 +33,9 @@ export function Navigation({ sitemap }: { sitemap: Sitemap | undefined }) {
           <ScrollArea.Viewport data-nav-viewport className={styles.viewport}>
             <ul className={styles.list}>
               {Object.entries(sitemap?.data || {})
-                .filter(([sectionName]) => sectionName.startsWith('DocsInfra'))
+                .filter(([sectionName]) => sectionName.startsWith('Lib'))
                 .map(([sectionName, section]) => {
-                  const displayName = sectionName.slice('DocsInfra'.length);
+                  const displayName = sectionName.slice('Lib'.length);
 
                   return (
                     <li key={sectionName} className={styles.section}>
@@ -44,7 +44,7 @@ export function Navigation({ sitemap }: { sitemap: Sitemap | undefined }) {
                         <ul className={styles.pageList}>
                           {section.pages.map((page, i) => {
                             const url = page.path
-                              ? `/docs-infra/${displayName.toLowerCase()}/${page.path.replace(/^\.\//, '').replace(/\/page\.mdx$/, '')}`
+                              ? `/lib/${displayName.toLowerCase()}/${page.path.replace(/^\.\//, '').replace(/\/page\.mdx$/, '')}`
                               : '#';
                             const isSelected = pathname === url;
 

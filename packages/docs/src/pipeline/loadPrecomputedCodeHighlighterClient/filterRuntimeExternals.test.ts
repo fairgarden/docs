@@ -10,7 +10,7 @@ describe('filterRuntimeExternals', () => {
         { name: 'ComponentType', type: 'named', isType: true },
         { name: 'ReactNode', type: 'named', isType: true },
       ],
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named', isType: false },
         { name: 'ButtonProps', type: 'named', isType: true },
       ],
@@ -21,7 +21,7 @@ describe('filterRuntimeExternals', () => {
 
     expect(result).toEqual({
       react: [{ name: 'default', type: 'default', isType: false }],
-      '@mui/material': [{ name: 'Button', type: 'named', isType: false }],
+      '@base-ui/react': [{ name: 'Button', type: 'named', isType: false }],
       // 'type-only-module' should be completely removed since it has no runtime imports
     });
   });
@@ -29,9 +29,9 @@ describe('filterRuntimeExternals', () => {
   it('should handle externals with no type-only imports', () => {
     const externals: Externals = {
       react: [{ name: 'default', type: 'default', isType: false }],
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named', isType: false },
-        { name: 'TextField', type: 'named', isType: false },
+        { name: 'Input', type: 'named', isType: false },
       ],
     };
 

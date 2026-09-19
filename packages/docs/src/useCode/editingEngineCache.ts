@@ -63,7 +63,7 @@ export async function preloadEditingEngine(loader?: EditingEngineLoader): Promis
     await loadEditingEngine(loader);
   } catch (error) {
     if (DEBUG) {
-      console.error('[docs-infra] editing engine failed to preload', error);
+      console.error('[fairgarden-docs] editing engine failed to preload', error);
     }
   }
 }

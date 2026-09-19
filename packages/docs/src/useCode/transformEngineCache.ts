@@ -55,7 +55,7 @@ export async function preloadTransformEngine(loader?: TransformEngineLoader): Pr
     await loadTransformEngine(loader);
   } catch (error) {
     if (DEBUG) {
-      console.error('[docs-infra] transform engine failed to preload', error);
+      console.error('[fairgarden-docs] transform engine failed to preload', error);
     }
   }
 }

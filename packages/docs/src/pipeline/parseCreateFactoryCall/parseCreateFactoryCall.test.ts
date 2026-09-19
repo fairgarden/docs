@@ -675,7 +675,7 @@ describe('parseCreateFactoryCall', () => {
 
     it('should handle scoped packages in externals', async () => {
       const code = `
-        import { Button } from '@mui/material';
+        import { Button } from '@base-ui/react';
         import styled from '@emotion/styled';
         import '@scoped/side-effect-package';
         import Component from './Component';
@@ -696,8 +696,8 @@ describe('parseCreateFactoryCall', () => {
       const code = `
         import * as React from 'react';
         import { Component as ReactComponent } from 'react';
-        import * as MaterialUI from '@mui/material';
-        import { Button, TextField as Input } from '@mui/material';
+        import * as MaterialUI from '@base-ui/react';
+        import { Button, Input as Input } from '@base-ui/react';
         import 'complex-side-effect';
         import LocalComponent from './Component';
         
@@ -1022,22 +1022,22 @@ describe('parseCreateFactoryCall', () => {
   describe('allowExternalVariants option', () => {
     it('should allow external imports when allowExternalVariants is true', async () => {
       const code = `
-        import { Button } from '@mui/material';
-        import { TextField } from '@mui/material';
+        import { Button } from '@base-ui/react';
+        import { Input } from '@base-ui/react';
         
-        createDemo(import.meta.url, { Button, TextField }, { name: 'External Demo' });
+        createDemo(import.meta.url, { Button, Input }, { name: 'External Demo' });
       `;
       const filePath = '/src/demo.ts';
       const result = await parseCreateFactoryCall(code, filePath, { allowExternalVariants: true });
 
       expect(result).not.toBeNull();
       expect(result!.variants).toEqual({
-        Button: '@mui/material',
-        TextField: '@mui/material',
+        Button: '@base-ui/react',
+        Input: '@base-ui/react',
       });
       expect(result!.namedExports).toEqual({
         Button: 'Button',
-        TextField: 'TextField',
+        Input: 'Input',
       });
       expect(result!.options).toEqual({
         name: 'External Demo',
@@ -1046,7 +1046,7 @@ describe('parseCreateFactoryCall', () => {
 
     it('should reject external imports when allowExternalVariants is false (default)', async () => {
       const code = `
-        import { Button } from '@mui/material';
+        import { Button } from '@base-ui/react';
         
         createDemo(import.meta.url, { Button }, { name: 'External Demo' });
       `;
@@ -1059,7 +1059,7 @@ describe('parseCreateFactoryCall', () => {
 
     it('should handle single external component with allowExternalVariants', async () => {
       const code = `
-        import { Button } from '@mui/material';
+        import { Button } from '@base-ui/react';
         
         createDemo(import.meta.url, Button);
       `;
@@ -1068,7 +1068,7 @@ describe('parseCreateFactoryCall', () => {
 
       expect(result).not.toBeNull();
       expect(result!.variants).toEqual({
-        Default: '@mui/material',
+        Default: '@base-ui/react',
       });
       expect(result!.namedExports).toEqual({
         Default: 'Button',
@@ -1078,7 +1078,7 @@ describe('parseCreateFactoryCall', () => {
     it('should handle mixed local and external imports with allowExternalVariants', async () => {
       const code = `
         import LocalComponent from './LocalComponent';
-        import { Button } from '@mui/material';
+        import { Button } from '@base-ui/react';
         import { useEffect } from 'react';
         
         createDemo(import.meta.url, { Local: LocalComponent, External: Button }, { name: 'Mixed Demo' });
@@ -1089,7 +1089,7 @@ describe('parseCreateFactoryCall', () => {
       expect(result).not.toBeNull();
       expect(result!.variants).toEqual({
         Local: 'file:///src/LocalComponent',
-        External: '@mui/material',
+        External: '@base-ui/react',
       });
       expect(result!.namedExports).toEqual({
         Local: undefined, // Default import
@@ -1099,29 +1099,29 @@ describe('parseCreateFactoryCall', () => {
 
     it('should handle external imports with aliases', async () => {
       const code = `
-        import { Button as MuiButton } from '@mui/material';
-        import { TextField as MuiTextField } from '@mui/material';
+        import { Button as BaseButton } from '@base-ui/react';
+        import { Input as MuiTextField } from '@base-ui/react';
         
-        createDemo(import.meta.url, { MuiButton, CustomTextField: MuiTextField });
+        createDemo(import.meta.url, { BaseButton, CustomTextField: MuiTextField });
       `;
       const filePath = '/src/demo.ts';
       const result = await parseCreateFactoryCall(code, filePath, { allowExternalVariants: true });
 
       expect(result).not.toBeNull();
       expect(result!.variants).toEqual({
-        MuiButton: '@mui/material',
-        CustomTextField: '@mui/material',
+        BaseButton: '@base-ui/react',
+        CustomTextField: '@base-ui/react',
       });
       expect(result!.namedExports).toEqual({
-        MuiButton: 'Button',
-        CustomTextField: 'TextField',
+        BaseButton: 'Button',
+        CustomTextField: 'Input',
       });
     });
 
     it('should handle default external imports', async () => {
       const code = `
         import React from 'react';
-        import Button from '@mui/material/Button';
+        import Button from '@base-ui/react/button';
         
         createDemo(import.meta.url, { React, Button });
       `;
@@ -1131,7 +1131,7 @@ describe('parseCreateFactoryCall', () => {
       expect(result).not.toBeNull();
       expect(result!.variants).toEqual({
         React: 'react',
-        Button: '@mui/material/Button',
+        Button: '@base-ui/react/button',
       });
       expect(result!.namedExports).toEqual({
         React: undefined, // Default import
@@ -1142,7 +1142,7 @@ describe('parseCreateFactoryCall', () => {
     it('should handle namespace external imports', async () => {
       const code = `
         import * as React from 'react';
-        import * as MUI from '@mui/material';
+        import * as MUI from '@base-ui/react';
         
         createDemo(import.meta.url, { React, MUI });
       `;
@@ -1152,7 +1152,7 @@ describe('parseCreateFactoryCall', () => {
       expect(result).not.toBeNull();
       expect(result!.variants).toEqual({
         React: 'react',
-        MUI: '@mui/material',
+        MUI: '@base-ui/react',
       });
       expect(result!.namedExports).toEqual({
         React: undefined, // Namespace import
@@ -1186,14 +1186,14 @@ describe('parseCreateFactoryCall', () => {
 
     it('should handle TypeScript generic types with external imports', async () => {
       const code = `
-        import { Button } from '@mui/material';
-        import { TextField } from '@mui/material';
+        import { Button } from '@base-ui/react';
+        import { Input } from '@base-ui/react';
         
         createDemo(
           import.meta.url,
           { 
             Button: Button as React.ComponentType<{ variant?: 'contained' | 'outlined' }>,
-            TextField: TextField as React.ComponentType<{ label?: string }>
+            Input: Input as React.ComponentType<{ label?: string }>
           },
           { name: 'External TypeScript Demo' }
         );
@@ -1203,12 +1203,12 @@ describe('parseCreateFactoryCall', () => {
 
       expect(result).not.toBeNull();
       expect(result!.variants).toEqual({
-        Button: '@mui/material',
-        TextField: '@mui/material',
+        Button: '@base-ui/react',
+        Input: '@base-ui/react',
       });
       expect(result!.namedExports).toEqual({
         Button: 'Button',
-        TextField: 'TextField',
+        Input: 'Input',
       });
     });
   });

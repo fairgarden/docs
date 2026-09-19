@@ -1,0 +1,115 @@
+@import '@wooorm/starry-night/style/light' layer(starry-night);
+
+:root {
+  --color-fairgarden-docs-syntax-number: #0550ae;
+  --color-fairgarden-docs-syntax-boolean: #0550ae;
+  --color-fairgarden-docs-syntax-nullish: #59636e;
+  --color-fairgarden-docs-syntax-property-string: #0550ae;
+  --color-fairgarden-docs-syntax-object-property: #0550ae;
+  --color-fairgarden-docs-syntax-attr-key: #0550ae;
+  --color-fairgarden-docs-syntax-attr-value: #0a3069;
+  --color-fairgarden-docs-syntax-attr-equals: #24292f;
+  --color-fairgarden-docs-syntax-data-attr: #0550ae;
+  --color-fairgarden-docs-syntax-css-property: #0550ae;
+  --color-fairgarden-docs-syntax-css-value: #0550ae;
+  --color-fairgarden-docs-syntax-this: #cf222e;
+  --color-fairgarden-docs-syntax-builtin-type: #0550ae;
+  --color-fairgarden-docs-syntax-punctuation: #24292f;
+  --color-fairgarden-docs-syntax-template-expression: #24292f;
+  --color-fairgarden-docs-syntax-template-delimiter: #24292f;
+  --color-fairgarden-docs-syntax-jsx: #116329;
+  --color-fairgarden-docs-syntax-jsx-variable: #953800;
+  --color-fairgarden-docs-syntax-html-tag: #0550ae;
+  --color-fairgarden-docs-syntax-jsx-tag: #116329;
+  --fairgarden-docs-syntax-line-height: 18.5px;
+  /* Duration of the transform / variant-swap line-collapse animations (defined
+     in CodeSource.module.css). Keep in sync with the `transformDelay` /
+     `variantSwapDelay` passed to `useCode` / `useDemo` in the demo components. */
+  --fairgarden-docs-syntax-transform-duration: 350ms;
+}
+
+.fgd-num {
+  color: var(--color-fairgarden-docs-syntax-number);
+}
+
+.fgd-bool {
+  color: var(--color-fairgarden-docs-syntax-boolean);
+}
+
+.fgd-n {
+  color: var(--color-fairgarden-docs-syntax-nullish);
+}
+
+.fgd-ps {
+  color: var(--color-fairgarden-docs-syntax-property-string);
+}
+
+.fgd-op {
+  color: var(--color-fairgarden-docs-syntax-object-property);
+}
+
+.fgd-ak {
+  color: var(--color-fairgarden-docs-syntax-attr-key);
+}
+
+.fgd-av {
+  color: var(--color-fairgarden-docs-syntax-attr-value);
+}
+
+.fgd-ae {
+  color: var(--color-fairgarden-docs-syntax-attr-equals);
+}
+
+.fgd-da {
+  color: var(--color-fairgarden-docs-syntax-data-attr);
+}
+
+.fgd-cp {
+  color: var(--color-fairgarden-docs-syntax-css-property);
+}
+
+.fgd-cv {
+  color: var(--color-fairgarden-docs-syntax-css-value);
+}
+
+.fgd-this {
+  color: var(--color-fairgarden-docs-syntax-this);
+}
+
+.fgd-bt {
+  color: var(--color-fairgarden-docs-syntax-builtin-type);
+}
+
+.fgd-pu {
+  color: var(--color-fairgarden-docs-syntax-punctuation);
+}
+
+/* Template-literal interpolation: reset the `${ ... }` expression away from the
+ * enclosing string color. Inner `pl-*` tokens keep their own colors on top. */
+.fgd-te {
+  color: var(--color-fairgarden-docs-syntax-template-expression);
+}
+
+.fgd-td {
+  color: var(--color-fairgarden-docs-syntax-template-delimiter);
+}
+
+.fgd-jsx {
+  color: var(--color-fairgarden-docs-syntax-jsx);
+}
+
+.fgd-jv {
+  color: var(--color-fairgarden-docs-syntax-jsx-variable);
+}
+
+.fgd-ht {
+  color: var(--color-fairgarden-docs-syntax-html-tag);
+}
+
+.fgd-jt {
+  color: var(--color-fairgarden-docs-syntax-jsx-tag);
+}
+
+code[data-inline] .pl-smi {
+  color: inherit;
+}

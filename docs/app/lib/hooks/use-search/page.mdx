@@ -1,0 +1,335 @@
+# Use Search
+
+The `useSearch` hook provides a powerful client-side search engine using [Orama](https://github.com/oramasearch/orama) for documentation sites. It handles index creation, search queries, and result formatting with built-in support for stemming, grouping, faceting, and customizable result types.
+
+---
+
+## Overview
+
+`useSearch` creates an in-memory search index from your sitemap data and provides instant search results with fuzzy matching, boosting, and tolerance controls. It's designed to work seamlessly with documentation structures that include pages, sections, subsections, component parts, and exports.
+
+### Key Features
+
+- **Fast in-memory search** with Orama's optimized indexing
+- **Automatic stemming** and stop word filtering for English
+- **Fuzzy matching** with configurable tolerance
+- **Result boosting** by field or result type
+- **Multiple result types** including pages, sections, parts, and exports
+- **Grouped results** with support for faceting and filtering
+- **Default results** for empty search states
+- **URL generation** with hash fragment support
+- **Type-safe** with full TypeScript support
+
+---
+
+## Basic Usage
+
+```tsx
+import { useSearch } from '@fairgarden/docs/useSearch';
+
+function SearchComponent() {
+  const { results, search, isReady, defaultResults, buildResultUrl } = useSearch({
+    sitemap: () => import('./sitemap'),
+    maxDefaultResults: 10,
+    enableStemming: true,
+  });
+
+  const handleSearch = (query: string) => {
+    search(query);
+  };
+
+  return (
+    <div>
+      <input onChange={(e) => handleSearch(e.target.value)} />
+      {results.results.map((group) =>
+        group.items.map((result) => (
+          <a key={result.id} href={buildResultUrl(result)}>
+            {result.title}
+          </a>
+        )),
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Configuration
+
+### Stemming and Stop Words
+
+Enable stemming to improve search quality by reducing words to their root form:
+
+```tsx
+const { search } = useSearch({
+  sitemap: () => import('./sitemap'),
+  enableStemming: true, // Default: true
+});
+```
+
+When enabled, searches for "running" will also match "run", "runs", and "runner".
+
+### Fuzzy Matching
+
+Control how tolerant the search is to typos:
+
+```tsx
+const { search } = useSearch({
+  sitemap: () => import('./sitemap'),
+  tolerance: 2, // Default: 1
+});
+```
+
+Higher tolerance values allow more character differences between the query and results.
+
+### Result Limiting
+
+Configure how many results to return:
+
+```tsx
+const { search, defaultResults } = useSearch({
+  sitemap: () => import('./sitemap'),
+  maxDefaultResults: 10, // Default: undefined (all pages)
+  limit: 20, // Default: 20
+});
+```
+
+When `maxDefaultResults` is `undefined`, all pages are included in the default results (but not headings, exports, or parts).
+
+### Including Private Pages
+
+When deploying internally, use `showPrivatePages` to include pages with `audience: 'private'` in both the search index and default results:
+
+```tsx
+const { search } = useSearch({
+  sitemap: () => import('./sitemap'),
+  showPrivatePages: process.env.SHOW_PRIVATE_PAGES === 'true', // Default: false
+});
+```
+
+When `showPrivatePages` is `false` (the default), pages with `audience: 'private'` are excluded from the search index.
+
+### Category Grouping
+
+Include page categories in result groups for better organization:
+
+```tsx
+const { search } = useSearch({
+  sitemap: () => import('./sitemap'),
+  includeCategoryInGroup: true, // Groups become "Overview Pages" vs just "Pages"
+});
+```
+
+### Field Boosting
+
+Boost specific fields to prioritize certain result types. You can import `defaultSearchBoost` and extend it:
+
+```tsx
+import { useSearch, defaultSearchBoost } from '@fairgarden/docs/useSearch';
+
+const { search } = useSearch({
+  sitemap: () => import('./sitemap'),
+  boost: {
+    ...defaultSearchBoost,
+    title: 3, // Override specific values
+  },
+});
+```
+
+The default boost values are:
+
+```typescript
+export const defaultSearchBoost = {
+  type: 100,
+  group: 100,
+  slug: 2,
+  path: 2,
+  title: 2,
+  page: 6,
+  pageKeywords: 15,
+  description: 1.5,
+  part: 1.5,
+  export: 1.3,
+  sectionTitle: 50,
+  section: 3,
+  subsection: 2.5,
+  props: 1.5,
+  dataAttributes: 1.5,
+  cssVariables: 1.5,
+  sections: 0.7,
+  subsections: 0.3,
+  keywords: 1.5,
+};
+```
+
+---
+
+## Custom Processing
+
+### Custom Flattening
+
+Override how pages are converted to search entries:
+
+```tsx
+const { search } = useSearch({
+  sitemap: () => import('./sitemap'),
+  flattenPage: (page, sectionData) => {
+    return [
+      {
+        type: 'page',
+        title: page.title,
+        slug: page.slug,
+        path: page.path,
+        description: page.description,
+        sectionTitle: sectionData.title,
+        prefix: sectionData.prefix,
+      },
+    ];
+  },
+});
+```
+
+### Custom Formatting
+
+Override how search hits are formatted:
+
+```tsx
+const { search } = useSearch({
+  sitemap: () => import('./sitemap'),
+  formatResult: (hit) => {
+    return {
+      type: 'page',
+      id: hit.id,
+      title: hit.document.title.toUpperCase(),
+      description: hit.document.description,
+      slug: hit.document.slug,
+      path: hit.document.path,
+      sectionTitle: hit.document.sectionTitle,
+      prefix: hit.document.prefix,
+      score: hit.score,
+    };
+  },
+});
+```
+
+---
+
+## URL Building
+
+The `buildResultUrl` function handles different result types:
+
+- **Page results**: Returns the page path
+- **Section results**: Adds `#section-slug` to the page path
+- **Subsection results**: Adds `#subsection-slug` to the page path
+- **Part results**: Adds `#part-name` to the page path
+- **Export results**: Adds `#export-name` or `#api-reference` to the page path
+
+Example output:
+
+```typescript
+// Page result
+buildResultUrl(pageResult); // "/components/button"
+
+// Section result
+buildResultUrl(sectionResult); // "/components/button#usage"
+
+// Export result
+buildResultUrl(exportResult); // "/components/button#api-reference"
+```
+
+---
+
+## Performance
+
+The search index is built asynchronously when the component mounts. Use the `isReady` flag to show loading states:
+
+```tsx
+const { isReady, search, results } = useSearch({
+  sitemap: () => import('./sitemap'),
+});
+
+if (!isReady) {
+  return <div>Loading search index…</div>;
+}
+```
+
+Index creation is fast but happens only once per mount. Consider memoizing the sitemap import for optimal performance.
+
+---
+
+## Creating the Sitemap
+
+The `useSearch` hook requires a sitemap with page metadata. Here's how to set one up:
+
+### 1. Extract Page Metadata
+
+Use the [`transformMarkdownMetadata`](../../pipeline/transform-markdown-metadata/page.mdx) remark plugin to automatically extract titles, descriptions, and sections from your MDX pages:
+
+```typescript
+// Each MDX page will have metadata extracted:
+export const metadata = {
+  title: 'Button',
+  description: 'A clickable button component.',
+  keywords: ['button', 'click'],
+};
+```
+
+### 2. Define the Sitemap
+
+Create a sitemap index file using [`createSitemap`](../../factories/create-sitemap/page.mdx):
+
+```typescript
+// app/sitemap/index.ts
+import { createSitemap } from '@fairgarden/docs/createSitemap';
+import Components from '../components/page.mdx';
+import Functions from '../functions/page.mdx';
+
+export const sitemap = createSitemap(import.meta.url, {
+  Components,
+  Functions,
+});
+```
+
+### 3. Import in useSearch
+
+Import the sitemap dynamically in your search component:
+
+```tsx
+const { search, results } = useSearch({
+  sitemap: () => import('../sitemap'),
+});
+```
+
+See [`createSitemap`](../../factories/create-sitemap/page.mdx) for the full API and [`transformMarkdownMetadata`](../../pipeline/transform-markdown-metadata/page.mdx) for metadata extraction options.
+
+---
+
+## Best Practices
+
+1. **Enable stemming** for better search quality in English documentation
+2. **Use default results** to show popular pages when the search is empty
+3. **Boost important fields** like `type`, `title`, and `slug` to prioritize exact matches
+4. **Set appropriate tolerance** based on your use case (1-2 for strict, 3+ for lenient)
+5. **Limit results** to keep the UI manageable (10-20 results is typical)
+6. **Use `buildResultUrl`** to ensure consistent URL formatting across result types
+7. **Check `isReady`** before allowing searches to prevent errors
+
+---
+
+## Types
+
+import { TypesUseSearch } from './types';
+
+<TypesUseSearch />
+
+[See Types](./types.md)
+
+---
+
+## Related
+
+- [`createSitemap`](../../factories/create-sitemap/page.mdx) - Define sitemap data for search indexing
+- [`transformMarkdownMetadata`](../../pipeline/transform-markdown-metadata/page.mdx) - Extract page metadata from MDX
+- [`loadServerSitemap`](../../pipeline/load-server-sitemap/page.mdx) - Runtime sitemap loading
+- [`withFairGardenDocs`](../../pipeline/with-fairgarden-docs/page.mdx) - Next.js plugin that configures the build

@@ -6,7 +6,7 @@ describe('collectDeclaredNames', () => {
     const source = `
       import React from 'react';
       import * as ReactDOM from 'react-dom';
-      import { Button, TextField as Field } from '@mui/material';
+      import { Button, Input as Field } from '@base-ui/react';
     `;
     const names = collectDeclaredNames(source);
     expect(names.has('React')).toBe(true);
@@ -14,7 +14,7 @@ describe('collectDeclaredNames', () => {
     expect(names.has('Button')).toBe(true);
     expect(names.has('Field')).toBe(true);
     // The original (pre-alias) name should not block reuse
-    expect(names.has('TextField')).toBe(false);
+    expect(names.has('Input')).toBe(false);
   });
 
   it('collects type-only named imports', () => {

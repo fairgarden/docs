@@ -17,7 +17,7 @@ import {
 } from '../pipeline/loadPrecomputedCodeHighlighter/performanceLogger';
 import { terminateWorkerManager } from '../pipeline/loadServerTypesMeta/workerManager';
 import { DEFAULT_CACHE_DIR } from '../pipeline/cacheUtils';
-import { extractDocsInfraOptionsFromNextConfig } from './loadNextConfig';
+import { extractLibOptionsFromNextConfig } from './loadNextConfig';
 import { ensureDemoClients } from './ensureDemoClients';
 import { ensureDemoPages } from './ensureDemoPages';
 import type { ValidateTask, ValidateResult } from './validateWorker';
@@ -74,7 +74,7 @@ const runValidate: CommandModule<{}, Args> = {
       .option('command', {
         type: 'string',
         description: 'Command to suggest when indexes are out of date',
-        default: 'pnpm docs-infra validate',
+        default: 'pnpm docs validate',
       })
       .option('indexes', {
         type: 'boolean',
@@ -99,8 +99,7 @@ const runValidate: CommandModule<{}, Args> = {
       .positional('paths', {
         type: 'string',
         array: true,
-        description:
-          'Optional paths to validate (e.g., docs-infra/components docs-infra/functions)',
+        description: 'Optional paths to validate (e.g., lib/components lib/functions)',
         default: [],
       }) as any;
   },
@@ -108,7 +107,7 @@ const runValidate: CommandModule<{}, Args> = {
     const cwd = process.cwd();
     const {
       paths = [],
-      command = 'pnpm docs-infra validate',
+      command = 'pnpm docs validate',
       indexes: indexesOnly = false,
       types: typesOnly = false,
       perf: perfEnabled = false,
@@ -123,7 +122,7 @@ const runValidate: CommandModule<{}, Args> = {
       cacheDir: configCacheDir,
       demoClientRequirements = [],
       demoPageRequirements = [],
-    } = await extractDocsInfraOptionsFromNextConfig(cwd);
+    } = await extractLibOptionsFromNextConfig(cwd);
 
     const socketDir = configSocketDir ? path.resolve(cwd, configSocketDir) : undefined;
     // Use the same page-index cache directory that the sitemap loader reads at build time.

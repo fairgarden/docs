@@ -33,7 +33,10 @@ export async function loadFileCacheEntry<T>(ref: FileCacheRef): Promise<FileCach
   } catch (error) {
     const isMissing = error instanceof Error && (error as NodeJS.ErrnoException).code === 'ENOENT';
     if (DEBUG && !isMissing) {
-      console.warn(`[docs-infra cache] read failed for ${ref.namespace}/${ref.cacheKey}:`, error);
+      console.warn(
+        `[fairgarden-docs cache] read failed for ${ref.namespace}/${ref.cacheKey}:`,
+        error,
+      );
     }
     return null;
   }
@@ -43,14 +46,18 @@ export async function loadFileCacheEntry<T>(ref: FileCacheRef): Promise<FileCach
     parsed = JSON.parse(raw);
   } catch {
     if (DEBUG) {
-      console.warn(`[docs-infra cache] ignoring corrupt entry ${ref.namespace}/${ref.cacheKey}`);
+      console.warn(
+        `[fairgarden-docs cache] ignoring corrupt entry ${ref.namespace}/${ref.cacheKey}`,
+      );
     }
     return null;
   }
 
   if (!isFileCacheEntry(parsed)) {
     if (DEBUG) {
-      console.warn(`[docs-infra cache] ignoring malformed entry ${ref.namespace}/${ref.cacheKey}`);
+      console.warn(
+        `[fairgarden-docs cache] ignoring malformed entry ${ref.namespace}/${ref.cacheKey}`,
+      );
     }
     return null;
   }

@@ -101,19 +101,19 @@ function replaceClass(element: Element, oldCls: string, newCls: string): void {
 }
 
 /**
- * Enhances `pl-c1` (constant) spans with more specific `di-*` classes
+ * Enhances `pl-c1` (constant) spans with more specific `fgd-*` classes
  * based on the text content.
  *
  * Language-agnostic:
- * - Numbers → `di-num`
- * - Booleans (`true`, `false`) → `di-bool`
- * - Nullish (`null`, `undefined`) → `di-n`
+ * - Numbers → `fgd-num`
+ * - Booleans (`true`, `false`) → `fgd-bool`
+ * - Nullish (`null`, `undefined`) → `fgd-n`
  *
  * JS/TS family only (`isJs`):
- * - `this`, `super` → `di-this`
+ * - `this`, `super` → `fgd-this`
  *
  * TS family only (`isTs`):
- * - Built-in type keywords (`string`, `number`, etc.) → `di-bt`
+ * - Built-in type keywords (`string`, `number`, etc.) → `fgd-bt`
  */
 function enhanceConstantSpan(element: Element, isJs: boolean, isTs: boolean): void {
   const text = getShallowTextContent(element);
@@ -122,21 +122,21 @@ function enhanceConstantSpan(element: Element, isJs: boolean, isTs: boolean): vo
   }
 
   if (text === 'true' || text === 'false') {
-    addClass(element, 'di-bool');
+    addClass(element, 'fgd-bool');
   } else if (text === 'null' || text === 'undefined') {
-    addClass(element, 'di-n');
+    addClass(element, 'fgd-n');
   } else if (isNumericConstant(text)) {
-    addClass(element, 'di-num');
+    addClass(element, 'fgd-num');
   } else if (isJs && (text === 'this' || text === 'super')) {
-    addClass(element, 'di-this');
+    addClass(element, 'fgd-this');
   } else if (isTs && BUILT_IN_TYPES.has(text)) {
-    addClass(element, 'di-bt');
+    addClass(element, 'fgd-bt');
   }
 }
 
 /**
  * Enhances `pl-s` (string) spans for empty string literals (`""`, `''`)
- * by adding the `di-n` (nullish) class.
+ * by adding the `fgd-n` (nullish) class.
  *
  * Starry-night tokenizes an empty string as exactly two `pl-pds` quote-delimiter
  * spans with no content between them:
@@ -155,7 +155,7 @@ function enhanceStringSpan(element: Element): void {
     close.type === 'element' &&
     getFirstClass(close) === 'pl-pds'
   ) {
-    addClass(element, 'di-n');
+    addClass(element, 'fgd-n');
   }
 }
 
@@ -192,8 +192,8 @@ function isSymbolicPunctuation(text: string): boolean {
 
 /**
  * Splits a text value into nodes, wrapping bare identifier object-literal keys
- * (e.g. `height` in `{ height: 400 }`) in a `<span>` carrying `di-op` plus, when
- * `inJsx` is true, also `di-jv`. Returns `null` if no key pattern is found,
+ * (e.g. `height` in `{ height: 400 }`) in a `<span>` carrying `fgd-op` plus, when
+ * `inJsx` is true, also `fgd-jv`. Returns `null` if no key pattern is found,
  * leaving the original text node untouched.
  *
  * A key is detected as `[A-Za-z_$][\w$]*` immediately preceded by `{` or `,`
@@ -270,7 +270,7 @@ function splitObjectKeys(value: string, inJsx: boolean): ElementContent[] | null
     if (i > lastEnd) {
       nodes.push({ type: 'text', value: value.slice(lastEnd, i) } as Text);
     }
-    const className = inJsx ? ['di-op', 'di-jv'] : ['di-op'];
+    const className = inJsx ? ['fgd-op', 'fgd-jv'] : ['fgd-op'];
     nodes.push({
       type: 'element',
       tagName: 'span',
@@ -316,22 +316,22 @@ function startsWithColon(text: string): boolean {
  */
 type TemplateFrame = { mode: 'string' } | { mode: 'expr'; braceDepth: number };
 
-/** Creates an empty `di-te` interpolation-region span. */
+/** Creates an empty `fgd-te` interpolation-region span. */
 function createInterpolationRegion(): Element {
   return {
     type: 'element',
     tagName: 'span',
-    properties: { className: ['di-te'] },
+    properties: { className: ['fgd-te'] },
     children: [],
   };
 }
 
-/** Creates a `di-td` delimiter span wrapping the given `${` or `}` glyph. */
+/** Creates a `fgd-td` delimiter span wrapping the given `${` or `}` glyph. */
 function createInterpolationDelimiter(value: string): Element {
   return {
     type: 'element',
     tagName: 'span',
-    properties: { className: ['di-td'] },
+    properties: { className: ['fgd-td'] },
     children: [{ type: 'text', value }],
   };
 }
@@ -353,9 +353,9 @@ function pushText(target: ElementContent[], value: string): void {
 
 /**
  * Scans one text node of a template literal, splitting it around interpolation
- * boundaries. In `string` mode it looks for `${` (opening a `di-te` region with a
- * `di-td` delimiter); in `expr` mode it counts `{`/`}` to find the matching close
- * (emitting the closing `di-td`). Mutates `stack` and `targets` in place as it
+ * boundaries. In `string` mode it looks for `${` (opening a `fgd-te` region with a
+ * `fgd-td` delimiter); in `expr` mode it counts `{`/`}` to find the matching close
+ * (emitting the closing `fgd-td`). Mutates `stack` and `targets` in place as it
  * crosses boundaries, appending nodes to the innermost current target.
  */
 function processTemplateText(
@@ -414,14 +414,14 @@ function processTemplateText(
 
 /**
  * Restructures one `pl-s` template-literal line, wrapping each `${ ... }`
- * interpolation slice on the line in a `di-te` region with `di-td` delimiters.
+ * interpolation slice on the line in a `fgd-te` region with `fgd-td` delimiters.
  *
  * `entryStack` carries the interpolation state from previous lines (a single
  * `string` frame for the opening line). `isOpener` is true for the line that
  * holds the opening backtick. Because starry-night emits one `pl-s` span per line
  * and the line gutter splits on top-level newlines, a region can never cross a
  * line boundary — each line's slice is wrapped on its own, so a continuation
- * line opens a fresh `di-te` with no leading `${`. Returns the stack to carry to
+ * line opens a fresh `fgd-te` with no leading `${`. Returns the stack to carry to
  * the next line, or `null` once the closing backtick is consumed (run complete).
  */
 function restructureTemplateLine(
@@ -434,7 +434,7 @@ function restructureTemplateLine(
   const stack: TemplateFrame[] = entryStack.map((frame) => ({ ...frame }));
 
   // Rebuild the physical target chain for the carried stack: each open `expr`
-  // frame gets a fresh `di-te` region on this line; nested `string` frames share
+  // frame gets a fresh `fgd-te` region on this line; nested `string` frames share
   // their parent expression's region as the target.
   const targets: ElementContent[][] = [out];
   for (let depth = 1; depth < stack.length; depth += 1) {
@@ -495,19 +495,19 @@ function restructureTemplateLine(
  * Recursively enhances nested elements.
  *
  * Per-element enhancements (applied to individual spans):
- * - `pl-c1` → `di-num`, `di-bool`, `di-n`, `di-this`, `di-bt` via enhanceConstantSpan
- * - `pl-s` → `di-n` for empty strings via enhanceStringSpan
- * - `pl-k` symbolic operators (`=`, `=>`, `&&`, `...`) → `di-pu`
+ * - `pl-c1` → `fgd-num`, `fgd-bool`, `fgd-n`, `fgd-this`, `fgd-bt` via enhanceConstantSpan
+ * - `pl-s` → `fgd-n` for empty strings via enhanceStringSpan
+ * - `pl-k` symbolic operators (`=`, `=>`, `&&`, `...`) → `fgd-pu`
  *
  * Sibling-context enhancements (depend on neighbor nodes or positional state):
  * - CSS `&` nesting selector → wraps in `pl-ent` span
- * - CSS `[attr]` → `di-da` on attribute name spans
- * - CSS `property: value` → `di-cp` / `di-cv` based on colon position
- * - HTML/JSX `<tag attr=value>` → `di-ak`, `di-ae`, `di-av`
- * - JSX `<Component>` → `di-jsx` on component name spans
- * - JSX `{expression}` → `di-jv` on `pl-smi`/`pl-v` identifier spans inside braces
- * - JS `'key':` object property string → `di-ps` on `pl-s` spans
- * - JS template literals → `di-te` region / `di-td` delimiters around `${ ... }`
+ * - CSS `[attr]` → `fgd-da` on attribute name spans
+ * - CSS `property: value` → `fgd-cp` / `fgd-cv` based on colon position
+ * - HTML/JSX `<tag attr=value>` → `fgd-ak`, `fgd-ae`, `fgd-av`
+ * - JSX `<Component>` → `fgd-jsx` on component name spans
+ * - JSX `{expression}` → `fgd-jv` on `pl-smi`/`pl-v` identifier spans inside braces
+ * - JS `'key':` object property string → `fgd-ps` on `pl-s` spans
+ * - JS template literals → `fgd-te` region / `fgd-td` delimiters around `${ ... }`
  */
 function enhanceChildren(
   children: ElementContent[],
@@ -635,8 +635,8 @@ function enhanceChildren(
         }
       }
 
-      // Bare object-literal keys (e.g. `height` in `{ height: 400 }`) become di-op spans.
-      // Inside a JSX attribute expression they also receive di-jv. Done before the `=` split
+      // Bare object-literal keys (e.g. `height` in `{ height: 400 }`) become fgd-op spans.
+      // Inside a JSX attribute expression they also receive fgd-jv. Done before the `=` split
       // below, which only fires in attribute context (htmlInsideTag) — the two paths don't conflict.
       // Children expressions (e.g. `<Comp>{children}</Comp>`) are excluded by the htmlInsideTag check.
       if (isJs) {
@@ -660,17 +660,17 @@ function enhanceChildren(
             nextChild.tagName === 'span' &&
             getFirstClass(nextChild) === 'pl-s'
           ) {
-            addClass(nextChild, 'di-av');
+            addClass(nextChild, 'fgd-av');
           }
 
-          // Split text around = and wrap in di-ae span
+          // Split text around = and wrap in fgd-ae span
           const before = value.slice(0, equalsIndex);
           const after = value.slice(equalsIndex + 1);
 
           const equalsSpan: Element = {
             type: 'element',
             tagName: 'span',
-            properties: { className: ['di-ae'] },
+            properties: { className: ['fgd-ae'] },
             children: [{ type: 'text', value: '=' }],
           };
 
@@ -699,8 +699,8 @@ function enhanceChildren(
 
     // ── Template-literal interpolation (JS family) ──
     // starry-night tokenizes a backtick string as a `pl-s` span (one per line for
-    // multi-line literals). Wrap each `${ ... }` slice in a `di-te` region with
-    // `di-td` delimiters so the interpolated expression resets from the string
+    // multi-line literals). Wrap each `${ ... }` slice in a `fgd-te` region with
+    // `fgd-td` delimiters so the interpolated expression resets from the string
     // color. `templateRun` carries the brace/nesting state across the per-line
     // `pl-s` spans; a run starts on the line whose first child is the opening
     // backtick. Handled here, before the generic recursion, so the expression
@@ -709,12 +709,12 @@ function enhanceChildren(
       const opensRun = templateRun === null && isBacktickDelimiter(child.children[0]);
       if (templateRun !== null || opensRun) {
         templateRun = restructureTemplateLine(child, templateRun ?? [{ mode: 'string' }], opensRun);
-        // Empty backtick literals (`` `` ``) keep their nullish (`di-n`) classification.
+        // Empty backtick literals (`` `` ``) keep their nullish (`fgd-n`) classification.
         enhanceStringSpan(child);
-        // Enhance the interpolated expressions (e.g. `di-num` on `${42}`) within
+        // Enhance the interpolated expressions (e.g. `fgd-num` on `${42}`) within
         // each region; nested regions are reached by the recursion.
         for (const region of child.children) {
-          if (region.type === 'element' && getFirstClass(region) === 'di-te') {
+          if (region.type === 'element' && getFirstClass(region) === 'fgd-te') {
             enhanceChildren(region.children, isCss, isHtmlJsx, isJs, isTs, isJsx);
           }
         }
@@ -744,7 +744,7 @@ function enhanceChildren(
     } else if (firstClass === 'pl-k') {
       const text = getShallowTextContent(child);
       if (text && isSymbolicPunctuation(text)) {
-        addClass(child, 'di-pu');
+        addClass(child, 'fgd-pu');
       }
     }
 
@@ -769,26 +769,26 @@ function enhanceChildren(
     // `<Comp>{children}</Comp>` are not tagged.
     if (isJsx && jsxExpressionDepth > 0 && htmlInsideTag) {
       if (firstClass === 'pl-smi' || firstClass === 'pl-v') {
-        addClass(child, 'di-jv');
+        addClass(child, 'fgd-jv');
       } else if (firstClass === 'pl-c1' && index > 0) {
         const prev = children[index - 1];
         if (prev.type === 'text' && prev.value.endsWith('.')) {
-          addClass(child, 'di-jv');
+          addClass(child, 'fgd-jv');
         }
       }
     }
 
     // ── JS object property string: pl-s followed by text starting with `:` ──
-    // String keys (e.g. `'aria-label': value`) get the dedicated `di-op` class plus
-    // `di-ps` for the string-shape detail. Inside JSX expressions, also add `di-jv`
+    // String keys (e.g. `'aria-label': value`) get the dedicated `fgd-op` class plus
+    // `fgd-ps` for the string-shape detail. Inside JSX expressions, also add `fgd-jv`
     // so themes that style JSX variables can include string keys.
     if (isJs && firstClass === 'pl-s') {
       const next = children[index + 1];
       if (next && next.type === 'text' && startsWithColon(next.value)) {
-        addClass(child, 'di-op');
-        addClass(child, 'di-ps');
+        addClass(child, 'fgd-op');
+        addClass(child, 'fgd-ps');
         if (isJsx && jsxExpressionDepth > 0 && htmlInsideTag) {
-          addClass(child, 'di-jv');
+          addClass(child, 'fgd-jv');
         }
       }
     }
@@ -799,13 +799,13 @@ function enhanceChildren(
       if (firstClass && CSS_ATTR_SELECTOR_CLASSES.has(firstClass) && index > 0) {
         const prev = children[index - 1];
         if (prev.type === 'text' && prev.value.endsWith('[')) {
-          addClass(child, 'di-da');
+          addClass(child, 'fgd-da');
         }
       }
 
       // CSS property name / value classification based on : position
       if (firstClass === 'pl-c1' && cssInsideBlock && !cssInsideBracket) {
-        addClass(child, cssAfterColon ? 'di-cv' : 'di-cp');
+        addClass(child, cssAfterColon ? 'fgd-cv' : 'fgd-cp');
       }
     }
 
@@ -813,12 +813,12 @@ function enhanceChildren(
     if (isHtmlJsx && htmlInsideTag) {
       // Attribute key: pl-e inside a tag
       if (firstClass === 'pl-e') {
-        addClass(child, 'di-ak');
+        addClass(child, 'fgd-ak');
       }
 
       // Attribute equals: pl-k span containing =
       if (firstClass === 'pl-k' && getShallowTextContent(child) === '=' && hadPrecedingSpan) {
-        addClass(child, 'di-ae');
+        addClass(child, 'fgd-ae');
         const nextChild = children[index + 1];
         if (
           nextChild &&
@@ -826,7 +826,7 @@ function enhanceChildren(
           nextChild.tagName === 'span' &&
           getFirstClass(nextChild) === 'pl-s'
         ) {
-          addClass(nextChild, 'di-av');
+          addClass(nextChild, 'fgd-av');
         }
       }
     }
@@ -842,14 +842,14 @@ function enhanceChildren(
         if (prev.value.endsWith('<') || prev.value.endsWith('</')) {
           const text = getShallowTextContent(child);
           if (!text || !BUILT_IN_TYPES.has(text)) {
-            addClass(child, 'di-jsx');
+            addClass(child, 'fgd-jsx');
           }
         }
       }
 
       // Standalone closing: pl-k("</") followed by pl-smi or pl-c1
       // Normalize the token shape to match the text-bracket pattern:
-      // - pl-smi JSX component (PascalCase) → pl-c1 + di-jsx
+      // - pl-smi JSX component (PascalCase) → pl-c1 + fgd-jsx
       // - pl-smi HTML element (lowercase) → pl-ent
       // - Remove pl-k from the adjacent bracket spans
       if (
@@ -869,7 +869,7 @@ function enhanceChildren(
           getShallowTextContent(closeBracket) === '>';
 
         if (firstClass === 'pl-c1') {
-          addClass(child, 'di-jsx');
+          addClass(child, 'fgd-jsx');
         } else {
           const tagText = getShallowTextContent(child);
           const isComponent =
@@ -878,9 +878,9 @@ function enhanceChildren(
             tagText[0] !== tagText[0].toLowerCase();
 
           if (isComponent) {
-            // JSX component: pl-smi → pl-c1 + di-jsx
+            // JSX component: pl-smi → pl-c1 + fgd-jsx
             replaceClass(child, 'pl-smi', 'pl-c1');
-            addClass(child, 'di-jsx');
+            addClass(child, 'fgd-jsx');
           } else {
             // HTML element: pl-smi → pl-ent
             replaceClass(child, 'pl-smi', 'pl-ent');
@@ -901,7 +901,7 @@ function enhanceChildren(
 }
 
 /**
- * Extends a syntax-highlighted HAST tree with additional `di-*` CSS classes
+ * Extends a syntax-highlighted HAST tree with additional `fgd-*` CSS classes
  * for fine-grained styling control. All extensions are **additive** — existing
  * `pl-*` classes from starry-night are never removed.
  *

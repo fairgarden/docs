@@ -483,7 +483,7 @@ export function registerPeer<TValue>(
     throw /* minify-error */ new Error(
       `coordinatePreference: peer '${peerId}' is already registered on channel '${channelKey}'. ` +
         'Each peer must have a unique id within a channel. ' +
-        'See https://mui.com/r/docs-infra-coordinate-preference for more info.',
+        'See https://github.com/fairgarden/docs/blob/main/docs/app/lib/hooks/use-coordinated/page.mdx for more info.',
     );
   }
   const peer: RegisteredPeer<TValue> = {
@@ -549,7 +549,7 @@ export function registerPeer<TValue>(
           callback(barrier.target);
         } catch (err) {
           console.error(
-            `[docs-infra/coordinatePreference] onSiblingAnnounce on register for peer ` +
+            `[fairgarden-docs/coordinatePreference] onSiblingAnnounce on register for peer ` +
               `'${peerId}' on channel '${channelKey}' threw:`,
             err,
           );
@@ -656,7 +656,7 @@ export function announceTarget<TValue, TPreload>(
     throw /* minify-error */ new Error(
       `coordinatePreference: peer '${peerId}' is not registered on channel '${channelKey}'. ` +
         'Call `registerPeer` before `announceTarget`. ' +
-        'See https://mui.com/r/docs-infra-coordinate-preference for more info.',
+        'See https://github.com/fairgarden/docs/blob/main/docs/app/lib/hooks/use-coordinated/page.mdx for more info.',
     );
   }
   if (options.isOriginator || options.causesLayoutShift(target)) {
@@ -729,7 +729,7 @@ function notifySiblings<TValue>(
       otherPeer.onSiblingAnnounce!(target);
     } catch (err) {
       console.error(
-        `[docs-infra/coordinatePreference] onSiblingAnnounce for peer '${otherPeer.id}' on channel ` +
+        `[fairgarden-docs/coordinatePreference] onSiblingAnnounce for peer '${otherPeer.id}' on channel ` +
           `'${channel.channelKey}' threw:`,
         err,
       );
@@ -784,7 +784,7 @@ function joinOrOpenBarrier<TValue, TPreload>(
         }
 
         console.warn(
-          `[docs-infra/coordinatePreference] Barrier on channel '${channel.channelKey}' ` +
+          `[fairgarden-docs/coordinatePreference] Barrier on channel '${channel.channelKey}' ` +
             `force-resolved after ${ultimateTimeoutMs}ms; ` +
             `${current.waiters.size} waiter(s) still pending. ` +
             'A peer likely unmounted or crashed mid-preload.',
@@ -884,7 +884,7 @@ function joinOrOpenBarrier<TValue, TPreload>(
         }
 
         console.error(
-          `[docs-infra/coordinatePreference] Preload for peer '${peer.id}' on channel ` +
+          `[fairgarden-docs/coordinatePreference] Preload for peer '${peer.id}' on channel ` +
             `'${channel.channelKey}' threw; treating as no-op. Error:`,
           err,
         );
@@ -992,7 +992,7 @@ function forceResolveBarrier<TValue>(channel: Channel<TValue>, barrierKey: strin
       waiter.onCommit(barrier.target, preloaded);
     } catch (err) {
       console.error(
-        `[docs-infra/coordinatePreference] onCommit for peer '${waiter.peerId}' on channel ` +
+        `[fairgarden-docs/coordinatePreference] onCommit for peer '${waiter.peerId}' on channel ` +
           `'${channel.channelKey}' threw:`,
         err,
       );
@@ -1013,7 +1013,7 @@ function forceResolveBarrier<TValue>(channel: Channel<TValue>, barrierKey: strin
           release();
         } catch (err) {
           console.error(
-            `[docs-infra/coordinatePreference] deferred lazy release on channel ` +
+            `[fairgarden-docs/coordinatePreference] deferred lazy release on channel ` +
               `'${channel.channelKey}' threw:`,
             err,
           );
@@ -1076,7 +1076,7 @@ function enqueueLazy<TValue, TPreload>(
       options.onCommit(target, preloaded);
     } catch (err) {
       console.error(
-        `[docs-infra/coordinatePreference] lazy-path onCommit for peer '${peer.id}' on channel ` +
+        `[fairgarden-docs/coordinatePreference] lazy-path onCommit for peer '${peer.id}' on channel ` +
           `'${channel.channelKey}' threw:`,
         err,
       );
@@ -1152,7 +1152,7 @@ function enqueueLazy<TValue, TPreload>(
         return userPreload(target, abort.signal) as TPreload | Promise<TPreload> | undefined;
       } catch (err) {
         console.error(
-          `[docs-infra/coordinatePreference] lazy-path preload for peer '${peer.id}' on channel ` +
+          `[fairgarden-docs/coordinatePreference] lazy-path preload for peer '${peer.id}' on channel ` +
             `'${channel.channelKey}' threw; treating as no-op. Error:`,
           err,
         );
@@ -1171,7 +1171,7 @@ function enqueueLazy<TValue, TPreload>(
       },
       (err) => {
         console.error(
-          `[docs-infra/coordinatePreference] lazy-path preload for peer '${peer.id}' on channel ` +
+          `[fairgarden-docs/coordinatePreference] lazy-path preload for peer '${peer.id}' on channel ` +
             `'${channel.channelKey}' threw; treating as no-op. Error:`,
           err,
         );

@@ -9,7 +9,7 @@ function getVersion() {
 }
 
 yargs()
-  .scriptName('docs-infra')
+  .scriptName('docs')
   .usage('$0 <command> [args]')
   .command(runValidate)
   .command(runBrowser)

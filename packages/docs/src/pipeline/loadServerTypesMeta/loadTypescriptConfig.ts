@@ -7,8 +7,8 @@ import ts from 'typescript';
 
 // Cache for loaded TypeScript configurations
 // Uses process object to persist across Turbopack module contexts
-const TSCONFIG_CACHE_KEY = Symbol.for('@mui/docs-infra/tsconfig-cache');
-const TSCONFIG_WATCHERS_KEY = Symbol.for('@mui/docs-infra/tsconfig-watchers');
+const TSCONFIG_CACHE_KEY = Symbol.for('@fairgarden/docs/tsconfig-cache');
+const TSCONFIG_WATCHERS_KEY = Symbol.for('@fairgarden/docs/tsconfig-watchers');
 
 interface ProcessWithTsConfigCache {
   [TSCONFIG_CACHE_KEY]?: Map<

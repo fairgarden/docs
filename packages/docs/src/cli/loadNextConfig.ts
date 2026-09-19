@@ -80,7 +80,7 @@ function extractUseVisibleDescriptionFromRemarkPlugins(
 }
 
 /**
- * Extracts docs-infra options (ordering, descriptionReplacements, socketDir,
+ * Extracts FairGarden Docs options (ordering, descriptionReplacements, socketDir,
  * useVisibleDescription) from loader options in a single pass.
  */
 function extractOptionsFromLoaderEntries(
@@ -127,7 +127,7 @@ function extractOptionsFromLoaderEntries(
 }
 
 /**
- * Searches turbopack rules for docs-infra options (ordering,
+ * Searches turbopack rules for FairGarden Docs options (ordering,
  * descriptionReplacements, socketDir, useVisibleDescription, cacheDir).
  *
  * Exported for tests.
@@ -197,7 +197,7 @@ function callWebpackSafely(config: any): any {
           isServer,
           nextRuntime: isServer ? 'nodejs' : undefined,
           dev: false,
-          buildId: 'docs-infra-validate',
+          buildId: 'fairgarden-docs-validate',
           config: { env: {} },
           webpack: () => ({}),
         }),
@@ -225,7 +225,7 @@ function callWebpackSafely(config: any): any {
 }
 
 /**
- * Calls the webpack function with a minimal config and extracts docs-infra
+ * Calls the webpack function with a minimal config and extracts FairGarden Docs
  * options (ordering, descriptionReplacements, socketDir, useVisibleDescription)
  * from the resulting rules.
  */
@@ -247,7 +247,7 @@ const NEXT_CONFIG_EXTENSIONS = ['.mjs', '.js', '.ts'];
 
 /**
  * Dynamically imports the next config from the given directory and extracts
- * docs-infra options needed by validate.
+ * FairGarden Docs options needed by validate.
  */
 /**
  * Walks Turbopack rules to collect demo patterns that opted into automatic
@@ -353,7 +353,7 @@ export function extractDemoPageRequirementsFromWebpackResult(result: any): DemoP
   return requirements;
 }
 
-export async function extractDocsInfraOptionsFromNextConfig(
+export async function extractLibOptionsFromNextConfig(
   dir: string,
 ): Promise<ExtractedNextConfigOptions> {
   const configPath = await findNextConfig(dir);
@@ -378,7 +378,7 @@ export async function extractDocsInfraOptionsFromNextConfig(
     // which usually presents to the user as `validate` doing nothing.
     const message = error instanceof Error ? error.message : String(error);
     console.warn(
-      `[docs-infra] Failed to load ${path.relative(dir, configPath)} for option extraction: ${message}`,
+      `[fairgarden-docs] Failed to load ${path.relative(dir, configPath)} for option extraction: ${message}`,
     );
     return {};
   }

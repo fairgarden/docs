@@ -126,7 +126,7 @@ export interface EnhanceCodeTypesOptions {
    * moduleLinkMap: {
    *   js: {
    *     '@fairgarden/docs/pipeline/enhanceCodeTypes': {
-   *       href: '/docs-infra/pipeline/enhanceCodeTypes',
+   *       href: '/lib/pipeline/enhanceCodeTypes',
    *       exports: {
    *         enhanceCodeTypes: { slug: '#enhance-code-types' },
    *       },

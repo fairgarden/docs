@@ -6,7 +6,7 @@ const INDEX_FILE_NAME = 'index.ts';
 /**
  * Converts a Turbopack-style glob (e.g. `./app/**\/demos/*\/index.ts`) to a
  * RegExp that matches absolute filesystem paths. Mirrors the logic used by
- * `withDocsInfra` for webpack rule generation. Pass-through when the input is
+ * `withFairGardenDocs` for webpack rule generation. Pass-through when the input is
  * already a RegExp (webpack-rule `test` regexes).
  */
 export function patternToRegExp(pattern: string | RegExp): RegExp {

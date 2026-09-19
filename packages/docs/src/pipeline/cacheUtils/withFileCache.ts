@@ -61,7 +61,7 @@ export async function withFileCache<TOrigin, TData>({
   let cacheEntry = await cacheEntryPromise;
   if (cacheEntry && cacheEntry.hash === contentHash) {
     if (DEBUG) {
-      console.warn(`[docs-infra cache] hit ${ref.namespace}/${ref.cacheKey}`);
+      console.warn(`[fairgarden-docs cache] hit ${ref.namespace}/${ref.cacheKey}`);
     }
     return cacheEntry.data;
   }
@@ -74,7 +74,7 @@ export async function withFileCache<TOrigin, TData>({
   cacheEntry = null;
   if (DEBUG && wasStale) {
     console.warn(
-      `[docs-infra cache] stale ${ref.namespace}/${ref.cacheKey} (hash mismatch, recomputing)`,
+      `[fairgarden-docs cache] stale ${ref.namespace}/${ref.cacheKey} (hash mismatch, recomputing)`,
     );
   }
 
@@ -83,7 +83,7 @@ export async function withFileCache<TOrigin, TData>({
   try {
     await saveFileCacheEntry(ref, { hash: contentHash, data });
     if (DEBUG) {
-      console.warn(`[docs-infra cache] miss → wrote ${ref.namespace}/${ref.cacheKey}`);
+      console.warn(`[fairgarden-docs cache] miss → wrote ${ref.namespace}/${ref.cacheKey}`);
     }
   } catch (error) {
     // Best-effort: any save failure — IO, the resolveCachePath traversal guard, or a serialization
@@ -91,7 +91,10 @@ export async function withFileCache<TOrigin, TData>({
     // fail a build; the computed result is returned regardless. The fail-fast writers (syncPageIndex
     // and syncTypes, via saveFileCache) surface these instead. DEBUG logs them here.
     if (DEBUG) {
-      console.warn(`[docs-infra cache] write failed for ${ref.namespace}/${ref.cacheKey}:`, error);
+      console.warn(
+        `[fairgarden-docs cache] write failed for ${ref.namespace}/${ref.cacheKey}:`,
+        error,
+      );
     }
   }
 

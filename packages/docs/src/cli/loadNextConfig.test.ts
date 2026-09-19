@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { NextConfig } from 'next';
-import { withDocsInfra } from '../withDocsInfra/withDocsInfra';
+import { withFairGardenDocs } from '../withFairGardenDocs/withFairGardenDocs';
 import {
   extractDemoPageRequirementsFromTurbopack,
   extractDemoPageRequirementsFromWebpackResult,
@@ -26,7 +26,7 @@ const mockWebpackOptions = {
 
 describe('extractDemoPageRequirementsFromTurbopack', () => {
   it('collects the demo index pattern when requireDemoPage is set', () => {
-    const config = withDocsInfra({ requireDemoPage: true })({});
+    const config = withFairGardenDocs({ requireDemoPage: true })({});
     const patterns = extractDemoPageRequirementsFromTurbopack(config).map((entry) => entry.pattern);
 
     expect(patterns).toContain('./app/**/demos/*/index.ts');
@@ -35,7 +35,7 @@ describe('extractDemoPageRequirementsFromTurbopack', () => {
   });
 
   it('includes additional demo index patterns', () => {
-    const config = withDocsInfra({
+    const config = withFairGardenDocs({
       requireDemoPage: true,
       additionalDemoPatterns: { index: ['./app/**/demos/*/demo-*/index.ts'] },
     })({});
@@ -46,14 +46,14 @@ describe('extractDemoPageRequirementsFromTurbopack', () => {
   });
 
   it('returns nothing when requireDemoPage is not set', () => {
-    const config = withDocsInfra()({});
+    const config = withFairGardenDocs()({});
     expect(extractDemoPageRequirementsFromTurbopack(config)).toEqual([]);
   });
 });
 
 describe('extractDemoPageRequirementsFromWebpackResult', () => {
   it('collects the demo index test regex when requireDemoPage is set', () => {
-    const config = withDocsInfra({ requireDemoPage: true })({});
+    const config = withFairGardenDocs({ requireDemoPage: true })({});
     const result = config.webpack!({ module: { rules: [] } }, mockWebpackOptions);
     const requirements = extractDemoPageRequirementsFromWebpackResult(result);
 
@@ -71,7 +71,7 @@ describe('extractDemoPageRequirementsFromWebpackResult', () => {
   });
 
   it('returns nothing when requireDemoPage is not set', () => {
-    const config = withDocsInfra()({});
+    const config = withFairGardenDocs()({});
     const result = config.webpack!({ module: { rules: [] } }, mockWebpackOptions);
     expect(extractDemoPageRequirementsFromWebpackResult(result)).toEqual([]);
   });
@@ -79,12 +79,12 @@ describe('extractDemoPageRequirementsFromWebpackResult', () => {
 
 describe('extractOptionsFromTurbopack', () => {
   it('reads cacheDir from the sitemap loader options', () => {
-    const config = withDocsInfra({ cacheDir: '/custom/cache' })({});
+    const config = withFairGardenDocs({ cacheDir: '/custom/cache' })({});
     expect(extractOptionsFromTurbopack(config).cacheDir).toBe('/custom/cache');
   });
 
-  it('defaults cacheDir to .next/cache/docs-infra', () => {
-    const config = withDocsInfra()({});
-    expect(extractOptionsFromTurbopack(config).cacheDir).toBe('.next/cache/docs-infra');
+  it('defaults cacheDir to .next/cache/fairgarden-docs', () => {
+    const config = withFairGardenDocs()({});
+    expect(extractOptionsFromTurbopack(config).cacheDir).toBe('.next/cache/fairgarden-docs');
   });
 });

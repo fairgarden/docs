@@ -22,7 +22,7 @@ describe('isServerOnlyModule', () => {
 
   it('does not flag client-safe packages', () => {
     expect(isServerOnlyModule('react')).toBe(false);
-    expect(isServerOnlyModule('@mui/material')).toBe(false);
+    expect(isServerOnlyModule('@base-ui/react')).toBe(false);
     expect(isServerOnlyModule('lodash')).toBe(false);
     // Subpath of a regular package — only exact built-in matches are flagged.
     expect(isServerOnlyModule('some-pkg/path')).toBe(false);
@@ -33,7 +33,7 @@ describe('findServerOnlyExternals', () => {
   it('returns an empty list when externals are client-safe', () => {
     const externals: Externals = {
       react: [{ name: 'React', type: 'default', isType: false }],
-      '@mui/material': [{ name: 'Button', type: 'named', isType: false }],
+      '@base-ui/react': [{ name: 'Button', type: 'named', isType: false }],
     };
     expect(findServerOnlyExternals(externals)).toEqual([]);
   });

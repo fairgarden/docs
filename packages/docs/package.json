@@ -48,7 +48,7 @@
     "./useType": "./src/useType/index.ts",
     "./useTypes": "./src/useTypes/index.ts",
     "./useUrlHashState": "./src/useUrlHashState/index.ts",
-    "./withDocsInfra": "./src/withDocsInfra/index.ts",
+    "./withFairGardenDocs": "./src/withFairGardenDocs/index.ts",
     "./pipeline/enhanceCodeEmphasis": "./src/pipeline/enhanceCodeEmphasis/index.ts",
     "./pipeline/enhanceCodeInline": "./src/pipeline/enhanceCodeInline/index.ts",
     "./pipeline/enhanceCodeTypes": "./src/pipeline/enhanceCodeTypes/index.ts",

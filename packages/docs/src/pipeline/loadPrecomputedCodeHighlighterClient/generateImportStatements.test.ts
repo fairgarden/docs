@@ -18,15 +18,15 @@ describe('generateImportStatements', () => {
 
   it('should generate import statements for named imports', () => {
     const externals: Externals = {
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named', isType: false },
-        { name: 'TextField', type: 'named', isType: false },
+        { name: 'Input', type: 'named', isType: false },
       ],
     };
 
     const result = generateImportStatements(externals);
 
-    expect(result).toContain("import { Button, TextField } from '@mui/material';");
+    expect(result).toContain("import { Button, Input } from '@base-ui/react';");
     expect(result).toHaveLength(1);
   });
 

@@ -4,7 +4,7 @@ import type { SitemapSection } from '../../createSitemap/types';
 
 /**
  * Converts a path segment to a title
- * e.g., "docs-infra" -> "Docs Infra", "components" -> "Components"
+ * e.g., "user-helpers" -> "User Helpers", "components" -> "Components"
  */
 export function pathSegmentToTitle(segment: string): string {
   return segment
@@ -34,7 +34,7 @@ export function stripTitleMarkdown(hierarchy: HeadingHierarchy): Record<string, 
 
 /**
  * Extracts prefix and title from an import path
- * e.g., "/path/to/app/docs-infra/components/page.mdx" -> { prefix: "/docs-infra/components/", title: "Docs Infra Components" }
+ * e.g., "/path/to/app/lib/components/page.mdx" -> { prefix: "/lib/components/", title: "Lib Components" }
  */
 export function extractPrefixAndTitle(
   absolutePath: string,

@@ -68,7 +68,7 @@ const report = (metric: Metric | CustomMetric) => {
 
   window.parent.postMessage(
     {
-      source: 'docs-infra:bench',
+      source: 'fairgarden-docs:bench',
       type: 'web-vitals',
       metric: {
         name: metric.name,

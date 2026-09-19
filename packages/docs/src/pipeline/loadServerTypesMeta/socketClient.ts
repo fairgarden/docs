@@ -21,7 +21,7 @@ const isWindows = process.platform === 'win32';
 
 /**
  * Short, stable hash of the current project directory. Used to scope shared
- * temp directories (CI runners, system tmp) so concurrent docs-infra processes
+ * temp directories (CI runners, system tmp) so concurrent FairGarden Docs processes
  * from different projects don't collide on the same socket/lock files.
  */
 const projectHash = createHash('sha256').update(process.cwd()).digest('hex').slice(0, 8);
@@ -45,7 +45,7 @@ function getDefaultSocketDir(): string {
  * An explicit `socketDir` is always used as-is (assumed to be project-scoped,
  * e.g. inside `.next/`). When no `socketDir` is given, shared temp directories
  * (CI runner temp or system tmp) are namespaced with a short hash of the project
- * directory so concurrent docs-infra processes from different projects don't
+ * directory so concurrent FairGarden Docs processes from different projects don't
  * collide on the same socket/lock files.
  * @param socketDir - Optional custom directory for socket files
  */
@@ -53,7 +53,7 @@ function getEffectiveSocketDir(socketDir?: string): string {
   if (socketDir) {
     return socketDir;
   }
-  return `${getDefaultSocketDir()}/mui-docs-infra-${projectHash}`;
+  return `${getDefaultSocketDir()}/fairgarden-docs-${projectHash}`;
 }
 
 /**

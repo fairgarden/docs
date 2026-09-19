@@ -107,7 +107,7 @@ export function useDemoController(options: UseDemoControllerOptions = {}): UseDe
     if (!crossTabSync || typeof window === 'undefined') {
       return null;
     }
-    return `mui-docs-infra:demo-controller:${window.location.pathname}\u0000${url ?? ''}`;
+    return `fairgarden-docs:demo-controller:${window.location.pathname}\u0000${url ?? ''}`;
   }, [crossTabSync, url]);
   const [code, setCode] = useCrossTabState<ControlledCode | undefined>(syncChannel, undefined);
   // Build errors (transpile/CSS failures) and render errors (the entry throwing) live

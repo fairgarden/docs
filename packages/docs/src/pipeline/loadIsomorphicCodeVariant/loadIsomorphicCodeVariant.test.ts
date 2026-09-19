@@ -1561,7 +1561,7 @@ describe('loadIsomorphicCodeVariant', () => {
         source: 'const main = true;',
         externals: {
           react: [{ name: 'React', type: 'default' }],
-          '@mui/material': [{ name: 'Button', type: 'named' }],
+          '@base-ui/react': [{ name: 'Button', type: 'named' }],
           lodash: [{ name: 'map', type: 'named' }],
         },
       });
@@ -1577,11 +1577,11 @@ describe('loadIsomorphicCodeVariant', () => {
       expect(result.code.source).toBe('const main = true;');
       expect(result.externals).toEqual({
         react: [{ name: 'React', type: 'default' }],
-        '@mui/material': [{ name: 'Button', type: 'named' }],
+        '@base-ui/react': [{ name: 'Button', type: 'named' }],
         lodash: [{ name: 'map', type: 'named' }],
       });
       // Verify that externals array is set on the code object
-      expect(result.code.externals).toEqual(['react', '@mui/material', 'lodash']);
+      expect(result.code.externals).toEqual(['react', '@base-ui/react', 'lodash']);
     });
 
     it('should combine externals from main file and extra files', async () => {
@@ -1600,7 +1600,7 @@ describe('loadIsomorphicCodeVariant', () => {
             source: 'const main = true;',
             externals: {
               react: [{ name: 'React', type: 'default' }],
-              '@mui/material': [{ name: 'Button', type: 'named' }],
+              '@base-ui/react': [{ name: 'Button', type: 'named' }],
             },
           });
         }
@@ -1627,12 +1627,12 @@ describe('loadIsomorphicCodeVariant', () => {
       expect(result.code.source).toBe('const main = true;');
       expect(result.externals).toEqual({
         react: [{ name: 'React', type: 'default' }],
-        '@mui/material': [{ name: 'Button', type: 'named' }],
+        '@base-ui/react': [{ name: 'Button', type: 'named' }],
         lodash: [{ name: 'map', type: 'named' }],
         axios: [{ name: 'axios', type: 'default' }],
       });
       // Verify that externals array is set on the code object
-      expect(result.code.externals).toEqual(['react', '@mui/material', 'lodash', 'axios']);
+      expect(result.code.externals).toEqual(['react', '@base-ui/react', 'lodash', 'axios']);
     });
 
     it('should merge different imports from same external modules', async () => {
@@ -1651,7 +1651,7 @@ describe('loadIsomorphicCodeVariant', () => {
             source: 'const main = true;',
             externals: {
               react: [{ name: 'React', type: 'default' }],
-              '@mui/material': [{ name: 'Button', type: 'named' }],
+              '@base-ui/react': [{ name: 'Button', type: 'named' }],
               lodash: [{ name: 'map', type: 'named' }],
             },
           });
@@ -1664,10 +1664,10 @@ describe('loadIsomorphicCodeVariant', () => {
                 { name: 'useState', type: 'named' },
                 { name: 'useEffect', type: 'named' },
               ], // Different imports from react
-              '@mui/material': [
-                { name: 'TextField', type: 'named' },
-                { name: 'Box', type: 'named' },
-              ], // Different imports from @mui/material
+              '@base-ui/react': [
+                { name: 'Input', type: 'named' },
+                { name: 'Field', type: 'named' },
+              ], // Different imports from @base-ui/react
               axios: [{ name: 'axios', type: 'default' }], // New module
             },
           });
@@ -1686,7 +1686,7 @@ describe('loadIsomorphicCodeVariant', () => {
       expect(result.code.source).toBe('const main = true;');
       // Should merge externals properly, combining all imports from each module:
       // - react: default import from main + named imports from helper
-      // - @mui/material: Button from main + TextField, Box from helper
+      // - @base-ui/react: Button from main + Input, Field from helper
       // - lodash: only from main
       // - axios: only from helper
       expect(result.externals).toEqual({
@@ -1695,16 +1695,16 @@ describe('loadIsomorphicCodeVariant', () => {
           { name: 'useState', type: 'named' },
           { name: 'useEffect', type: 'named' },
         ],
-        '@mui/material': [
+        '@base-ui/react': [
           { name: 'Button', type: 'named' },
-          { name: 'TextField', type: 'named' },
-          { name: 'Box', type: 'named' },
+          { name: 'Input', type: 'named' },
+          { name: 'Field', type: 'named' },
         ],
         lodash: [{ name: 'map', type: 'named' }],
         axios: [{ name: 'axios', type: 'default' }],
       });
       // Verify that externals array is set on the code object
-      expect(result.code.externals).toEqual(['react', '@mui/material', 'lodash', 'axios']);
+      expect(result.code.externals).toEqual(['react', '@base-ui/react', 'lodash', 'axios']);
     });
 
     it('should handle URL-only loadIsomorphicCodeVariant call and return externals correctly', async () => {
@@ -1775,16 +1775,16 @@ export default function CheckboxBasic() {
       mockLoadSource.mockResolvedValue({
         source: `
 import React from 'react';
-import { Button as MuiButton } from '@mui/material';
-import type { ButtonProps } from '@mui/material';
+import { Button as BaseButton } from '@base-ui/react';
+import type { ButtonProps } from '@base-ui/react';
 
 export default function Button(props: ButtonProps) {
-  return <MuiButton {...props}>Click me</MuiButton>;
+  return <BaseButton {...props}>Click me</BaseButton>;
 }
         `,
         externals: {
           react: [{ name: 'React', type: 'default' }],
-          '@mui/material': [
+          '@base-ui/react': [
             { name: 'Button', type: 'named' },
             { name: 'ButtonProps', type: 'named', isType: true },
           ],
@@ -1813,14 +1813,14 @@ export default function Button(props: ButtonProps) {
       // Should return externals from loadSource including isType flags
       expect(result.externals).toEqual({
         react: [{ name: 'React', type: 'default' }],
-        '@mui/material': [
+        '@base-ui/react': [
           { name: 'Button', type: 'named' },
           { name: 'ButtonProps', type: 'named', isType: true },
         ],
       });
 
       // Should set externals array on code object
-      expect(result.code.externals).toEqual(['react', '@mui/material']);
+      expect(result.code.externals).toEqual(['react', '@base-ui/react']);
 
       // Should create basic variant with fileName from URL
       expect(result.code.fileName).toBe('Button.tsx');
@@ -1924,7 +1924,7 @@ export default function Button(props: ButtonProps) {
                 { name: 'FC', type: 'named', isType: true }, // type import
                 { name: 'ReactNode', type: 'named', isType: true }, // type import
               ],
-              '@mui/material': [
+              '@base-ui/react': [
                 { name: 'Button', type: 'named' }, // runtime import
                 { name: 'ButtonProps', type: 'named', isType: true }, // type import
               ],
@@ -1952,9 +1952,9 @@ export default function Button(props: ButtonProps) {
               react: [
                 { name: 'useEffect', type: 'named' }, // runtime import
               ],
-              '@mui/material': [
-                { name: 'TextField', type: 'named' }, // runtime import
-                { name: 'TextFieldProps', type: 'named', isType: true }, // type import
+              '@base-ui/react': [
+                { name: 'Input', type: 'named' }, // runtime import
+                { name: 'InputProps', type: 'named', isType: true }, // type import
               ],
             },
           });
@@ -1982,11 +1982,11 @@ export default function Button(props: ButtonProps) {
           { name: 'useState', type: 'named' }, // no isType flag (runtime)
           { name: 'useEffect', type: 'named' }, // no isType flag (runtime)
         ],
-        '@mui/material': [
+        '@base-ui/react': [
           { name: 'Button', type: 'named' }, // no isType flag (runtime)
           { name: 'ButtonProps', type: 'named', isType: true },
-          { name: 'TextField', type: 'named' }, // no isType flag (runtime)
-          { name: 'TextFieldProps', type: 'named', isType: true },
+          { name: 'Input', type: 'named' }, // no isType flag (runtime)
+          { name: 'InputProps', type: 'named', isType: true },
         ],
         typescript: [
           { name: 'TSConfig', type: 'named', isType: true }, // type-only module
@@ -1994,7 +1994,7 @@ export default function Button(props: ButtonProps) {
       });
 
       // Verify that externals array is set on the code object
-      expect(result.code.externals).toEqual(['react', '@mui/material', 'typescript']);
+      expect(result.code.externals).toEqual(['react', '@base-ui/react', 'typescript']);
     });
   });
 

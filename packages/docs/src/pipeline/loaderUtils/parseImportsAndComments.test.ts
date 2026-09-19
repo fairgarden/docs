@@ -120,7 +120,7 @@ describe('parseImportsAndComments', () => {
   it('should ignore non-relative imports', async () => {
     const code = `
       import React from 'react';
-      import { Button } from '@mui/material';
+      import { Button } from '@scope/design';
       import Component from './Component';
     `;
     const filePath = '/src/demo.ts';
@@ -139,7 +139,7 @@ describe('parseImportsAndComments', () => {
           names: [{ name: 'React', type: 'default' }],
           positions: [{ start: 25, end: 32 }],
         },
-        '@mui/material': {
+        '@scope/design': {
           names: [{ name: 'Button', type: 'named' }],
           positions: [{ start: 63, end: 78 }],
         },
@@ -436,8 +436,8 @@ describe('parseImportsAndComments', () => {
       const code = `
         import type { ComponentType, ReactNode } from 'react';
         import React, { useState, useEffect } from 'react';
-        import type { ButtonProps } from '@mui/material';
-        import { Button, TextField } from '@mui/material';
+        import type { ButtonProps } from '@scope/design';
+        import { Button, TextField } from '@scope/design';
         import type * as Types from './types';
         import * as Utils from './utils';
       `;
@@ -453,7 +453,7 @@ describe('parseImportsAndComments', () => {
         { name: 'useEffect', type: 'named' },
       ]);
 
-      expect(result.externals['@mui/material'].names).toEqual([
+      expect(result.externals['@scope/design'].names).toEqual([
         { name: 'ButtonProps', type: 'named', isType: true },
         { name: 'Button', type: 'named' },
         { name: 'TextField', type: 'named' },
@@ -489,8 +489,8 @@ describe('parseImportsAndComments', () => {
         import { useState } from 'react';
         import React from 'react';
         import { useState, useEffect } from 'react';
-        import { Button } from '@mui/material';
-        import { Button, TextField } from '@mui/material';
+        import { Button } from '@scope/design';
+        import { Button, TextField } from '@scope/design';
       `;
       const filePath = '/src/demo.ts';
       const result = parseImportsAndComments(code, filePath);
@@ -498,7 +498,7 @@ describe('parseImportsAndComments', () => {
       // parseImportsAndComments should handle the duplicates and produce a consolidated structure
       // The exact behavior depends on implementation, but it should not crash
       expect(result.externals.react).toBeDefined();
-      expect(result.externals['@mui/material']).toBeDefined();
+      expect(result.externals['@scope/design']).toBeDefined();
 
       // Should contain all the unique imports
       const reactNames = result.externals.react.names.map((n) => n.name);
@@ -506,7 +506,7 @@ describe('parseImportsAndComments', () => {
       expect(reactNames).toContain('useState');
       expect(reactNames).toContain('useEffect');
 
-      const muiNames = result.externals['@mui/material'].names.map((n) => n.name);
+      const muiNames = result.externals['@scope/design'].names.map((n) => n.name);
       expect(muiNames).toContain('Button');
       expect(muiNames).toContain('TextField');
     });
@@ -522,7 +522,7 @@ describe('parseImportsAndComments', () => {
           Button,
           // This is a comment
           TextField
-        } from '@mui/material';
+        } from '@scope/design';
       `;
       const filePath = '/src/demo.ts';
       const result = parseImportsAndComments(code, filePath);
@@ -534,7 +534,7 @@ describe('parseImportsAndComments', () => {
         { name: 'useEffect', type: 'named' },
       ]);
 
-      expect(result.externals['@mui/material'].names).toEqual([
+      expect(result.externals['@scope/design'].names).toEqual([
         { name: 'Button', type: 'named' },
         { name: 'TextField', type: 'named' },
       ]);
@@ -545,8 +545,8 @@ describe('parseImportsAndComments', () => {
       const code = `
         import type { FC, ReactNode, ComponentType } from 'react';
         import React, { useState, useEffect } from 'react';
-        import type { ButtonProps, TextFieldProps } from '@mui/material';
-        import { Button, TextField } from '@mui/material';
+        import type { ButtonProps, TextFieldProps } from '@scope/design';
+        import { Button, TextField } from '@scope/design';
         import type { } from './empty-types';
         import { } from './empty-runtime';
         import './side-effect.css';
@@ -577,21 +577,21 @@ describe('parseImportsAndComments', () => {
       expect(result.externals.react.names).toContainEqual({ name: 'useState', type: 'named' });
       expect(result.externals.react.names).toContainEqual({ name: 'useEffect', type: 'named' });
 
-      expect(result.externals['@mui/material'].names).toContainEqual({
+      expect(result.externals['@scope/design'].names).toContainEqual({
         name: 'ButtonProps',
         type: 'named',
         isType: true,
       });
-      expect(result.externals['@mui/material'].names).toContainEqual({
+      expect(result.externals['@scope/design'].names).toContainEqual({
         name: 'TextFieldProps',
         type: 'named',
         isType: true,
       });
-      expect(result.externals['@mui/material'].names).toContainEqual({
+      expect(result.externals['@scope/design'].names).toContainEqual({
         name: 'Button',
         type: 'named',
       });
-      expect(result.externals['@mui/material'].names).toContainEqual({
+      expect(result.externals['@scope/design'].names).toContainEqual({
         name: 'TextField',
         type: 'named',
       });
@@ -661,7 +661,7 @@ export default function CheckboxBasic() {
     it('should ignore imports in single-line comments', async () => {
       const code = `
         import React from 'react';
-        // import { Button } from '@mui/material';
+        // import { Button } from '@scope/design';
         // This is a comment with import './fake-module';
         const x = 1;
       `;
@@ -683,7 +683,7 @@ export default function CheckboxBasic() {
       const code = `
         import React from 'react';
         /*
-         * import { Button } from '@mui/material';
+         * import { Button } from '@scope/design';
          * import Component from './Component';
          */
         /* import './styles.css'; */
@@ -706,7 +706,7 @@ export default function CheckboxBasic() {
     it('should ignore imports in string literals', async () => {
       const code = `
         import React from 'react';
-        const fakeImport1 = "import { Button } from '@mui/material';";
+        const fakeImport1 = "import { Button } from '@scope/design';";
         const fakeImport2 = 'import Component from "./Component";';
         const fakeImport3 = "import './styles.css';";
       `;
@@ -727,7 +727,7 @@ export default function CheckboxBasic() {
     it('should ignore imports in template literals', async () => {
       const code = `
         import React from 'react';
-        const fakeImport1 = \`import { Button } from '@mui/material';\`;
+        const fakeImport1 = \`import { Button } from '@scope/design';\`;
         const fakeImport2 = \`
           import Component from "./Component";
           import './styles.css';
@@ -772,7 +772,7 @@ export default function CheckboxBasic() {
       const code = `
         import React from 'react';
         /* 
-         * This is a comment containing "import { Button } from '@mui/material';"
+         * This is a comment containing "import { Button } from '@scope/design';"
          * and also 'import Component from "./Component";'
          */
         // This comment has "import './styles.css';" in a string
@@ -799,8 +799,8 @@ export default function CheckboxBasic() {
     it('should handle mixed real and fake imports correctly', async () => {
       const code = `
         import React from 'react'; // Real import
-        // import { FakeButton } from '@mui/material'; - This is commented out
-        import { RealButton } from '@mui/material'; // Real import
+        // import { FakeButton } from '@scope/design'; - This is commented out
+        import { RealButton } from '@scope/design'; // Real import
         
         const fakeCode = \`
           import { TemplateButton } from '@mui/template'; // Fake import in template
@@ -830,7 +830,7 @@ export default function CheckboxBasic() {
             names: [{ name: 'React', type: 'default' }],
             positions: [{ start: 27, end: 34 }],
           },
-          '@mui/material': {
+          '@scope/design': {
             names: [{ name: 'RealButton', type: 'named' }],
             positions: [{ start: 165, end: 180 }],
           },
@@ -842,7 +842,7 @@ export default function CheckboxBasic() {
       const code = `
         import React from 'react';
         // This is a comment
-        import { Button } from '@mui/material';
+        import { Button } from '@scope/design';
         /* Multi-line comment */
         import Component from './Component';
         const str = "fake import";
@@ -869,7 +869,7 @@ export default function CheckboxBasic() {
             names: [{ name: 'React', type: 'default' }],
             positions: [{ start: 27, end: 34 }],
           },
-          '@mui/material': {
+          '@scope/design': {
             names: [{ name: 'Button', type: 'named' }],
             positions: [{ start: 96, end: 111 }],
           },
@@ -1671,7 +1671,7 @@ export default function CheckboxBasic() {
     it('should ignore imports inside triple backtick code blocks in MDX files', async () => {
       const code = `
         import React from 'react';
-        import { Button } from '@mui/material';
+        import { Button } from '@scope/design';
         
         # My Component Demo
         
@@ -1706,7 +1706,7 @@ export default function CheckboxBasic() {
             names: [{ name: 'React', type: 'default' }],
             positions: [{ start: 27, end: 34 }],
           },
-          '@mui/material': {
+          '@scope/design': {
             names: [{ name: 'Button', type: 'named' }],
             positions: [{ start: 67, end: 82 }],
           },
@@ -1763,7 +1763,7 @@ export default function CheckboxBasic() {
     it('should handle nested code blocks and complex MDX content', async () => {
       const code = `
         import React from 'react';
-        import { Typography } from '@mui/material';
+        import { Typography } from '@scope/design';
         
         # Demo Documentation
         
@@ -1821,7 +1821,7 @@ export default function CheckboxBasic() {
             names: [{ name: 'React', type: 'default' }],
             positions: [{ start: 27, end: 34 }],
           },
-          '@mui/material': {
+          '@scope/design': {
             names: [{ name: 'Typography', type: 'named' }],
             positions: [{ start: 71, end: 86 }],
           },
@@ -2608,7 +2608,7 @@ console.log('after');`);
   it('should parse imports and strip comments simultaneously', async () => {
     const code = `import React from 'react';
 // @eslint-ignore import-order
-import { Button } from '@mui/material';
+import { Button } from '@scope/design';
 import { Component } from './Component';
 // @ts-ignore missing types
 const x = 42;`;
@@ -2627,14 +2627,14 @@ const x = 42;`;
 
     expect(result.externals).toEqual({
       react: { names: [{ name: 'React', type: 'default' }], positions: [{ start: 18, end: 25 }] },
-      '@mui/material': {
+      '@scope/design': {
         names: [{ name: 'Button', type: 'named' }],
         positions: [{ start: 50, end: 65 }],
       },
     });
 
     expect(result.code).toBe(`import React from 'react';
-import { Button } from '@mui/material';
+import { Button } from '@scope/design';
 import { Component } from './Component';
 const x = 42;`);
 
@@ -2647,7 +2647,7 @@ const x = 42;`);
   it('should not return code or comments when no whitelist provided', async () => {
     const code = `import React from 'react';
 // @eslint-ignore import-order
-import { Button } from '@mui/material';`;
+import { Button } from '@scope/design';`;
 
     const result = parseImportsAndComments(code, '/src/test.tsx');
 
@@ -2655,7 +2655,7 @@ import { Button } from '@mui/material';`;
     expect(result.comments).toBeUndefined();
     expect(result.externals).toEqual({
       react: { names: [{ name: 'React', type: 'default' }], positions: [{ start: 18, end: 25 }] },
-      '@mui/material': {
+      '@scope/design': {
         names: [{ name: 'Button', type: 'named' }],
         positions: [{ start: 81, end: 96 }],
       },
@@ -2887,7 +2887,7 @@ console.log('codeB');`);
   it('should work with imports and notable comments together', async () => {
     const code = `import React from 'react';
 // @todo add better prop types
-import { Button } from '@mui/material';
+import { Button } from '@scope/design';
 // @fixme handle edge case
 import { Component } from './Component';`;
 
@@ -2906,14 +2906,14 @@ import { Component } from './Component';`;
 
     expect(result.externals).toEqual({
       react: { names: [{ name: 'React', type: 'default' }], positions: [{ start: 18, end: 25 }] },
-      '@mui/material': {
+      '@scope/design': {
         names: [{ name: 'Button', type: 'named' }],
         positions: [{ start: 50, end: 65 }],
       },
     });
 
     expect(result.code).toBe(`import React from 'react';
-import { Button } from '@mui/material';
+import { Button } from '@scope/design';
 import { Component } from './Component';`);
 
     // Only @todo comments should be collected
@@ -3359,14 +3359,14 @@ describe('Export-from statement parsing', () => {
   });
 
   it('should parse export-from from external packages', async () => {
-    const code = `export { Button } from '@mui/material';`;
+    const code = `export { Button } from '@scope/design';`;
     const filePath = '/src/index.ts';
     const result = parseImportsAndComments(code, filePath);
 
     expect(result).toEqual({
       relative: {},
       externals: {
-        '@mui/material': {
+        '@scope/design': {
           names: [{ name: 'Button', type: 'named' }],
           positions: [{ start: 23, end: 38 }],
         },
@@ -3378,7 +3378,7 @@ describe('Export-from statement parsing', () => {
     const code = `
       export { Button } from './Button';
       export { Input } from './Input';
-      export { Select } from '@mui/material';
+      export { Select } from '@scope/design';
     `;
     const filePath = '/src/index.ts';
     const result = parseImportsAndComments(code, filePath);
@@ -3397,7 +3397,7 @@ describe('Export-from statement parsing', () => {
         },
       },
       externals: {
-        '@mui/material': {
+        '@scope/design': {
           names: [{ name: 'Select', type: 'named' }],
           positions: [{ start: 110, end: 125 }],
         },

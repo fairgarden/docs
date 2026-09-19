@@ -1,10 +1,10 @@
-# MUI Infra Docs
+# FairGarden Docs
 
-This package contains the documentation for the MUI Infra project, which is responsible for the infrastructure and tooling used in the various MUI documentation sites and libraries.
+Build-time optimized documentation infrastructure for React and Next.js sites.
 
 [Read in Markdown](<./app/(shared)/page.mdx>)
 
-[Read in Browser](https://mui-internal.netlify.app/)
+[Read in Browser](https://docs.fairgarden.org/)
 
 For the most immersive experience, we recommend opening this documentation in VSCode, starting with this README and working deeper into the documentation by navigating through the links provided (ctrl + click). You should have [the MDX extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) installed to view the documentation properly.
 

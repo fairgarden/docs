@@ -16,9 +16,9 @@ import type { CreateTransformedFiles } from '../useCode/TransformEngine';
  * when a factory is actually invoked.
  */
 
-export const PRELOAD_KEY_LOAD_VARIANT = 'docs-infra/loadIsomorphicCodeVariant';
-export const PRELOAD_KEY_LOAD_FALLBACK = 'docs-infra/loadCodeFallback';
-export const PRELOAD_KEY_COMPUTE_DELTAS = 'docs-infra/computeHastDeltas';
+export const PRELOAD_KEY_LOAD_VARIANT = 'FairGardenDocs/loadIsomorphicCodeVariant';
+export const PRELOAD_KEY_LOAD_FALLBACK = 'FairGardenDocs/loadCodeFallback';
+export const PRELOAD_KEY_COMPUTE_DELTAS = 'FairGardenDocs/computeHastDeltas';
 
 export const loadVariantFactory = async (): Promise<LoadVariantFn> =>
   (await import('../pipeline/loadIsomorphicCodeVariant/loadIsomorphicCodeVariant'))
@@ -30,12 +30,12 @@ export const loadFallbackFactory = async (): Promise<LoadFallbackCodeFn> =>
 export const computeHastDeltasFactory = async (): Promise<ComputeHastDeltasFn> =>
   (await import('../pipeline/loadIsomorphicCodeVariant/computeHastDeltas')).computeHastDeltas;
 
-export const PRELOAD_KEY_EDITING = 'docs-infra/editingEngine';
+export const PRELOAD_KEY_EDITING = 'FairGardenDocs/editingEngine';
 
 export const editingEngineFactory = async (): Promise<EditingEngineModule> =>
   import('../useCode/EditingEngine');
 
-export const PRELOAD_KEY_TRANSFORM_ENGINE = 'docs-infra/transformEngine';
+export const PRELOAD_KEY_TRANSFORM_ENGINE = 'FairGardenDocs/transformEngine';
 
 export const transformEngineFactory = async (): Promise<CreateTransformedFiles> =>
   (await import('../useCode/TransformEngine')).createTransformedFiles;

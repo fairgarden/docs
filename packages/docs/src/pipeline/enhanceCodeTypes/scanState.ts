@@ -35,7 +35,7 @@ export type ScopeBinding =
  * Entry in the moduleLinkMap configuration.
  */
 export interface ModuleLinkMapEntry {
-  /** The page URL for this module (e.g., '/docs-infra/pipeline/enhanceCodeTypes'). */
+  /** The page URL for this module (e.g., '/lib/pipeline/enhanceCodeTypes'). */
   href: string;
   /** Per-module override for the anchor slug used by default/namespace imports. */
   defaultSlug?: string;

@@ -6,6 +6,6 @@ This package hosts the tools that help create the documentation.
 
 This is stored in the `docs` top-level directory.
 
-[Read in Markdown](../../docs/app/docs-infra/page.mdx)
+[Read in Markdown](../../docs/app/lib/page.mdx)
 
-[Read in Browser](https://mui-internal.netlify.app/docs-infra)
+[Read in Browser](https://docs.fairgarden.org/lib)

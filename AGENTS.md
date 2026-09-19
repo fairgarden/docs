@@ -67,7 +67,7 @@ packages/
 └── docs/                         # @fairgarden/docs — the published library
 
 docs/                             # Next.js site documenting the library
-└── app/docs-infra/               # the documentation pages themselves
+└── app/lib/               # the documentation pages themselves
 
 renovate/                         # Renovate presets this repo extends locally
 ```
@@ -151,9 +151,9 @@ fresh resolution.
 
 All commands are fast in this repository, but network issues or system load can cause delays. Always wait for completion.
 
-## Docs Infra Conventions
+## FairGarden Docs Conventions
 
-Follow additional instructions when working in the `@fairgarden/docs` (`packages/docs`) package or `docs/app/docs-infra` docs:
+Follow additional instructions when working in the `@fairgarden/docs` (`packages/docs`) package or `docs/app/lib` docs:
 
 ### Development Process
 
@@ -186,10 +186,10 @@ Follow additional instructions when working in the `@fairgarden/docs` (`packages
 
 ### Documentation & Examples
 
-- **4.1** Create documentation in `/docs/app/docs-infra` for all public functions using mdx files at `/docs/app/docs-infra/{functionName}/page.mdx`.
-- **4.2** Create examples of common use cases in `/docs/app/docs-infra/{type}/{functionName}/demos/{useCaseName}`. `type`, `functionName`, `useCaseName` should be lowercase and hyphenated. Types should be documented in `/docs/app/docs-infra/{functionName}/types.ts`.
-- **4.3** For demos follow the [recommended structure](docs/app/docs-infra/pipeline/load-precomputed-code-highlighter/page.mdx) and [best practices](docs/app/docs-infra/components/code-highlighter/page.mdx).
-- **4.4** For types follow the [recommended structure](docs/app/docs-infra/pipeline/load-precomputed-types/page.mdx).
+- **4.1** Create documentation in `/docs/app/lib` for all public functions using mdx files at `/docs/app/lib/{functionName}/page.mdx`.
+- **4.2** Create examples of common use cases in `/docs/app/lib/{type}/{functionName}/demos/{useCaseName}`. `type`, `functionName`, `useCaseName` should be lowercase and hyphenated. Types should be documented in `/docs/app/lib/{functionName}/types.ts`.
+- **4.3** For demos follow the [recommended structure](docs/app/lib/pipeline/load-precomputed-code-highlighter/page.mdx) and [best practices](docs/app/lib/components/code-highlighter/page.mdx).
+- **4.4** For types follow the [recommended structure](docs/app/lib/pipeline/load-precomputed-types/page.mdx).
 - **4.5** When looking for documentation, start at the `/README.md` and follow links inward.
 - **4.6** Avoid "breaking the 3rd wall" in code comments and documentation by referring to the instructions provided when working in this repository. Instead, focus on clear, concise explanations of the code itself.
 - **4.7** When writing code comments, use JSDoc style comments for all functions, but type definitions should be in TypeScript types. Avoid using JSDoc `@typedef` and `@param` tags for types. Use them only for descriptions.

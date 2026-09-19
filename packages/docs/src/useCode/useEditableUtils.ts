@@ -2,7 +2,7 @@
  * Pure DOM/text helpers extracted from useEditable.ts. None of these
  * touch React state or the hook's internal `state` object — they only
  * read from / mutate the DOM and the browser Selection. Kept in a
- * sibling file (per AGENTS.md docs-infra rule 2.3) so the main hook
+ * sibling file (per AGENTS.md FairGarden Docs rule 2.3) so the main hook
  * stays focused on lifecycle wiring and event handling.
  */
 

@@ -56,7 +56,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
                 "properties": {
                   "className": [
                     "pl-k",
-                    "di-pu",
+                    "fgd-pu",
                   ],
                 },
                 "tagName": "span",
@@ -208,7 +208,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
                 "properties": {
                   "className": [
                     "pl-k",
-                    "di-pu",
+                    "fgd-pu",
                   ],
                 },
                 "tagName": "span",
@@ -228,7 +228,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
                 "properties": {
                   "className": [
                     "pl-c1",
-                    "di-bt",
+                    "fgd-bt",
                   ],
                 },
                 "tagName": "span",
@@ -367,7 +367,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-k",
-                  "di-pu",
+                  "fgd-pu",
                 ],
               },
               "tagName": "span",
@@ -463,7 +463,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-k",
-                  "di-pu",
+                  "fgd-pu",
                 ],
               },
               "tagName": "span",
@@ -498,7 +498,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-k",
-                  "di-pu",
+                  "fgd-pu",
                 ],
               },
               "tagName": "span",
@@ -609,7 +609,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-k",
-                  "di-pu",
+                  "fgd-pu",
                 ],
               },
               "tagName": "span",
@@ -625,7 +625,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-smi",
-                  "di-jv",
+                  "fgd-jv",
                 ],
               },
               "tagName": "span",
@@ -832,7 +832,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-c1",
-                  "di-cp",
+                  "fgd-cp",
                 ],
               },
               "tagName": "span",
@@ -852,7 +852,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-c1",
-                  "di-cv",
+                  "fgd-cv",
                 ],
               },
               "tagName": "span",
@@ -960,7 +960,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-c1",
-                  "di-jsx",
+                  "fgd-jsx",
                 ],
               },
               "tagName": "span",
@@ -999,7 +999,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-c1",
-                  "di-jsx",
+                  "fgd-jsx",
                 ],
               },
               "tagName": "span",
@@ -1019,7 +1019,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-c1",
-                  "di-jsx",
+                  "fgd-jsx",
                 ],
               },
               "tagName": "span",
@@ -1058,7 +1058,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-c1",
-                  "di-jsx",
+                  "fgd-jsx",
                 ],
               },
               "tagName": "span",
@@ -1162,7 +1162,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-k",
-                  "di-pu",
+                  "fgd-pu",
                 ],
               },
               "tagName": "span",
@@ -1231,7 +1231,7 @@ exports[`highlightTypes > snapshot tests - precomputed output verification > sho
               "properties": {
                 "className": [
                   "pl-k",
-                  "di-pu",
+                  "fgd-pu",
                 ],
               },
               "tagName": "span",

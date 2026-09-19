@@ -3,7 +3,7 @@ import type { CommandModule } from 'yargs';
 import { $, which } from 'zx';
 import { existsSync } from 'node:fs';
 
-const CONTAINER_NAME = 'docs-infra-playwright';
+const CONTAINER_NAME = 'fairgarden-docs-playwright';
 
 type Args = {
   port: number;

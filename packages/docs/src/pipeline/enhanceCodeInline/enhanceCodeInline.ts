@@ -6,14 +6,14 @@ import { BUILT_IN_TYPES } from '../parseSource/extendSyntaxTokens';
 
 /**
  * Maps tag-name span classes to their wrapper class.
- * - pl-ent (HTML entity tag like div, span) → di-ht (HTML tag)
- * - pl-c1 (syntax constant like Box, Stack) → di-jt (JSX tag)
+ * - pl-ent (HTML entity tag like div, span) → fgd-ht (HTML tag)
+ * - pl-c1 (syntax constant like Box, Stack) → fgd-jt (JSX tag)
  *
- * When the element also has `di-jsx`, the wrapper is always `di-jt`.
+ * When the element also has `fgd-jsx`, the wrapper is always `fgd-jt`.
  */
 const TAG_NAME_CLASS_MAP: Record<string, string> = {
-  'pl-ent': 'di-ht',
-  'pl-c1': 'di-jt',
+  'pl-ent': 'fgd-ht',
+  'pl-c1': 'fgd-jt',
 };
 
 /**
@@ -29,7 +29,7 @@ const CLASS_RECLASSIFICATIONS: Record<string, Record<string, string>> = {
 
 /**
  * Returns the wrapper class for a tag-name element, or undefined if not a tag name.
- * If the element has `di-jsx`, always returns `di-jt` (JSX component tag).
+ * If the element has `fgd-jsx`, always returns `fgd-jt` (JSX component tag).
  */
 function getTagWrapperClass(element: Element): string | undefined {
   const className = element.properties?.className;
@@ -43,13 +43,13 @@ function getTagWrapperClass(element: Element): string | undefined {
       if (TAG_NAME_CLASS_MAP[cls] && !baseWrapper) {
         baseWrapper = TAG_NAME_CLASS_MAP[cls];
       }
-      if (cls === 'di-jsx') {
+      if (cls === 'fgd-jsx') {
         hasDiJsx = true;
       }
     }
   }
   if (hasDiJsx) {
-    return 'di-jt';
+    return 'fgd-jt';
   }
   return baseWrapper;
 }
@@ -110,8 +110,8 @@ function findClosingBracket(text: string): { position: number; suffix: string } 
  * Wraps HTML/JSX tag patterns in a wrapper span that groups the opening bracket,
  * tag-name span, and closing bracket into one element.
  *
- * - HTML tags (pl-ent) get `<span class="di-ht">` (HTML tag)
- * - JSX component tags (pl-c1 with di-jsx) get `<span class="di-jt">` (JSX tag)
+ * - HTML tags (pl-ent) get `<span class="fgd-ht">` (HTML tag)
+ * - JSX component tags (pl-c1 with fgd-jsx) get `<span class="fgd-jt">` (JSX tag)
  *
  * Expects the pattern: text(`<`) + span(tagName) + text(`>`)
  * where `extendSyntaxTokens` has already normalized bracket spans to text nodes.
@@ -274,17 +274,17 @@ function reclassifyTokens(children: ElementContent[]): void {
 
 /**
  * Reclassifies `pl-smi` and `pl-k` spans whose text is a built-in type keyword
- * (e.g. `string`, `number`, `void`) to `pl-c1 di-bt`.
+ * (e.g. `string`, `number`, `void`) to `pl-c1 fgd-bt`.
  *
  * Only applies to TypeScript-family languages, matching the contract in
- * `extendSyntaxTokens` which gates `di-bt` on `isTs`.
+ * `extendSyntaxTokens` which gates `fgd-bt` on `isTs`.
  *
  * Starry Night tokenizes standalone type keywords inconsistently when there is
  * no surrounding type context: most (`string`, `number`, …) become `pl-smi`
  * (identifier), while `void` becomes `pl-k` (keyword). In inline code this is
  * the common case — e.g. `` `string` `` — so we reclassify them to match the
  * output of `type x = string` (where starry-night produces `pl-c1`) and add
- * `di-bt` for semantic styling.
+ * `fgd-bt` for semantic styling.
  *
  * For `pl-k` tokens (like `void`), we only reclassify when the token is the
  * sole child of the code element to avoid mis-highlighting the unary `void`
@@ -314,7 +314,7 @@ function enhanceBuiltInTypes(children: ElementContent[]): void {
     const text = getShallowTextContent(child);
     if (text && BUILT_IN_TYPES.has(text)) {
       className[targetIndex] = 'pl-c1';
-      className.push('di-bt');
+      className.push('fgd-bt');
     }
   }
 }
@@ -324,8 +324,8 @@ function enhanceBuiltInTypes(children: ElementContent[]): void {
  *
  * 1. **Tag bracket wrapping**: Wraps HTML/JSX tag patterns (opening bracket,
  *    tag-name span, closing bracket) in a wrapper span. HTML tags (`pl-ent`)
- *    get `<span class="di-ht">`, JSX component tags (`pl-c1`) get
- *    `<span class="di-jt">`. The original `pl-*` spans are preserved
+ *    get `<span class="fgd-ht">`, JSX component tags (`pl-c1`) get
+ *    `<span class="fgd-jt">`. The original `pl-*` spans are preserved
  *    inside — no semantic information is destroyed.
  *
  * 2. **Token reclassification**: Corrects misidentified token classes,
@@ -333,13 +333,13 @@ function enhanceBuiltInTypes(children: ElementContent[]): void {
  *
  * 3. **Built-in type enhancement** (TypeScript only): Reclassifies standalone
  *    type keywords (`string`, `number`, `void`, etc.) from `pl-smi`/`pl-k`
- *    to `pl-c1 di-bt`, matching `extendSyntaxTokens` output in type context.
+ *    to `pl-c1 fgd-bt`, matching `extendSyntaxTokens` output in type context.
  *
  * Transforms patterns like:
  * `<code>&lt;<span class="pl-ent">div</span>&gt;</code>`
  *
  * Into:
- * `<code><span class="di-ht">&lt;<span class="pl-ent">div</span>&gt;</span></code>`
+ * `<code><span class="fgd-ht">&lt;<span class="pl-ent">div</span>&gt;</span></code>`
  *
  * **Important**: This plugin should run after syntax highlighting plugins
  * (like transformHtmlCodeInline) as it modifies the structure

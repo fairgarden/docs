@@ -24,7 +24,7 @@ function makeFrame(frameType: string | undefined, lineCount: number): Element {
 }
 
 function makeRoot(frames: Element[], data?: { focusedLines?: number }): Root {
-  // `focusedLines` is an augmented field on the docs-infra HastRoot data, not
+  // `focusedLines` is an augmented field on the FairGarden Docs HastRoot data, not
   // part of the base hast `RootData` — cast so the test can set it.
   return { type: 'root', children: frames, ...(data ? { data: data as Root['data'] } : {}) };
 }

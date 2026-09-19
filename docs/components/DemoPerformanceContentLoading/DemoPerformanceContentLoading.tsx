@@ -6,13 +6,13 @@ import { useCodeFallback } from '@fairgarden/docs/CodeHighlighter';
 import { hastToJsx } from '@fairgarden/docs/pipeline/hastUtils';
 import { generateFileSlug } from '@fairgarden/docs/pipeline/loaderUtils';
 import { Tabs } from '@/components/Tabs';
-import { CodeActionsMenu } from '../../app/docs-infra/components/code-highlighter/demos/CodeActionsMenu';
+import { CodeActionsMenu } from '../../app/lib/components/code-highlighter/demos/CodeActionsMenu';
 import {
   CodeBlockHeader,
   CodeBlockHeaderLabel,
-} from '../../app/docs-infra/components/code-highlighter/demos/CodeBlockHeader';
-import { CodeSource } from '../../app/docs-infra/components/code-highlighter/demos/CodeSource';
-import styles from '../../app/docs-infra/components/code-highlighter/demos/DemoContent.module.css';
+} from '../../app/lib/components/code-highlighter/demos/CodeBlockHeader';
+import { CodeSource } from '../../app/lib/components/code-highlighter/demos/CodeSource';
+import styles from '../../app/lib/components/code-highlighter/demos/DemoContent.module.css';
 import benchStyles from '../BenchViewer/BenchViewer.module.css';
 
 export function DemoPerformanceContentLoading(props: ContentLoadingProps<object>) {

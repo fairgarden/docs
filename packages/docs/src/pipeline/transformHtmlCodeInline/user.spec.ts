@@ -130,7 +130,7 @@ describe('transformHtmlCodeInline', () => {
 
     it('highlights bare object literals as expressions', async () => {
       // Inline JS object snippets are tokenized as expressions, not block statements,
-      // so keys get the `di-op` (object property) class.
+      // so keys get the `fgd-op` (object property) class.
       const input = '<code class="language-tsx">{ height: 400 }</code>';
 
       const output = await processHtml(input);
@@ -138,7 +138,7 @@ describe('transformHtmlCodeInline', () => {
       // The wrapping `(` and `)` should not appear in the output text.
       expect(getTextContent(output)).toBe('{ height: 400 }');
       // The key should be tagged as an object property.
-      expect(output).toContain('di-op');
+      expect(output).toContain('fgd-op');
     });
   });
 

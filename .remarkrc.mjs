@@ -4,12 +4,12 @@ export default createRemarkConfig({
   overrides: [
     {
       // TODO @dav-is: Fix duplicate headings in the types.md generation output and drop this override.
-      files: 'docs/app/docs-infra/pipeline/*/types.md',
+      files: 'docs/app/lib/pipeline/*/types.md',
       rules: { 'no-duplicate-headings': false },
     },
     {
       // TODO @dav-is: replace `[//]: # 'comment'` idiom with `<!-- comment -->` and drop these overrides.
-      files: 'docs/app/docs-infra/**',
+      files: 'docs/app/lib/**',
       rules: { 'no-empty-url': false, 'no-unused-definitions': false },
     },
     {

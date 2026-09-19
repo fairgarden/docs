@@ -71,7 +71,7 @@ export function BenchViewer({
         return; // our iframes are always same origin
       }
 
-      if (event.data?.source !== 'docs-infra:bench') {
+      if (event.data?.source !== 'fairgarden-docs:bench') {
         return;
       }
 

@@ -197,7 +197,7 @@ class WorkerThreadTypesProcessor implements TypesProcessor {
 // Use process global to ensure singleton persists across all Turbopack module contexts
 // In Turbopack dev mode, each compilation can have separate globalThis contexts,
 // but they all share the same Node.js process object
-const WORKER_MANAGER_KEY = Symbol.for('@mui/docs-infra/types-meta-worker-manager');
+const WORKER_MANAGER_KEY = Symbol.for('@fairgarden/docs/types-meta-worker-manager');
 
 interface ProcessWithWorkerManager {
   [WORKER_MANAGER_KEY]?: TypesProcessor;

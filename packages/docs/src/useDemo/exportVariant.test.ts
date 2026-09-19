@@ -464,7 +464,7 @@ describe('exportVariant', () => {
     it('should add externals as dependencies with latest version', () => {
       const variantWithExternals: VariantCode = {
         ...baseVariantCode,
-        externals: ['lodash', '@mui/material', 'axios'],
+        externals: ['lodash', '@base-ui/react', 'axios'],
       };
 
       const result = exportVariant(variantWithExternals);
@@ -475,7 +475,7 @@ describe('exportVariant', () => {
 
         // Should add externals as dependencies with 'latest' version
         expect(packageJson.dependencies.lodash).toBe('latest');
-        expect(packageJson.dependencies['@mui/material']).toBe('latest');
+        expect(packageJson.dependencies['@base-ui/react']).toBe('latest');
         expect(packageJson.dependencies.axios).toBe('latest');
 
         // Should preserve default dependencies
@@ -559,7 +559,7 @@ describe('exportVariant', () => {
     it('should handle externals with special characters and scoped packages', () => {
       const variantWithScopedExternals: VariantCode = {
         ...baseVariantCode,
-        externals: ['@mui/material', '@emotion/react', '@types/lodash', 'react-router-dom'],
+        externals: ['@base-ui/react', '@emotion/react', '@types/lodash', 'react-router-dom'],
       };
 
       const result = exportVariant(variantWithScopedExternals);
@@ -569,7 +569,7 @@ describe('exportVariant', () => {
         const packageJson = JSON.parse(stringOrHastToString(packageJsonContent.source!));
 
         // Should handle scoped packages correctly
-        expect(packageJson.dependencies['@mui/material']).toBe('latest');
+        expect(packageJson.dependencies['@base-ui/react']).toBe('latest');
         expect(packageJson.dependencies['@emotion/react']).toBe('latest');
         expect(packageJson.dependencies['@types/lodash']).toBe('latest');
         expect(packageJson.dependencies['react-router-dom']).toBe('latest');
@@ -1556,9 +1556,9 @@ describe('exportVariant', () => {
 
     it('should not duplicate metadata files when transformVariant modifies existing metadata files', () => {
       const baseVariant: VariantCode = {
-        url: 'file:///src/components/ui/Card/index.tsx',
+        url: 'file:///src/components/ui/Dialog/index.tsx',
         fileName: 'index.tsx',
-        source: 'export default function Card() { return <div>Card</div>; }',
+        source: 'export default function Dialog() { return <div>Dialog</div>; }',
         extraFiles: {
           'card.module.css': { source: '.card { border: 1px solid; }' },
           '../theme.css': { source: '.theme { color: blue; }', metadata: true },

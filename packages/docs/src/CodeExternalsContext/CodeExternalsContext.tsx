@@ -10,7 +10,7 @@ type Module = NonNullable<unknown>;
  * Used by demo client providers to make precomputed externals available to child components.
  */
 export interface CodeExternalsContext {
-  /** Map of module specifiers to their imported values (e.g., { 'react': React, '@mui/material': { Button } }) */
+  /** Map of module specifiers to their imported values (e.g., { 'react': React, '@base-ui/react/button': { Button } }) */
   externals?: Record<string, Module>;
 }
 

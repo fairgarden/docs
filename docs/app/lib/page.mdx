@@ -1,0 +1,56 @@
+# FairGarden Docs
+
+Build-time optimized documentation infrastructure for React and Next.js sites.
+This package was originally developed to power Base UI's documentation with syntax-highlighted code demos, auto-extracted TypeScript API references, and client-side search.
+
+## Key Features
+
+- **Code Demos** with syntax highlighting, multiple variants (CSS Modules, Tailwind), and live previews
+- **Type Documentation** automatically extracted from TypeScript at build time
+- **Search** with [Orama](https://github.com/oramasearch/orama)-powered client-side indexing
+- **Zero runtime overhead** - heavy processing happens during build via webpack loaders
+
+## Core Concepts
+
+New to the codebase? Start with the [Architecture](./overview/architecture/page.mdx) page to understand how the build-time optimization, factory pattern, and data flows work together.
+
+## Installation
+
+```bash variant=pnpm
+pnpm install @fairgarden/docs
+```
+
+```bash variant=yarn
+yarn add @fairgarden/docs
+```
+
+```bash variant=npm
+npm install @fairgarden/docs
+```
+
+Then configure your Next.js app with [`withFairGardenDocs`](./pipeline/with-fairgarden-docs/page.mdx):
+
+```js title="next.config.mjs"
+import { withFairGardenDocs } from '@fairgarden/docs/withFairGardenDocs';
+
+export default withFairGardenDocs()(nextConfig);
+```
+
+## Documentation
+
+- [Architecture](./overview/architecture/page.mdx) - System design, data flows, and key decisions
+- [Components](./components/page.mdx) - `CodeHighlighter`, `CodeProvider`, context providers
+- [Hooks](./hooks/page.mdx) - `useCode`, `useDemo`, `useTypes`, `useSearch`
+- [Commands](./commands/page.mdx) - CLI tools for validation
+- [Factories](./factories/page.mdx) - `createDemo`, `createTypesMeta`, factory patterns
+- [Pipeline](./pipeline/page.mdx) - Loaders, transformers, enhancers, and build-time tools
+- [Patterns](./patterns/page.mdx) - Architectural patterns and best practices
+- [Conventions](./conventions/page.mdx) - Filesystem and coding conventions
+
+## Contributing
+
+See the [Contributing guide](./overview/contributing/page.mdx).
+
+## License & Use
+
+This project is licensed under the [MIT License](https://github.com/fairgarden/docs/blob/main/LICENSE).

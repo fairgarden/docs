@@ -1,2 +1,2 @@
 // dog-food the types content
-export * from '../../app/docs-infra/hooks/use-types/demos/createTypes';
+export * from '../../app/lib/hooks/use-types/demos/createTypes';

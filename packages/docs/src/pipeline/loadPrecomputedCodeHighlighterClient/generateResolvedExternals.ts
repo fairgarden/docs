@@ -174,7 +174,8 @@ export function generateResolvedExternals(
       // Single default export - use direct assignment (e.g., 'react': React)
       resolvedValue = moduleImport.default!;
     } else if (!hasDefault && hasNamed && !hasNamespace) {
-      // Named exports only - use object syntax (e.g., '@mui/material': { Button, TextField }).
+      // Named exports only - use object syntax (e.g.,
+      // '@base-ui/react/direction-provider': { DirectionProvider, useDirection }).
       // When a name had to be aliased due to a collision, emit `{ original: unique }`
       // so the resolved value still references the renamed local binding.
       const namedExports = moduleImport.named

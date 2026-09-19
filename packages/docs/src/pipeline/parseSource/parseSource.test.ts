@@ -119,13 +119,13 @@ describe('parseSource', () => {
     expect(result.children[0].type).not.toBe('text');
   });
 
-  it('extracts bare object keys into di-op spans', async () => {
+  it('extracts bare object keys into fgd-op spans', async () => {
     const source = "const obj = { key: 'val', count: 42 };";
     const result = parseSource(source, 'test.tsx') as Root;
     const tokens = extractLineTokens(result);
 
     const opKeys = tokens.filter(
-      (token) => token.type === 'element' && token.value.split(' ').includes('di-op'),
+      (token) => token.type === 'element' && token.value.split(' ').includes('fgd-op'),
     );
     expect(opKeys.length).toBe(2);
   });
@@ -148,13 +148,13 @@ describe('parseSource', () => {
     );
   });
 
-  it('extracts bare object keys into di-op spans even with a typed binding', async () => {
+  it('extracts bare object keys into fgd-op spans even with a typed binding', async () => {
     const source = 'const obj: Obj = { key: "val" };';
     const result = parseSource(source, 'test.tsx') as Root;
     const tokens = extractLineTokens(result);
 
     const opKeys = tokens.filter(
-      (token) => token.type === 'element' && token.value.split(' ').includes('di-op'),
+      (token) => token.type === 'element' && token.value.split(' ').includes('fgd-op'),
     );
     expect(opKeys.length).toBe(1);
   });

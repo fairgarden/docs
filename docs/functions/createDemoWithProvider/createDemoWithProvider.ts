@@ -5,8 +5,8 @@ import {
   createDemoWithVariantsFactory,
 } from '@fairgarden/docs/abstractCreateDemo';
 
-import { CollapsibleDemoContent as DemoContent } from '../../app/docs-infra/hooks/use-code-window/demos/CollapsibleDemoContent';
-import { DemoTitle } from '../../app/docs-infra/components/code-highlighter/demos/DemoTitle';
+import { CollapsibleDemoContent as DemoContent } from '../../app/lib/hooks/use-code-window/demos/CollapsibleDemoContent';
+import { DemoTitle } from '../../app/lib/components/code-highlighter/demos/DemoTitle';
 import { DemoDataCodeProvider } from '../../demo-data/code-provider';
 
 const demoGlobalData = [DemoDataCodeProvider];

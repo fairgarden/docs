@@ -17,14 +17,14 @@ describe('externalsToPackages', () => {
     const externals = [
       '@fairgarden/docs/CodeHighlighter',
       '@fairgarden/docs/pipeline/parseSource',
-      '@mui/material/Button',
+      '@base-ui/react/button',
       '@types/node',
     ];
     const result = externalsToPackages(externals);
 
     expect(result).toEqual({
       '@fairgarden/docs': true,
-      '@mui/material': true,
+      '@base-ui/react': true,
       '@types/node': true,
     });
   });
@@ -64,15 +64,15 @@ describe('externalsToPackages', () => {
       'react/jsx-runtime',
       'lodash/get',
       'lodash/map',
-      '@mui/material/Button',
-      '@mui/material/TextField',
+      '@base-ui/react/button',
+      '@base-ui/react/input',
     ];
     const result = externalsToPackages(externals);
 
     expect(result).toEqual({
       react: true,
       lodash: true,
-      '@mui/material': true,
+      '@base-ui/react': true,
     });
   });
 
@@ -133,9 +133,8 @@ describe('externalsToPackages', () => {
       'react',
       'react/jsx-runtime',
       'react-dom',
-      '@mui/material/Button',
-      '@mui/material/TextField',
-      '@mui/system/styled',
+      '@base-ui/react/button',
+      '@base-ui/react/input',
       '@emotion/react',
       '@emotion/styled',
       'lodash/debounce',
@@ -148,8 +147,7 @@ describe('externalsToPackages', () => {
     expect(result).toEqual({
       react: true,
       'react-dom': true,
-      '@mui/material': true,
-      '@mui/system': true,
+      '@base-ui/react': true,
       '@emotion/react': true,
       '@emotion/styled': true,
       lodash: true,
@@ -164,7 +162,7 @@ describe('externalsToPackages', () => {
       'react',
       '@/components/Button',
       '@/utils/helpers',
-      '@mui/material/Button',
+      '@base-ui/react/button',
       '@/src/types',
       'lodash/get',
       '@/lib/constants',
@@ -173,7 +171,7 @@ describe('externalsToPackages', () => {
 
     expect(result).toEqual({
       react: true,
-      '@mui/material': true,
+      '@base-ui/react': true,
       lodash: true,
     });
   });

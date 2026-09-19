@@ -16,27 +16,27 @@ describe('generateResolvedExternals', () => {
 
   it('should generate resolved externals for named imports', () => {
     const externals: Externals = {
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named', isType: false },
-        { name: 'TextField', type: 'named', isType: false },
+        { name: 'Input', type: 'named', isType: false },
       ],
     };
 
     const { imports, resolvedExternals } = generateResolvedExternals(externals);
 
-    expect(imports).toEqual(["import { Button, TextField } from '@mui/material';"]);
-    expect(resolvedExternals).toEqual({ '"@mui/material"': '{ Button, TextField }' });
+    expect(imports).toEqual(["import { Button, Input } from '@base-ui/react';"]);
+    expect(resolvedExternals).toEqual({ '"@base-ui/react"': '{ Button, Input }' });
   });
 
   it('should generate resolved externals for single named import', () => {
     const externals: Externals = {
-      '@mui/system': [{ name: 'styled', type: 'named', isType: false }],
+      '@base-ui/react/use-render': [{ name: 'useRender', type: 'named', isType: false }],
     };
 
     const { imports, resolvedExternals } = generateResolvedExternals(externals);
 
-    expect(imports).toEqual(["import { styled } from '@mui/system';"]);
-    expect(resolvedExternals).toEqual({ '"@mui/system"': '{ styled }' });
+    expect(imports).toEqual(["import { useRender } from '@base-ui/react/use-render';"]);
+    expect(resolvedExternals).toEqual({ '"@base-ui/react/use-render"': '{ useRender }' });
   });
 
   it('should generate resolved externals for namespace imports', () => {
@@ -53,9 +53,9 @@ describe('generateResolvedExternals', () => {
   it('should generate resolved externals for mixed imports', () => {
     const externals: Externals = {
       react: [{ name: 'React', type: 'default', isType: false }],
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named', isType: false },
-        { name: 'TextField', type: 'named', isType: false },
+        { name: 'Input', type: 'named', isType: false },
       ],
     };
 
@@ -63,11 +63,11 @@ describe('generateResolvedExternals', () => {
 
     expect(imports).toEqual([
       "import React from 'react';",
-      "import { Button, TextField } from '@mui/material';",
+      "import { Button, Input } from '@base-ui/react';",
     ]);
     expect(resolvedExternals).toEqual({
       react: 'React',
-      '"@mui/material"': '{ Button, TextField }',
+      '"@base-ui/react"': '{ Button, Input }',
     });
   });
 
@@ -87,7 +87,7 @@ describe('generateResolvedExternals', () => {
 
   it('should handle scoped packages', () => {
     const externals: Externals = {
-      '@mui/material': [{ name: 'Button', type: 'named', isType: false }],
+      '@base-ui/react': [{ name: 'Button', type: 'named', isType: false }],
       '@emotion/styled': [{ name: 'styled', type: 'default', isType: false }],
       '@types/react': [{ name: 'FC', type: 'named', isType: true }],
     };
@@ -95,11 +95,11 @@ describe('generateResolvedExternals', () => {
     const { imports, resolvedExternals } = generateResolvedExternals(externals);
 
     expect(imports).toEqual([
-      "import { Button } from '@mui/material';",
+      "import { Button } from '@base-ui/react';",
       "import styled from '@emotion/styled';",
     ]);
     expect(resolvedExternals).toEqual({
-      '"@mui/material"': '{ Button }',
+      '"@base-ui/react"': '{ Button }',
       '"@emotion/styled"': 'styled',
     });
   });
@@ -182,13 +182,13 @@ describe('generateResolvedExternals', () => {
         { name: 'useMemo', type: 'named', isType: false },
         { name: 'useRef', type: 'named', isType: false },
       ],
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named', isType: false },
-        { name: 'TextField', type: 'named', isType: false },
-        { name: 'Box', type: 'named', isType: false },
-        { name: 'Typography', type: 'named', isType: false },
-        { name: 'Card', type: 'named', isType: false },
-        { name: 'CardContent', type: 'named', isType: false },
+        { name: 'Input', type: 'named', isType: false },
+        { name: 'Field', type: 'named', isType: false },
+        { name: 'Separator', type: 'named', isType: false },
+        { name: 'Dialog', type: 'named', isType: false },
+        { name: 'Popover', type: 'named', isType: false },
       ],
       '@mui/icons-material': [
         { name: 'Add', type: 'named', isType: false },
@@ -212,7 +212,7 @@ describe('generateResolvedExternals', () => {
 
     expect(imports).toEqual([
       "import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';",
-      "import { Button, TextField, Box, Typography, Card, CardContent } from '@mui/material';",
+      "import { Button, Input, Field, Separator, Dialog, Popover } from '@base-ui/react';",
       "import { Add, Delete, Edit } from '@mui/icons-material';",
       "import { map, filter, reduce, debounce } from 'lodash';",
       "import axios from 'axios';",
@@ -220,7 +220,7 @@ describe('generateResolvedExternals', () => {
     ]);
     expect(resolvedExternals).toEqual({
       react: 'React',
-      '"@mui/material"': '{ Button, TextField, Box, Typography, Card, CardContent }',
+      '"@base-ui/react"': '{ Button, Input, Field, Separator, Dialog, Popover }',
       '"@mui/icons-material"': '{ Add, Delete, Edit }',
       lodash: '{ map, filter, reduce, debounce }',
       axios: 'axios',
@@ -238,7 +238,7 @@ describe('generateResolvedExternals', () => {
         { name: 'ComponentType', type: 'named', isType: true }, // Type-only
         { name: 'React', type: 'default', isType: false }, // Duplicate
       ],
-      '@mui/material': [
+      '@base-ui/react': [
         { name: '  ', type: 'named', isType: false }, // Whitespace name
         { name: 'Button', type: 'named', isType: false },
         { name: 'ButtonProps', type: 'named', isType: true }, // Type-only
@@ -254,9 +254,9 @@ describe('generateResolvedExternals', () => {
 
     expect(imports).toEqual([
       "import React, { useState } from 'react';",
-      "import { Button } from '@mui/material';",
+      "import { Button } from '@base-ui/react';",
     ]);
-    expect(resolvedExternals).toEqual({ react: 'React', '"@mui/material"': '{ Button }' });
+    expect(resolvedExternals).toEqual({ react: 'React', '"@base-ui/react"': '{ Button }' });
   });
 
   it('should handle mixed import types from same module', () => {
@@ -293,19 +293,19 @@ describe('generateResolvedExternals', () => {
 
     it('aliases named imports that collide and emits `original: unique` mapping', () => {
       const externals: Externals = {
-        '@mui/material': [
+        '@base-ui/react': [
           { name: 'Button', type: 'named', isType: false },
-          { name: 'TextField', type: 'named', isType: false },
+          { name: 'Input', type: 'named', isType: false },
         ],
       };
 
       const { imports, resolvedExternals } = generateResolvedExternals(externals, ['Button']);
 
       expect(imports).toEqual([
-        "import { Button as Buttonmuimaterial, TextField } from '@mui/material';",
+        "import { Button as Buttonbaseuireact, Input } from '@base-ui/react';",
       ]);
       expect(resolvedExternals).toEqual({
-        '"@mui/material"': '{ Button: Buttonmuimaterial, TextField }',
+        '"@base-ui/react"': '{ Button: Buttonbaseuireact, Input }',
       });
     });
 

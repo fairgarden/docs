@@ -1,31 +1,31 @@
 import createMDX from '@next/mdx';
 import {
-  withDocsInfra,
-  getDocsInfraMdxOptions,
+  withFairGardenDocs,
+  getFairGardenDocsMdxOptions,
   withDeploymentConfig,
-} from '@fairgarden/docs/withDocsInfra';
+} from '@fairgarden/docs/withFairGardenDocs';
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
-// Create MDX with docs-infra configuration
+// Create MDX with FairGarden Docs configuration
 const withMDX = createMDX({
-  options: getDocsInfraMdxOptions({
+  options: getFairGardenDocsMdxOptions({
     additionalRemarkPlugins: [],
     additionalRehypePlugins: ['rehype-slug'],
     extractToIndex: {
       indexWrapperComponent: 'PagesIndex',
       include: [
-        'app/docs-infra/overview',
-        'app/docs-infra/components',
-        'app/docs-infra/hooks',
-        'app/docs-infra/commands',
-        'app/docs-infra/factories',
-        'app/docs-infra/patterns',
-        'app/docs-infra/pipeline',
-        'app/docs-infra/conventions',
+        'app/lib/overview',
+        'app/lib/components',
+        'app/lib/hooks',
+        'app/lib/commands',
+        'app/lib/factories',
+        'app/lib/patterns',
+        'app/lib/pipeline',
+        'app/lib/conventions',
       ],
     },
   }),
@@ -34,7 +34,7 @@ const withMDX = createMDX({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Your custom configuration here
-  // The withDocsInfra plugin will add the necessary docs infrastructure setup
+  // The withFairGardenDocs plugin will add the necessary docs infrastructure setup
   distDir: 'export',
   trailingSlash: false,
   devIndicators: {
@@ -47,7 +47,7 @@ const nextConfig = {
 
 export default withDeploymentConfig(
   withBundleAnalyzer(
-    withDocsInfra({
+    withFairGardenDocs({
       // Add demo-* patterns specific to this docs site
       additionalDemoPatterns: {
         // Note: The demo-* pattern below is specific to our internal docs structure

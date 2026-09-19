@@ -9,14 +9,14 @@ import { createDemoClient } from './createDemoClient';
 
 export const Demo = createDemoClient(import.meta.url);`;
 
-    const importLines = ["import React from 'react';", "import { Button } from '@mui/material';"];
+    const importLines = ["import React from 'react';", "import { Button } from '@base-ui/react';"];
 
     const result = injectImportsIntoSource(source, importLines);
 
     expect(result).toBe(`'use client';
 
 import React from 'react';
-import { Button } from '@mui/material';
+import { Button } from '@base-ui/react';
 
 import { createDemoClient } from './createDemoClient';
 
@@ -28,12 +28,12 @@ export const Demo = createDemoClient(import.meta.url);`);
 
 export const Demo = createDemoClient(import.meta.url);`;
 
-    const importLines = ["import React from 'react';", "import { Button } from '@mui/material';"];
+    const importLines = ["import React from 'react';", "import { Button } from '@base-ui/react';"];
 
     const result = injectImportsIntoSource(source, importLines);
 
     expect(result).toBe(`import React from 'react';
-import { Button } from '@mui/material';
+import { Button } from '@base-ui/react';
 
 import { createDemoClient } from './createDemoClient';
 

@@ -6,14 +6,14 @@ import { useDemo } from '@fairgarden/docs/useDemo';
 import { useScrollAnchor } from '@fairgarden/docs/useScrollAnchor';
 import { Tabs } from '@/components/Tabs';
 import { DemoError } from '@/components/DemoError';
-import { CodeActionsMenu } from '../../app/docs-infra/components/code-highlighter/demos/CodeActionsMenu';
+import { CodeActionsMenu } from '../../app/lib/components/code-highlighter/demos/CodeActionsMenu';
 import {
   CodeBlockHeader,
   CodeBlockHeaderLabel,
-} from '../../app/docs-infra/components/code-highlighter/demos/CodeBlockHeader';
-import { CodeSource } from '../../app/docs-infra/components/code-highlighter/demos/CodeSource';
-import { DemoVariantBar } from '../../app/docs-infra/components/code-highlighter/demos/DemoVariantBar';
-import styles from '../../app/docs-infra/components/code-highlighter/demos/DemoContent.module.css';
+} from '../../app/lib/components/code-highlighter/demos/CodeBlockHeader';
+import { CodeSource } from '../../app/lib/components/code-highlighter/demos/CodeSource';
+import { DemoVariantBar } from '../../app/lib/components/code-highlighter/demos/DemoVariantBar';
+import styles from '../../app/lib/components/code-highlighter/demos/DemoContent.module.css';
 import { BenchViewer } from '../BenchViewer';
 
 const variantNames: Record<string, string | undefined> = {

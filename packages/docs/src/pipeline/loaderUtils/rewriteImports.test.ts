@@ -678,36 +678,36 @@ const C = null;`);
   describe('realistic sitemap scenario', () => {
     it('should rewrite MDX imports in a sitemap file', () => {
       const source = `import { createSitemap } from './createSitemap';
-import DocsInfraComponents from './docs-infra/components/page.mdx';
-import DocsInfraFunctions from './docs-infra/functions/page.mdx';
+import LibComponents from './lib/components/page.mdx';
+import LibFunctions from './lib/functions/page.mdx';
 
 export const sitemap = createSitemap(import.meta.url, {
-  DocsInfraComponents,
-  DocsInfraFunctions,
+  LibComponents,
+  LibFunctions,
 });`;
       const importPathsToRewrite = new Set([
-        './docs-infra/components/page.mdx',
-        './docs-infra/functions/page.mdx',
+        './lib/components/page.mdx',
+        './lib/functions/page.mdx',
       ]);
       const importResult = {
-        './docs-infra/components/page.mdx': {
-          positions: [{ start: 81, end: 115 }],
-          names: [{ name: 'DocsInfraComponents', type: 'default' }],
+        './lib/components/page.mdx': {
+          positions: [{ start: 75, end: 102 }],
+          names: [{ name: 'LibComponents', type: 'default' }],
         },
-        './docs-infra/functions/page.mdx': {
-          positions: [{ start: 148, end: 181 }],
-          names: [{ name: 'DocsInfraFunctions', type: 'default' }],
+        './lib/functions/page.mdx': {
+          positions: [{ start: 129, end: 155 }],
+          names: [{ name: 'LibFunctions', type: 'default' }],
         },
       };
 
       const result = rewriteImportsToNull(source, importPathsToRewrite, importResult);
       expect(result).toBe(`import { createSitemap } from './createSitemap';
-const DocsInfraComponents = null;
-const DocsInfraFunctions = null;
+const LibComponents = null;
+const LibFunctions = null;
 
 export const sitemap = createSitemap(import.meta.url, {
-  DocsInfraComponents,
-  DocsInfraFunctions,
+  LibComponents,
+  LibFunctions,
 });`);
     });
   });

@@ -816,7 +816,7 @@ body {
         const input = {
           sourceCode: `
 import React from 'react';
-import { Button } from '@mui/material';
+import { Button } from '@base-ui/react';
 import ComponentA from '../components/ComponentA';
 
 # My Documentation
@@ -870,7 +870,7 @@ import { helper } from '../shared/helpers';
 
         // External imports should remain unchanged
         expect(result.processedSource).toContain("import React from 'react'");
-        expect(result.processedSource).toContain("import { Button } from '@mui/material'");
+        expect(result.processedSource).toContain("import { Button } from '@base-ui/react'");
 
         // Imports in code blocks should remain unchanged (not rewritten)
         expect(result.processedSource).toContain(

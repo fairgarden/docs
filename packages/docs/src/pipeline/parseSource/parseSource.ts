@@ -89,12 +89,12 @@ export const parseSource: ParseSource = (source, fileName, language) => {
     // Fall back to plain text; the block re-highlights on the next render once
     // the grammar is registered (a one-tick unstyled paint at worst).
     if (DEBUG) {
-      console.error(`[docs-infra] grammar for scope "${grammarScope}" not registered`, error);
+      console.error(`[fairgarden docs] grammar for scope "${grammarScope}" not registered`, error);
     }
     return createPlainTextRoot(source);
   }
 
-  extendSyntaxTokens(highlighted, grammarScope); // mutates the tree to add di-* classes
+  extendSyntaxTokens(highlighted, grammarScope); // mutates the tree to add fgd-* classes
   const sourceLines = source.split(/\r?\n|\r/);
   starryNightGutter(highlighted, sourceLines); // mutates the tree to add line gutters
 

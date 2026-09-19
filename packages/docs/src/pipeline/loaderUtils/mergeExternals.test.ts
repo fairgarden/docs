@@ -73,7 +73,7 @@ describe('mergeExternals', () => {
   it('should handle single externals object', () => {
     const externals = {
       react: [{ name: 'React', type: 'default' as const }],
-      '@mui/material': [{ name: 'Button', type: 'named' as const }],
+      '@base-ui/react': [{ name: 'Button', type: 'named' as const }],
     };
 
     const result = mergeExternals([externals]);
@@ -83,24 +83,24 @@ describe('mergeExternals', () => {
 
   it('should handle multiple imports from same module across multiple sources', () => {
     const externals1 = {
-      '@mui/material': [{ name: 'Button', type: 'named' as const }],
+      '@base-ui/react': [{ name: 'Button', type: 'named' as const }],
     };
 
     const externals2 = {
-      '@mui/material': [{ name: 'TextField', type: 'named' as const }],
+      '@base-ui/react': [{ name: 'Input', type: 'named' as const }],
     };
 
     const externals3 = {
-      '@mui/material': [{ name: 'Box', type: 'named' as const }],
+      '@base-ui/react': [{ name: 'Field', type: 'named' as const }],
     };
 
     const result = mergeExternals([externals1, externals2, externals3]);
 
     expect(result).toEqual({
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named' },
-        { name: 'TextField', type: 'named' },
-        { name: 'Box', type: 'named' },
+        { name: 'Input', type: 'named' },
+        { name: 'Field', type: 'named' },
       ],
     });
   });
@@ -253,7 +253,7 @@ describe('mergeExternals', () => {
         { name: 'React', type: 'default' as const },
         { name: 'FC', type: 'named' as const, isType: true },
       ],
-      '@mui/material': [{ name: 'Button', type: 'named' as const }],
+      '@base-ui/react': [{ name: 'Button', type: 'named' as const }],
     };
 
     const externals2 = {
@@ -261,7 +261,7 @@ describe('mergeExternals', () => {
         { name: 'useState', type: 'named' as const },
         { name: 'ReactNode', type: 'named' as const, isType: true },
       ],
-      '@mui/material': [{ name: 'ButtonProps', type: 'named' as const, isType: true }],
+      '@base-ui/react': [{ name: 'ButtonProps', type: 'named' as const, isType: true }],
       typescript: [{ name: 'TSConfig', type: 'named' as const, isType: true }],
     };
 
@@ -274,7 +274,7 @@ describe('mergeExternals', () => {
         { name: 'useState', type: 'named' },
         { name: 'ReactNode', type: 'named', isType: true },
       ],
-      '@mui/material': [
+      '@base-ui/react': [
         { name: 'Button', type: 'named' },
         { name: 'ButtonProps', type: 'named', isType: true },
       ],

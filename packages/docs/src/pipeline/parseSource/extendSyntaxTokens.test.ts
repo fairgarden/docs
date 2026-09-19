@@ -70,80 +70,80 @@ function getClasses(element: Element): string[] {
 }
 
 describe('extendSyntaxTokens', () => {
-  describe('number enhancement (di-num)', () => {
-    it('adds di-num to integer constants', () => {
+  describe('number enhancement (fgd-num)', () => {
+    it('adds fgd-num to integer constants', () => {
       const node = span('pl-c1', '42');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-num']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-num']);
     });
 
-    it('adds di-num to float constants', () => {
+    it('adds fgd-num to float constants', () => {
       const node = span('pl-c1', '3.14');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-num']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-num']);
     });
 
-    it('adds di-num to negative numbers', () => {
+    it('adds fgd-num to negative numbers', () => {
       const node = span('pl-c1', '-1');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-num']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-num']);
     });
 
-    it('adds di-num to decimal starting with dot', () => {
+    it('adds fgd-num to decimal starting with dot', () => {
       const node = span('pl-c1', '.5');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-num']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-num']);
     });
 
-    it('adds di-num to hex constants', () => {
+    it('adds fgd-num to hex constants', () => {
       const node = span('pl-c1', '0xFF');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-num']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-num']);
     });
 
-    it('adds di-num to zero', () => {
+    it('adds fgd-num to zero', () => {
       const node = span('pl-c1', '0');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-num']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-num']);
     });
 
-    it('adds di-num to CSS numeric values with units', () => {
+    it('adds fgd-num to CSS numeric values with units', () => {
       const node = span('pl-c1', '100px');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(node)).toContain('di-num');
+      expect(getClasses(node)).toContain('fgd-num');
     });
 
-    it('adds di-num to percentage values', () => {
+    it('adds fgd-num to percentage values', () => {
       const node = span('pl-c1', '50%');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(node)).toContain('di-num');
+      expect(getClasses(node)).toContain('fgd-num');
     });
 
-    it('adds di-num when unit is nested as pl-smi child', () => {
+    it('adds fgd-num when unit is nested as pl-smi child', () => {
       // Starry-night tokenizes `1rem` as `<span class="pl-c1">1<span class="pl-smi">rem</span></span>`
       const node: Element = {
         type: 'element',
@@ -155,19 +155,19 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(node)).toContain('di-num');
+      expect(getClasses(node)).toContain('fgd-num');
     });
 
-    it('does not add di-num to named constants like color', () => {
+    it('does not add fgd-num to named constants like color', () => {
       const node = span('pl-c1', 'color');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(node)).not.toContain('di-num');
+      expect(getClasses(node)).not.toContain('fgd-num');
     });
 
-    it('does not add di-num to component names like Button', () => {
+    it('does not add fgd-num to component names like Button', () => {
       const node = span('pl-c1', 'Button');
       const tree = root([node]);
 
@@ -176,7 +176,7 @@ describe('extendSyntaxTokens', () => {
       expect(getClasses(node)).toEqual(['pl-c1']);
     });
 
-    it('does not add di-num to non-pl-c1 spans', () => {
+    it('does not add fgd-num to non-pl-c1 spans', () => {
       const node = span('pl-k', '42');
       const tree = root([node]);
 
@@ -185,7 +185,7 @@ describe('extendSyntaxTokens', () => {
       expect(getClasses(node)).toEqual(['pl-k']);
     });
 
-    it('does not add di-num to NaN', () => {
+    it('does not add fgd-num to NaN', () => {
       const node = span('pl-c1', 'NaN');
       const tree = root([node]);
 
@@ -194,7 +194,7 @@ describe('extendSyntaxTokens', () => {
       expect(getClasses(node)).toEqual(['pl-c1']);
     });
 
-    it('does not add di-num to Infinity', () => {
+    it('does not add fgd-num to Infinity', () => {
       const node = span('pl-c1', 'Infinity');
       const tree = root([node]);
 
@@ -204,26 +204,26 @@ describe('extendSyntaxTokens', () => {
     });
   });
 
-  describe('boolean enhancement (di-bool)', () => {
-    it('adds di-bool to true', () => {
+  describe('boolean enhancement (fgd-bool)', () => {
+    it('adds fgd-bool to true', () => {
       const node = span('pl-c1', 'true');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-bool']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-bool']);
     });
 
-    it('adds di-bool to false', () => {
+    it('adds fgd-bool to false', () => {
       const node = span('pl-c1', 'false');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-bool']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-bool']);
     });
 
-    it('does not add di-bool to non-pl-c1 spans', () => {
+    it('does not add fgd-bool to non-pl-c1 spans', () => {
       const node = span('pl-s', 'true');
       const tree = root([node]);
 
@@ -233,26 +233,26 @@ describe('extendSyntaxTokens', () => {
     });
   });
 
-  describe('nullish enhancement (di-n)', () => {
-    it('adds di-n to null', () => {
+  describe('nullish enhancement (fgd-n)', () => {
+    it('adds fgd-n to null', () => {
       const node = span('pl-c1', 'null');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-n']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-n']);
     });
 
-    it('adds di-n to undefined', () => {
+    it('adds fgd-n to undefined', () => {
       const node = span('pl-c1', 'undefined');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'di-n']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'fgd-n']);
     });
 
-    it('does not add di-n to undefinedValue', () => {
+    it('does not add fgd-n to undefinedValue', () => {
       const node = span('pl-c1', 'undefinedValue');
       const tree = root([node]);
 
@@ -261,25 +261,25 @@ describe('extendSyntaxTokens', () => {
       expect(getClasses(node)).toEqual(['pl-c1']);
     });
 
-    it('adds di-n to empty double-quoted string', () => {
+    it('adds fgd-n to empty double-quoted string', () => {
       const node = stringSpan('"', '');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-s', 'di-n']);
+      expect(getClasses(node)).toEqual(['pl-s', 'fgd-n']);
     });
 
-    it('adds di-n to empty single-quoted string', () => {
+    it('adds fgd-n to empty single-quoted string', () => {
       const node = stringSpan("'", '');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-s', 'di-n']);
+      expect(getClasses(node)).toEqual(['pl-s', 'fgd-n']);
     });
 
-    it('does not add di-n to non-empty strings', () => {
+    it('does not add fgd-n to non-empty strings', () => {
       const node = stringSpan('"', 'hello');
       const tree = root([node]);
 
@@ -288,7 +288,7 @@ describe('extendSyntaxTokens', () => {
       expect(getClasses(node)).toEqual(['pl-s']);
     });
 
-    it('does not add di-n to strings with spaces', () => {
+    it('does not add fgd-n to strings with spaces', () => {
       const node = stringSpan('"', ' ');
       const tree = root([node]);
 
@@ -299,24 +299,24 @@ describe('extendSyntaxTokens', () => {
   });
 
   describe('additive behavior', () => {
-    it('preserves existing pl-c1 class when adding di-num', () => {
+    it('preserves existing pl-c1 class when adding fgd-num', () => {
       const node = span('pl-c1', '42');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
       expect(getClasses(node)).toContain('pl-c1');
-      expect(getClasses(node)).toContain('di-num');
+      expect(getClasses(node)).toContain('fgd-num');
     });
 
-    it('preserves existing pl-c1 class when adding di-bool', () => {
+    it('preserves existing pl-c1 class when adding fgd-bool', () => {
       const node = span('pl-c1', 'true');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
       expect(getClasses(node)).toContain('pl-c1');
-      expect(getClasses(node)).toContain('di-bool');
+      expect(getClasses(node)).toContain('fgd-bool');
     });
 
     it('preserves additional classes on the element', () => {
@@ -325,12 +325,12 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toEqual(['pl-c1', 'custom-class', 'di-num']);
+      expect(getClasses(node)).toEqual(['pl-c1', 'custom-class', 'fgd-num']);
     });
   });
 
-  describe('CSS attribute selector enhancement (di-da)', () => {
-    it('adds di-da to pl-c1 span preceded by [ text node', () => {
+  describe('CSS attribute selector enhancement (fgd-da)', () => {
+    it('adds fgd-da to pl-c1 span preceded by [ text node', () => {
       // Current starry-night: &[<span class="pl-c1">data-starting-style</span>]
       const attrSpan = span('pl-c1', 'data-starting-style');
       const tree = root([span('pl-ent', '&'), textNode('['), attrSpan, textNode(']')]);
@@ -338,29 +338,29 @@ describe('extendSyntaxTokens', () => {
       extendSyntaxTokens(tree, 'source.css');
 
       expect(getClasses(attrSpan)).toContain('pl-c1');
-      expect(getClasses(attrSpan)).toContain('di-da');
+      expect(getClasses(attrSpan)).toContain('fgd-da');
     });
 
-    it('adds di-da to pl-e span preceded by [ text node (future starry-night)', () => {
+    it('adds fgd-da to pl-e span preceded by [ text node (future starry-night)', () => {
       const attrSpan = span('pl-e', 'data-ending-style');
       const tree = root([textNode('['), attrSpan, textNode(']')]);
 
       extendSyntaxTokens(tree, 'source.css');
 
       expect(getClasses(attrSpan)).toContain('pl-e');
-      expect(getClasses(attrSpan)).toContain('di-da');
+      expect(getClasses(attrSpan)).toContain('fgd-da');
     });
 
-    it('adds di-da for any attribute name in brackets, not just data-*', () => {
+    it('adds fgd-da for any attribute name in brackets, not just data-*', () => {
       const attrSpan = span('pl-c1', 'open');
       const tree = root([textNode('['), attrSpan, textNode(']')]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(attrSpan)).toContain('di-da');
+      expect(getClasses(attrSpan)).toContain('fgd-da');
     });
 
-    it('does not add di-da to CSS class selectors', () => {
+    it('does not add fgd-da to CSS class selectors', () => {
       // .my-class is a pl-e span not preceded by [
       const classSpan = span('pl-e', '.my-class');
       const tree = root([classSpan]);
@@ -370,7 +370,7 @@ describe('extendSyntaxTokens', () => {
       expect(getClasses(classSpan)).toEqual(['pl-e']);
     });
 
-    it('does not add di-da when not preceded by [', () => {
+    it('does not add fgd-da when not preceded by [', () => {
       const attrSpan = span('pl-c1', 'data-foo');
       const tree = root([textNode(' '), attrSpan, textNode(']')]);
 
@@ -379,25 +379,25 @@ describe('extendSyntaxTokens', () => {
       expect(getClasses(attrSpan)).toEqual(['pl-c1']);
     });
 
-    it('does not add di-da for non-CSS grammar scopes', () => {
+    it('does not add fgd-da for non-CSS grammar scopes', () => {
       const attrSpan = span('pl-c1', 'data-foo');
       const tree = root([textNode('['), attrSpan, textNode(']')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(attrSpan)).not.toContain('di-da');
+      expect(getClasses(attrSpan)).not.toContain('fgd-da');
     });
 
-    it('also applies constant enhancement alongside di-da for numeric attribute names', () => {
+    it('also applies constant enhancement alongside fgd-da for numeric attribute names', () => {
       // Hypothetical: [0] — the 0 is pl-c1 and numeric
       const attrSpan = span('pl-c1', '0');
       const tree = root([textNode('['), attrSpan, textNode(']')]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      // Gets both di-num (from constant enhancement) and di-da (from CSS attr selector)
-      expect(getClasses(attrSpan)).toContain('di-num');
-      expect(getClasses(attrSpan)).toContain('di-da');
+      // Gets both fgd-num (from constant enhancement) and fgd-da (from CSS attr selector)
+      expect(getClasses(attrSpan)).toContain('fgd-num');
+      expect(getClasses(attrSpan)).toContain('fgd-da');
     });
 
     it('does not modify & already tokenized as pl-ent', () => {
@@ -409,7 +409,7 @@ describe('extendSyntaxTokens', () => {
       extendSyntaxTokens(tree, 'source.css');
 
       expect(getClasses(ampersand)).toEqual(['pl-ent']);
-      expect(getClasses(attrSpan)).toContain('di-da');
+      expect(getClasses(attrSpan)).toContain('fgd-da');
     });
   });
 
@@ -493,8 +493,8 @@ describe('extendSyntaxTokens', () => {
   });
 
   describe('HTML/JSX attribute enhancement', () => {
-    describe('attribute key (di-ak)', () => {
-      it('adds di-ak to pl-e span inside a tag', () => {
+    describe('attribute key (fgd-ak)', () => {
+      it('adds fgd-ak to pl-e span inside a tag', () => {
         const attrName = span('pl-e', 'className');
         const tree = root([
           textNode('<'),
@@ -509,10 +509,10 @@ describe('extendSyntaxTokens', () => {
         extendSyntaxTokens(tree, 'source.tsx');
 
         expect(getClasses(attrName)).toContain('pl-e');
-        expect(getClasses(attrName)).toContain('di-ak');
+        expect(getClasses(attrName)).toContain('fgd-ak');
       });
 
-      it('does not add di-ak to pl-e span outside a tag', () => {
+      it('does not add fgd-ak to pl-e span outside a tag', () => {
         const entitySpan = span('pl-e', 'something');
         const tree = root([entitySpan]);
 
@@ -521,7 +521,7 @@ describe('extendSyntaxTokens', () => {
         expect(getClasses(entitySpan)).toEqual(['pl-e']);
       });
 
-      it('does not add di-ak for non-HTML/JSX grammars', () => {
+      it('does not add fgd-ak for non-HTML/JSX grammars', () => {
         const attrName = span('pl-e', 'className');
         const tree = root([
           textNode('<'),
@@ -538,7 +538,7 @@ describe('extendSyntaxTokens', () => {
         expect(getClasses(attrName)).toEqual(['pl-e']);
       });
 
-      it('adds di-ak in MDX grammar scope', () => {
+      it('adds fgd-ak in MDX grammar scope', () => {
         const attrName = span('pl-e', 'className');
         const tree = root([
           textNode('<'),
@@ -552,10 +552,10 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.mdx');
 
-        expect(getClasses(attrName)).toContain('di-ak');
+        expect(getClasses(attrName)).toContain('fgd-ak');
       });
 
-      it('resets after > so pl-e outside tag does not get di-ak', () => {
+      it('resets after > so pl-e outside tag does not get fgd-ak', () => {
         const insideAttr = span('pl-e', 'className');
         const outsideEntity = span('pl-e', 'something');
         const tree = root([
@@ -571,13 +571,13 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(insideAttr)).toContain('di-ak');
+        expect(getClasses(insideAttr)).toContain('fgd-ak');
         expect(getClasses(outsideEntity)).toEqual(['pl-e']);
       });
     });
 
-    describe('attribute equals (di-ae)', () => {
-      it('wraps = in a di-ae span inside a tag context', () => {
+    describe('attribute equals (fgd-ae)', () => {
+      it('wraps = in a fgd-ae span inside a tag context', () => {
         // <div className="test">
         const tree = root([
           textNode('<'),
@@ -595,7 +595,7 @@ describe('extendSyntaxTokens', () => {
             child.type === 'element' &&
             child.tagName === 'span' &&
             Array.isArray(child.properties?.className) &&
-            (child.properties.className as string[]).includes('di-ae'),
+            (child.properties.className as string[]).includes('fgd-ae'),
         ) as Element | undefined;
 
         expect(aeSpan).toBeDefined();
@@ -613,7 +613,7 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        // Should have text ' className' before the di-ae span
+        // Should have text ' className' before the fgd-ae span
         const children = tree.children;
         const beforeText = children.find(
           (child) => child.type === 'text' && child.value === ' className',
@@ -628,14 +628,14 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        // No < was seen, so insideTag is false, no di-ae should exist
+        // No < was seen, so insideTag is false, no fgd-ae should exist
         const children = tree.children;
         const aeSpan = children.find(
           (child) =>
             child.type === 'element' &&
             child.tagName === 'span' &&
             Array.isArray(child.properties?.className) &&
-            (child.properties.className as string[]).includes('di-ae'),
+            (child.properties.className as string[]).includes('fgd-ae'),
         ) as Element | undefined;
 
         expect(aeSpan).toBeUndefined();
@@ -658,7 +658,7 @@ describe('extendSyntaxTokens', () => {
             child.type === 'element' &&
             child.tagName === 'span' &&
             Array.isArray(child.properties?.className) &&
-            (child.properties.className as string[]).includes('di-ae'),
+            (child.properties.className as string[]).includes('fgd-ae'),
         ) as Element | undefined;
 
         expect(aeSpan).toBeUndefined();
@@ -681,7 +681,7 @@ describe('extendSyntaxTokens', () => {
             child.type === 'element' &&
             child.tagName === 'span' &&
             Array.isArray(child.properties?.className) &&
-            (child.properties.className as string[]).includes('di-ae'),
+            (child.properties.className as string[]).includes('fgd-ae'),
         ) as Element | undefined;
 
         expect(aeSpan).toBeDefined();
@@ -705,13 +705,13 @@ describe('extendSyntaxTokens', () => {
             child.type === 'element' &&
             child.tagName === 'span' &&
             Array.isArray(child.properties?.className) &&
-            (child.properties.className as string[]).includes('di-ae'),
+            (child.properties.className as string[]).includes('fgd-ae'),
         ) as Element | undefined;
 
         expect(aeSpan).toBeUndefined();
       });
 
-      it('adds di-ae to pl-k span containing = inside a tag', () => {
+      it('adds fgd-ae to pl-k span containing = inside a tag', () => {
         // Real TSX output: <span class="pl-e">className</span><span class="pl-k">=</span><span class="pl-s">...</span>
         const equalsSpan = span('pl-k', '=');
         const tree = root([
@@ -727,10 +727,10 @@ describe('extendSyntaxTokens', () => {
         extendSyntaxTokens(tree, 'source.tsx');
 
         expect(getClasses(equalsSpan)).toContain('pl-k');
-        expect(getClasses(equalsSpan)).toContain('di-ae');
+        expect(getClasses(equalsSpan)).toContain('fgd-ae');
       });
 
-      it('does not add di-ae to pl-k = outside a tag', () => {
+      it('does not add fgd-ae to pl-k = outside a tag', () => {
         const equalsSpan = span('pl-k', '=');
         const tree = root([
           span('pl-smi', 'x'),
@@ -742,10 +742,10 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(equalsSpan)).not.toContain('di-ae');
+        expect(getClasses(equalsSpan)).not.toContain('fgd-ae');
       });
 
-      it('adds di-ae to pl-k = when next sibling is an expression (pl-pse)', () => {
+      it('adds fgd-ae to pl-k = when next sibling is an expression (pl-pse)', () => {
         // JSX: <Component onClick={handler}>
         const equalsSpan = span('pl-k', '=');
         const tree = root([
@@ -762,10 +762,10 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(equalsSpan)).toContain('di-ae');
+        expect(getClasses(equalsSpan)).toContain('fgd-ae');
       });
 
-      it('adds di-ae to bare text = when next sibling is an expression (pl-pse)', () => {
+      it('adds fgd-ae to bare text = when next sibling is an expression (pl-pse)', () => {
         // JSX: <div className={styles.root}>
         const tree = root([
           textNode('<'),
@@ -782,13 +782,13 @@ describe('extendSyntaxTokens', () => {
 
         const aeSpan = tree.children.find(
           (child) =>
-            child.type === 'element' && (child.properties.className as string[]).includes('di-ae'),
+            child.type === 'element' && (child.properties.className as string[]).includes('fgd-ae'),
         );
         expect(aeSpan).toBeDefined();
       });
 
-      it('does not add di-av when next sibling is an expression', () => {
-        // di-av should only apply to string literals (pl-s), not expressions
+      it('does not add fgd-av when next sibling is an expression', () => {
+        // fgd-av should only apply to string literals (pl-s), not expressions
         const expressionSpan = span('pl-pse', '{');
         const tree = root([
           textNode('<'),
@@ -807,7 +807,7 @@ describe('extendSyntaxTokens', () => {
         expect(getClasses(expressionSpan)).toEqual(['pl-pse']);
       });
 
-      it('does not add di-ae/di-av in source.js (comparison misread as tag)', () => {
+      it('does not add fgd-ae/fgd-av in source.js (comparison misread as tag)', () => {
         // Plain JS: `a < b` followed by `x = "hi"` — the `<` is a comparison, not a tag
         const valueSpan = stringSpan('"', 'hi');
         const tree = root([
@@ -820,19 +820,19 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.js');
 
-        // No di-ae span should have been created
+        // No fgd-ae span should have been created
         const aeSpan = tree.children.find(
           (child) =>
-            child.type === 'element' && (child.properties.className as string[]).includes('di-ae'),
+            child.type === 'element' && (child.properties.className as string[]).includes('fgd-ae'),
         );
         expect(aeSpan).toBeUndefined();
-        // String should not get di-av
+        // String should not get fgd-av
         expect(getClasses(valueSpan)).toEqual(['pl-s']);
       });
     });
 
-    describe('attribute value (di-av)', () => {
-      it('adds di-av to pl-s span that is an attribute value', () => {
+    describe('attribute value (fgd-av)', () => {
+      it('adds fgd-av to pl-s span that is an attribute value', () => {
         const valueSpan = stringSpan('"', 'test');
         const tree = root([
           textNode('<'),
@@ -844,11 +844,11 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(valueSpan)).toContain('di-av');
+        expect(getClasses(valueSpan)).toContain('fgd-av');
         expect(getClasses(valueSpan)).toContain('pl-s');
       });
 
-      it('does not add di-av outside tag context', () => {
+      it('does not add fgd-av outside tag context', () => {
         const valueSpan = stringSpan('"', 'test');
         const tree = root([textNode('x='), valueSpan]);
 
@@ -872,11 +872,11 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(idValue)).toContain('di-av');
-        expect(getClasses(classValue)).toContain('di-av');
+        expect(getClasses(idValue)).toContain('fgd-av');
+        expect(getClasses(classValue)).toContain('fgd-av');
       });
 
-      it('adds di-av to attribute values in MDX grammar scope', () => {
+      it('adds fgd-av to attribute values in MDX grammar scope', () => {
         const valueSpan = stringSpan('"', 'test');
         const tree = root([
           textNode('<'),
@@ -888,11 +888,11 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.mdx');
 
-        expect(getClasses(valueSpan)).toContain('di-av');
+        expect(getClasses(valueSpan)).toContain('fgd-av');
         expect(getClasses(valueSpan)).toContain('pl-s');
       });
 
-      it('adds di-av when = is a pl-k span', () => {
+      it('adds fgd-av when = is a pl-k span', () => {
         const valueSpan = stringSpan('"', 'x');
         const tree = root([
           textNode('<'),
@@ -906,7 +906,7 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(valueSpan)).toContain('di-av');
+        expect(getClasses(valueSpan)).toContain('fgd-av');
         expect(getClasses(valueSpan)).toContain('pl-s');
       });
     });
@@ -938,8 +938,8 @@ describe('extendSyntaxTokens', () => {
       const tree = root([frame]);
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(numSpan)).toEqual(['pl-c1', 'di-num']);
-      expect(getClasses(boolSpan)).toEqual(['pl-c1', 'di-bool']);
+      expect(getClasses(numSpan)).toEqual(['pl-c1', 'fgd-num']);
+      expect(getClasses(boolSpan)).toEqual(['pl-c1', 'fgd-bool']);
     });
   });
 
@@ -979,54 +979,54 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(numSpan)).toEqual(['pl-c1', 'di-num']);
-      expect(getClasses(boolSpan)).toEqual(['pl-c1', 'di-bool']);
-      expect(getClasses(nullSpan)).toEqual(['pl-c1', 'di-n']);
-      expect(getClasses(emptyString)).toEqual(['pl-s', 'di-n']);
+      expect(getClasses(numSpan)).toEqual(['pl-c1', 'fgd-num']);
+      expect(getClasses(boolSpan)).toEqual(['pl-c1', 'fgd-bool']);
+      expect(getClasses(nullSpan)).toEqual(['pl-c1', 'fgd-n']);
+      expect(getClasses(emptyString)).toEqual(['pl-s', 'fgd-n']);
       expect(getClasses(namedConst)).toEqual(['pl-c1']);
     });
   });
 
-  describe('this/super enhancement (di-this)', () => {
-    it('adds di-this to pl-c1 span containing this', () => {
+  describe('this/super enhancement (fgd-this)', () => {
+    it('adds fgd-this to pl-c1 span containing this', () => {
       const thisSpan = span('pl-c1', 'this');
       const tree = root([thisSpan, textNode('.'), span('pl-c1', 'name')]);
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(thisSpan)).toContain('di-this');
+      expect(getClasses(thisSpan)).toContain('fgd-this');
     });
 
-    it('adds di-this to pl-c1 span containing super', () => {
+    it('adds fgd-this to pl-c1 span containing super', () => {
       const superSpan = span('pl-c1', 'super');
       const tree = root([superSpan, textNode('.'), span('pl-en', 'method'), textNode('()')]);
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(superSpan)).toContain('di-this');
+      expect(getClasses(superSpan)).toContain('fgd-this');
     });
 
-    it('does not add di-this to other pl-c1 spans', () => {
+    it('does not add fgd-this to other pl-c1 spans', () => {
       const consoleSpan = span('pl-c1', 'console');
       const tree = root([consoleSpan]);
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(consoleSpan)).not.toContain('di-this');
+      expect(getClasses(consoleSpan)).not.toContain('fgd-this');
     });
 
-    it('does not add di-this for non-JS grammars', () => {
+    it('does not add fgd-this for non-JS grammars', () => {
       const thisSpan = span('pl-c1', 'this');
       const tree = root([thisSpan]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(thisSpan)).not.toContain('di-this');
+      expect(getClasses(thisSpan)).not.toContain('fgd-this');
     });
   });
 
-  describe('built-in type enhancement (di-bt)', () => {
-    it('adds di-bt to pl-c1 string type', () => {
+  describe('built-in type enhancement (fgd-bt)', () => {
+    it('adds fgd-bt to pl-c1 string type', () => {
       const typeSpan = span('pl-c1', 'string');
       const tree = root([
         span('pl-k', 'let'),
@@ -1039,19 +1039,19 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(typeSpan)).toContain('di-bt');
+      expect(getClasses(typeSpan)).toContain('fgd-bt');
     });
 
-    it('adds di-bt to pl-c1 number type', () => {
+    it('adds fgd-bt to pl-c1 number type', () => {
       const typeSpan = span('pl-c1', 'number');
       const tree = root([typeSpan]);
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(typeSpan)).toContain('di-bt');
+      expect(getClasses(typeSpan)).toContain('fgd-bt');
     });
 
-    it('adds di-bt to all built-in type keywords', () => {
+    it('adds fgd-bt to all built-in type keywords', () => {
       const types = [
         'string',
         'number',
@@ -1070,65 +1070,65 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.ts');
 
-        expect(getClasses(typeSpan)).toContain('di-bt');
+        expect(getClasses(typeSpan)).toContain('fgd-bt');
       }
     });
 
-    it('does not add di-bt to non-type pl-c1 spans', () => {
+    it('does not add fgd-bt to non-type pl-c1 spans', () => {
       const consoleSpan = span('pl-c1', 'console');
       const tree = root([consoleSpan]);
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(consoleSpan)).not.toContain('di-bt');
+      expect(getClasses(consoleSpan)).not.toContain('fgd-bt');
     });
 
-    it('does not add di-bt to undefined (already di-n)', () => {
+    it('does not add fgd-bt to undefined (already fgd-n)', () => {
       const undefinedSpan = span('pl-c1', 'undefined');
       const tree = root([undefinedSpan]);
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(undefinedSpan)).toContain('di-n');
-      expect(getClasses(undefinedSpan)).not.toContain('di-bt');
+      expect(getClasses(undefinedSpan)).toContain('fgd-n');
+      expect(getClasses(undefinedSpan)).not.toContain('fgd-bt');
     });
 
-    it('does not add di-bt for non-JS grammars', () => {
+    it('does not add fgd-bt for non-JS grammars', () => {
       const typeSpan = span('pl-c1', 'string');
       const tree = root([typeSpan]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(typeSpan)).not.toContain('di-bt');
+      expect(getClasses(typeSpan)).not.toContain('fgd-bt');
     });
 
-    it('does not add di-bt for plain JS (string is a valid variable name)', () => {
+    it('does not add fgd-bt for plain JS (string is a valid variable name)', () => {
       const typeSpan = span('pl-c1', 'string');
       const tree = root([typeSpan]);
 
       extendSyntaxTokens(tree, 'source.js');
 
-      expect(getClasses(typeSpan)).not.toContain('di-bt');
+      expect(getClasses(typeSpan)).not.toContain('fgd-bt');
     });
   });
 
-  describe('JSX component enhancement (di-jsx)', () => {
-    it('adds di-jsx to pl-c1 after < text in opening tag', () => {
+  describe('JSX component enhancement (fgd-jsx)', () => {
+    it('adds fgd-jsx to pl-c1 after < text in opening tag', () => {
       const component = span('pl-c1', 'Button');
       const tree = root([textNode('<'), component, textNode(' />')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(component)).toContain('di-jsx');
+      expect(getClasses(component)).toContain('fgd-jsx');
     });
 
-    it('reclassifies pl-smi to pl-c1 with di-jsx for PascalCase names in standalone closing tags', () => {
+    it('reclassifies pl-smi to pl-c1 with fgd-jsx for PascalCase names in standalone closing tags', () => {
       const component = span('pl-smi', 'Button');
       const tree = root([span('pl-k', '</'), component, span('pl-k', '>')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(component)).toEqual(['pl-c1', 'di-jsx']);
+      expect(getClasses(component)).toEqual(['pl-c1', 'fgd-jsx']);
       // Bracket spans are replaced with text nodes
       expect(tree.children[0]).toEqual({ type: 'text', value: '</' });
       expect(tree.children[2]).toEqual({ type: 'text', value: '>' });
@@ -1145,37 +1145,37 @@ describe('extendSyntaxTokens', () => {
       expect(tree.children[2]).toEqual({ type: 'text', value: '>' });
     });
 
-    it('adds di-jsx to pl-c1 and replaces bracket spans in standalone closing tags', () => {
+    it('adds fgd-jsx to pl-c1 and replaces bracket spans in standalone closing tags', () => {
       // Single-letter component names like <A> produce pl-c1 instead of pl-smi
       const component = span('pl-c1', 'A');
       const tree = root([span('pl-k', '</'), component, span('pl-k', '>')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(component)).toContain('di-jsx');
+      expect(getClasses(component)).toContain('fgd-jsx');
       expect(tree.children[0]).toEqual({ type: 'text', value: '</' });
       expect(tree.children[2]).toEqual({ type: 'text', value: '>' });
     });
 
-    it('adds di-jsx to pl-c1 after text ending in "</" in inline closing tag', () => {
+    it('adds fgd-jsx to pl-c1 after text ending in "</" in inline closing tag', () => {
       const component = span('pl-c1', 'Button');
       const tree = root([textNode('>hi</'), component, textNode('>')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(component)).toContain('di-jsx');
+      expect(getClasses(component)).toContain('fgd-jsx');
     });
 
-    it('does not add di-jsx to HTML elements (pl-ent)', () => {
+    it('does not add fgd-jsx to HTML elements (pl-ent)', () => {
       const div = span('pl-ent', 'div');
       const tree = root([textNode('<'), div, textNode('>')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(div)).not.toContain('di-jsx');
+      expect(getClasses(div)).not.toContain('fgd-jsx');
     });
 
-    it('does not add di-jsx for non-JSX grammars like source.ts', () => {
+    it('does not add fgd-jsx for non-JSX grammars like source.ts', () => {
       // source.ts is in JS_GRAMMARS but NOT JSX_GRAMMARS — generic call syntax
       // like f<MyType>() produces the same text("<") + pl-c1 pattern as JSX
       const component = span('pl-c1', 'Button');
@@ -1183,19 +1183,19 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(component)).not.toContain('di-jsx');
+      expect(getClasses(component)).not.toContain('fgd-jsx');
     });
 
-    it('does not add di-jsx for generics (< is pl-k)', () => {
+    it('does not add fgd-jsx for generics (< is pl-k)', () => {
       const typeArg = span('pl-smi', 'string');
       const tree = root([span('pl-c1', 'Array'), span('pl-k', '<'), typeArg, span('pl-k', '>')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(typeArg)).not.toContain('di-jsx');
+      expect(getClasses(typeArg)).not.toContain('fgd-jsx');
     });
 
-    it('does not add di-jsx for less-than comparison (< is pl-k, not text)', () => {
+    it('does not add fgd-jsx for less-than comparison (< is pl-k, not text)', () => {
       // `a < MAX_SIZE` — starry-night tokenizes < as pl-k, so the text before pl-c1
       // is " " not "<", preventing a false match
       const constant = span('pl-c1', 'MAX_SIZE');
@@ -1209,10 +1209,10 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(constant)).not.toContain('di-jsx');
+      expect(getClasses(constant)).not.toContain('fgd-jsx');
     });
 
-    it('does not add di-jsx to TS built-in types in generics (e.g. useState<number | null>)', () => {
+    it('does not add fgd-jsx to TS built-in types in generics (e.g. useState<number | null>)', () => {
       // React.useState<number | null>(2) — starry-night emits text "<" then pl-c1("number")
       // which previously matched the JSX opening-tag pattern.
       const numberType = span('pl-c1', 'number');
@@ -1232,12 +1232,12 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(numberType)).not.toContain('di-jsx');
-      expect(getClasses(nullType)).not.toContain('di-jsx');
+      expect(getClasses(numberType)).not.toContain('fgd-jsx');
+      expect(getClasses(nullType)).not.toContain('fgd-jsx');
     });
 
     it('does not enter attribute context for default type params like <T = string>', () => {
-      // `<T = string>` inside a generic — the `=` must not become di-ae.
+      // `<T = string>` inside a generic — the `=` must not become fgd-ae.
       const stringType = span('pl-c1', 'string');
       const tree = root([
         span('pl-en', 'f'),
@@ -1250,38 +1250,38 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      // The text " = " should not have been split into a di-ae span
+      // The text " = " should not have been split into a fgd-ae span
       const eqSpan = tree.children.find(
         (n) =>
           n.type === 'element' &&
           n.tagName === 'span' &&
           Array.isArray(n.properties?.className) &&
-          n.properties.className.includes('di-ae'),
+          n.properties.className.includes('fgd-ae'),
       );
       expect(eqSpan).toBeUndefined();
     });
   });
 
   describe('CSS property/value enhancement', () => {
-    describe('CSS property name (di-cp)', () => {
-      it('adds di-cp to pl-c1 before colon inside declaration block', () => {
+    describe('CSS property name (fgd-cp)', () => {
+      it('adds fgd-cp to pl-c1 before colon inside declaration block', () => {
         // .x { color: red; }
         const propName = span('pl-c1', 'color');
         const tree = root([textNode('{ '), propName, textNode(': '), span('pl-c1', 'red')]);
 
         extendSyntaxTokens(tree, 'source.css');
 
-        expect(getClasses(propName)).toContain('di-cp');
-        expect(getClasses(propName)).not.toContain('di-cv');
+        expect(getClasses(propName)).toContain('fgd-cp');
+        expect(getClasses(propName)).not.toContain('fgd-cv');
       });
 
-      it('does not add di-cp for non-CSS grammars', () => {
+      it('does not add fgd-cp for non-CSS grammars', () => {
         const propName = span('pl-c1', 'color');
         const tree = root([textNode('{ '), propName, textNode(': '), span('pl-c1', 'red')]);
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(propName)).not.toContain('di-cp');
+        expect(getClasses(propName)).not.toContain('fgd-cp');
       });
 
       it('resets after semicolon', () => {
@@ -1303,10 +1303,10 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.css');
 
-        expect(getClasses(prop1)).toContain('di-cp');
-        expect(getClasses(val1)).toContain('di-cv');
-        expect(getClasses(prop2)).toContain('di-cp');
-        expect(getClasses(val2)).toContain('di-cv');
+        expect(getClasses(prop1)).toContain('fgd-cp');
+        expect(getClasses(val1)).toContain('fgd-cv');
+        expect(getClasses(prop2)).toContain('fgd-cp');
+        expect(getClasses(val2)).toContain('fgd-cv');
       });
 
       it('resets after closing brace', () => {
@@ -1316,10 +1316,10 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.css');
 
-        expect(getClasses(prop)).toContain('di-cp');
+        expect(getClasses(prop)).toContain('fgd-cp');
       });
 
-      it('does not add di-cp to selector tokens outside declaration blocks', () => {
+      it('does not add fgd-cp to selector tokens outside declaration blocks', () => {
         // [data-active] { color: red }
         const selectorAttr = span('pl-c1', 'data-active');
         const propName = span('pl-c1', 'color');
@@ -1335,12 +1335,12 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.css');
 
-        expect(getClasses(selectorAttr)).not.toContain('di-cp');
-        expect(getClasses(selectorAttr)).not.toContain('di-cv');
-        expect(getClasses(propName)).toContain('di-cp');
+        expect(getClasses(selectorAttr)).not.toContain('fgd-cp');
+        expect(getClasses(selectorAttr)).not.toContain('fgd-cv');
+        expect(getClasses(propName)).toContain('fgd-cp');
       });
 
-      it('does not add di-cp to attribute selector inside a declaration block', () => {
+      it('does not add fgd-cp to attribute selector inside a declaration block', () => {
         // .parent { &[data-starting-style] { color: red } }
         const attrName = span('pl-c1', 'data-starting-style');
         const propName = span('pl-c1', 'color');
@@ -1357,24 +1357,24 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.css');
 
-        expect(getClasses(attrName)).toContain('di-da');
-        expect(getClasses(attrName)).not.toContain('di-cp');
-        expect(getClasses(propName)).toContain('di-cp');
+        expect(getClasses(attrName)).toContain('fgd-da');
+        expect(getClasses(attrName)).not.toContain('fgd-cp');
+        expect(getClasses(propName)).toContain('fgd-cp');
       });
     });
 
-    describe('CSS property value (di-cv)', () => {
-      it('adds di-cv to pl-c1 after colon inside declaration block', () => {
+    describe('CSS property value (fgd-cv)', () => {
+      it('adds fgd-cv to pl-c1 after colon inside declaration block', () => {
         const propValue = span('pl-c1', 'red');
         const tree = root([textNode('{ '), span('pl-c1', 'color'), textNode(': '), propValue]);
 
         extendSyntaxTokens(tree, 'source.css');
 
-        expect(getClasses(propValue)).toContain('di-cv');
-        expect(getClasses(propValue)).not.toContain('di-cp');
+        expect(getClasses(propValue)).toContain('fgd-cv');
+        expect(getClasses(propValue)).not.toContain('fgd-cp');
       });
 
-      it('adds di-cv to multiple values after colon', () => {
+      it('adds fgd-cv to multiple values after colon', () => {
         // { transition: transform 150ms }
         const transitionProp = span('pl-c1', 'transition');
         const numValue = span('pl-c1', '150');
@@ -1388,42 +1388,42 @@ describe('extendSyntaxTokens', () => {
 
         extendSyntaxTokens(tree, 'source.css');
 
-        expect(getClasses(transitionProp)).toContain('di-cp');
-        expect(getClasses(numValue)).toContain('di-cv');
-        expect(getClasses(numValue)).toContain('di-num');
+        expect(getClasses(transitionProp)).toContain('fgd-cp');
+        expect(getClasses(numValue)).toContain('fgd-cv');
+        expect(getClasses(numValue)).toContain('fgd-num');
       });
 
-      it('does not add di-cv for non-CSS grammars', () => {
+      it('does not add fgd-cv for non-CSS grammars', () => {
         const propValue = span('pl-c1', 'red');
         const tree = root([textNode('{ '), span('pl-c1', 'color'), textNode(': '), propValue]);
 
         extendSyntaxTokens(tree, 'source.tsx');
 
-        expect(getClasses(propValue)).not.toContain('di-cv');
+        expect(getClasses(propValue)).not.toContain('fgd-cv');
       });
     });
   });
 
-  describe('punctuation enhancement (di-pu)', () => {
-    it('adds di-pu to pl-k span containing only =', () => {
+  describe('punctuation enhancement (fgd-pu)', () => {
+    it('adds fgd-pu to pl-k span containing only =', () => {
       const node = span('pl-k', '=');
       const tree = root([span('pl-smi', 'x'), textNode(' '), node, textNode(' 1')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toContain('di-pu');
+      expect(getClasses(node)).toContain('fgd-pu');
     });
 
-    it('adds di-pu to pl-k span containing =>', () => {
+    it('adds fgd-pu to pl-k span containing =>', () => {
       const node = span('pl-k', '=>');
       const tree = root([textNode('() '), node, textNode(' x')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toContain('di-pu');
+      expect(getClasses(node)).toContain('fgd-pu');
     });
 
-    it('adds di-pu to pl-k span containing &&', () => {
+    it('adds fgd-pu to pl-k span containing &&', () => {
       const node = span('pl-k', '&&');
       const tree = root([
         span('pl-smi', 'a'),
@@ -1435,10 +1435,10 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toContain('di-pu');
+      expect(getClasses(node)).toContain('fgd-pu');
     });
 
-    it('adds di-pu to pl-k span containing ||', () => {
+    it('adds fgd-pu to pl-k span containing ||', () => {
       const node = span('pl-k', '||');
       const tree = root([
         span('pl-smi', 'a'),
@@ -1450,55 +1450,55 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toContain('di-pu');
+      expect(getClasses(node)).toContain('fgd-pu');
     });
 
-    it('adds di-pu to pl-k span containing ...', () => {
+    it('adds fgd-pu to pl-k span containing ...', () => {
       const node = span('pl-k', '...');
       const tree = root([span('pl-pse', '{'), node, span('pl-smi', 'rest'), span('pl-pse', '}')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toContain('di-pu');
+      expect(getClasses(node)).toContain('fgd-pu');
     });
 
-    it('adds di-pu to pl-k span containing +', () => {
+    it('adds fgd-pu to pl-k span containing +', () => {
       const node = span('pl-k', '+');
       const tree = root([span('pl-smi', 'a'), textNode(' '), node, textNode(' 1')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toContain('di-pu');
+      expect(getClasses(node)).toContain('fgd-pu');
     });
 
-    it('does not add di-pu to pl-k word keywords like const', () => {
+    it('does not add fgd-pu to pl-k word keywords like const', () => {
       const node = span('pl-k', 'const');
       const tree = root([node, textNode(' x = 1')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).not.toContain('di-pu');
+      expect(getClasses(node)).not.toContain('fgd-pu');
     });
 
-    it('does not add di-pu to pl-k word keywords like if', () => {
+    it('does not add fgd-pu to pl-k word keywords like if', () => {
       const node = span('pl-k', 'if');
       const tree = root([node, textNode(' (a) {}')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).not.toContain('di-pu');
+      expect(getClasses(node)).not.toContain('fgd-pu');
     });
 
-    it('does not add di-pu to non-pl-k spans', () => {
+    it('does not add fgd-pu to non-pl-k spans', () => {
       const node = span('pl-c1', '+');
       const tree = root([node]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).not.toContain('di-pu');
+      expect(getClasses(node)).not.toContain('fgd-pu');
     });
 
-    it('coexists with di-ae on the JSX attribute = sign', () => {
+    it('coexists with fgd-ae on the JSX attribute = sign', () => {
       const node = span('pl-k', '=');
       const tree = root([
         textNode('<'),
@@ -1512,11 +1512,11 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).toContain('di-pu');
-      expect(getClasses(node)).toContain('di-ae');
+      expect(getClasses(node)).toContain('fgd-pu');
+      expect(getClasses(node)).toContain('fgd-ae');
     });
 
-    it('applies di-pu to pl-k symbols in CSS too', () => {
+    it('applies fgd-pu to pl-k symbols in CSS too', () => {
       const node = span('pl-k', '+');
       const tree = root([
         span('pl-e', '.a'),
@@ -1528,12 +1528,12 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(node)).toContain('di-pu');
+      expect(getClasses(node)).toContain('fgd-pu');
     });
   });
 
-  describe('JSX variable enhancement (di-jv)', () => {
-    it('adds di-jv to pl-smi inside JSX expression braces', () => {
+  describe('JSX variable enhancement (fgd-jv)', () => {
+    it('adds fgd-jv to pl-smi inside JSX expression braces', () => {
       // <Component value={age} />
       const variable = span('pl-smi', 'age');
       const tree = root([
@@ -1550,10 +1550,10 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(variable)).toContain('di-jv');
+      expect(getClasses(variable)).toContain('fgd-jv');
     });
 
-    it('adds di-jv to pl-smi spread argument', () => {
+    it('adds fgd-jv to pl-smi spread argument', () => {
       // <Checkbox {...label} />
       const variable = span('pl-smi', 'label');
       const tree = root([
@@ -1569,10 +1569,10 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(variable)).toContain('di-jv');
+      expect(getClasses(variable)).toContain('fgd-jv');
     });
 
-    it('adds di-jv to pl-v parameters inside arrow function expression', () => {
+    it('adds fgd-jv to pl-v parameters inside arrow function expression', () => {
       // <Rating onChange={(event, newValue) => ...} />
       const param1 = span('pl-v', 'event');
       const param2 = span('pl-v', 'newValue');
@@ -1596,22 +1596,22 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(param1)).toContain('di-jv');
-      expect(getClasses(param2)).toContain('di-jv');
+      expect(getClasses(param1)).toContain('fgd-jv');
+      expect(getClasses(param2)).toContain('fgd-jv');
     });
 
-    it('does not add di-jv to identifiers outside JSX expression braces', () => {
+    it('does not add fgd-jv to identifiers outside JSX expression braces', () => {
       const outside = span('pl-smi', 'x');
       const tree = root([span('pl-k', 'const'), textNode(' '), outside, textNode(' = 1')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(outside)).not.toContain('di-jv');
+      expect(getClasses(outside)).not.toContain('fgd-jv');
     });
 
-    it('does not add di-jv to identifiers in JSX children expressions', () => {
+    it('does not add fgd-jv to identifiers in JSX children expressions', () => {
       // <Component>{children}</Component> — the expression is between tags,
-      // not inside a tag, so identifiers inside it must NOT receive di-jv.
+      // not inside a tag, so identifiers inside it must NOT receive fgd-jv.
       const childIdentifier = span('pl-smi', 'children');
       const tree = root([
         textNode('<'),
@@ -1627,10 +1627,10 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(childIdentifier)).not.toContain('di-jv');
+      expect(getClasses(childIdentifier)).not.toContain('fgd-jv');
     });
 
-    it('does not add di-jv to a ternary condition in JSX children, but does inside nested attributes', () => {
+    it('does not add fgd-jv to a ternary condition in JSX children, but does inside nested attributes', () => {
       // <Wrapper>
       //   {hasTabs ? <Tabs tabs={tabs} /> : <Label>{code.name}</Label>}
       // </Wrapper>
@@ -1676,16 +1676,16 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      // Children-position identifiers must NOT receive di-jv
-      expect(getClasses(hasTabs)).not.toContain('di-jv');
-      expect(getClasses(codeIdent)).not.toContain('di-jv');
-      expect(getClasses(nameProp)).not.toContain('di-jv');
+      // Children-position identifiers must NOT receive fgd-jv
+      expect(getClasses(hasTabs)).not.toContain('fgd-jv');
+      expect(getClasses(codeIdent)).not.toContain('fgd-jv');
+      expect(getClasses(nameProp)).not.toContain('fgd-jv');
 
-      // Attribute-position identifier still receives di-jv
-      expect(getClasses(tabsAttrValue)).toContain('di-jv');
+      // Attribute-position identifier still receives fgd-jv
+      expect(getClasses(tabsAttrValue)).toContain('fgd-jv');
     });
 
-    it('does not add di-jv to property strings or object keys in JSX children expressions', () => {
+    it('does not add fgd-jv to property strings or object keys in JSX children expressions', () => {
       // <Component>{{ 'aria-label': value, height: 1 }}</Component>
       const stringKey = span('pl-s', "'aria-label'");
       const tree = root([
@@ -1708,24 +1708,24 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      // String key still gets di-op + di-ps, but no di-jv
-      expect(getClasses(stringKey)).toContain('di-op');
-      expect(getClasses(stringKey)).toContain('di-ps');
-      expect(getClasses(stringKey)).not.toContain('di-jv');
+      // String key still gets fgd-op + fgd-ps, but no fgd-jv
+      expect(getClasses(stringKey)).toContain('fgd-op');
+      expect(getClasses(stringKey)).toContain('fgd-ps');
+      expect(getClasses(stringKey)).not.toContain('fgd-jv');
 
-      // Bare object key `height` becomes a di-op span but no di-jv
+      // Bare object key `height` becomes a fgd-op span but no fgd-jv
       const heightKey = tree.children.find(
         (node): node is Element =>
           node.type === 'element' &&
           Array.isArray(node.properties?.className) &&
-          node.properties.className.includes('di-op') &&
+          node.properties.className.includes('fgd-op') &&
           node.children.some((c) => c.type === 'text' && c.value === 'height'),
       );
       expect(heightKey).toBeDefined();
-      expect(getClasses(heightKey!)).not.toContain('di-jv');
+      expect(getClasses(heightKey!)).not.toContain('fgd-jv');
     });
 
-    it('does not add di-jv after the expression closes', () => {
+    it('does not add fgd-jv after the expression closes', () => {
       const inside = span('pl-smi', 'a');
       const outside = span('pl-smi', 'b');
       const tree = root([
@@ -1743,22 +1743,22 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(inside)).toContain('di-jv');
-      expect(getClasses(outside)).not.toContain('di-jv');
+      expect(getClasses(inside)).toContain('fgd-jv');
+      expect(getClasses(outside)).not.toContain('fgd-jv');
     });
 
-    it('does not add di-jv for non-JSX grammars', () => {
+    it('does not add fgd-jv for non-JSX grammars', () => {
       const variable = span('pl-smi', 'age');
       const tree = root([span('pl-pse', '{'), variable, span('pl-pse', '}')]);
 
       extendSyntaxTokens(tree, 'source.ts');
 
-      expect(getClasses(variable)).not.toContain('di-jv');
+      expect(getClasses(variable)).not.toContain('fgd-jv');
     });
 
     it('handles nested JSX expression braces', () => {
       // <A p={{ x: y }}> — only outer pl-pse braces are tracked, but identifiers
-      // inside should still receive di-jv as long as the depth > 0.
+      // inside should still receive fgd-jv as long as the depth > 0.
       const inner = span('pl-smi', 'y');
       const tree = root([
         textNode('<'),
@@ -1776,13 +1776,13 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(inner)).toContain('di-jv');
+      expect(getClasses(inner)).toContain('fgd-jv');
     });
 
-    it('does not add di-jv to a JSX component nested inside an expression', () => {
+    it('does not add fgd-jv to a JSX component nested inside an expression', () => {
       // <FormControlLabel control={<Radio />} />
       // Radio is tokenized as pl-c1 (component), not pl-smi/pl-v, so it should
-      // receive di-jsx but never di-jv.
+      // receive fgd-jsx but never fgd-jv.
       const radio = span('pl-c1', 'Radio');
       const tree = root([
         textNode('<'),
@@ -1800,11 +1800,11 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(radio)).toContain('di-jsx');
-      expect(getClasses(radio)).not.toContain('di-jv');
+      expect(getClasses(radio)).toContain('fgd-jsx');
+      expect(getClasses(radio)).not.toContain('fgd-jv');
     });
 
-    it('adds di-jv to pl-c1 member-access property after a dot', () => {
+    it('adds fgd-jv to pl-c1 member-access property after a dot', () => {
       // <X p={row.name} /> — `row` is pl-smi, `name` is pl-c1 after `.`
       const obj = span('pl-smi', 'row');
       const prop = span('pl-c1', 'name');
@@ -1824,17 +1824,17 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(obj)).toContain('di-jv');
-      expect(getClasses(prop)).toContain('di-jv');
+      expect(getClasses(obj)).toContain('fgd-jv');
+      expect(getClasses(prop)).toContain('fgd-jv');
     });
 
-    it('does not add di-jv to numeric pl-c1 in a member-access-like position', () => {
+    it('does not add fgd-jv to numeric pl-c1 in a member-access-like position', () => {
       // Sanity: a number after `.` (not a real JS pattern, but ensures we don't
-      // double-tag). The number gets di-num via enhanceConstantSpan; the `.` rule
-      // would still add di-jv because we look at preceding text. To avoid this,
-      // ensure di-num and di-jv don't both apply by relying on grammar reality:
+      // double-tag). The number gets fgd-num via enhanceConstantSpan; the `.` rule
+      // would still add fgd-jv because we look at preceding text. To avoid this,
+      // ensure fgd-num and fgd-jv don't both apply by relying on grammar reality:
       // numbers in JSX expressions don't follow `.`. Instead, check a numeric
-      // literal in normal expression position — it must keep only di-num.
+      // literal in normal expression position — it must keep only fgd-num.
       const num = span('pl-c1', '42');
       const tree = root([
         textNode('<'),
@@ -1850,12 +1850,12 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(num)).toContain('di-num');
-      expect(getClasses(num)).not.toContain('di-jv');
+      expect(getClasses(num)).toContain('fgd-num');
+      expect(getClasses(num)).not.toContain('fgd-jv');
     });
 
-    it('does not add di-jv to a pl-en function call inside expression braces', () => {
-      // <X p={getValue()} /> — function-call names should NOT get di-jv
+    it('does not add fgd-jv to a pl-en function call inside expression braces', () => {
+      // <X p={getValue()} /> — function-call names should NOT get fgd-jv
       const fn = span('pl-en', 'getValue');
       const tree = root([
         textNode('<'),
@@ -1872,13 +1872,13 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(fn)).not.toContain('di-jv');
+      expect(getClasses(fn)).not.toContain('fgd-jv');
     });
 
-    it('adds di-op + di-jv to bare object-literal keys inside JSX expression braces', () => {
+    it('adds fgd-op + fgd-jv to bare object-literal keys inside JSX expression braces', () => {
       // <Paper sx={{ height: 400, width: '100%' }} />
       // The `{ height: 400, width: ` text is plain text inside the outer expression;
-      // we split it so `height` and `width` get both di-op and di-jv.
+      // we split it so `height` and `width` get both fgd-op and fgd-jv.
       const tree = root([
         textNode('<'),
         span('pl-c1', 'Paper'),
@@ -1902,19 +1902,19 @@ describe('extendSyntaxTokens', () => {
         (node): node is Element =>
           node.type === 'element' &&
           Array.isArray(node.properties?.className) &&
-          node.properties.className.includes('di-op'),
+          node.properties.className.includes('fgd-op'),
       );
       const keyTexts = keySpans.map((node) =>
         node.children.map((c) => (c.type === 'text' ? c.value : '')).join(''),
       );
       expect(keyTexts).toEqual(['height', 'width']);
-      // Inside JSX, di-op spans must also carry di-jv
+      // Inside JSX, fgd-op spans must also carry fgd-jv
       for (const node of keySpans) {
-        expect(getClasses(node)).toContain('di-jv');
+        expect(getClasses(node)).toContain('fgd-jv');
       }
     });
 
-    it('adds di-op (without di-jv) to bare object-literal keys outside JSX', () => {
+    it('adds fgd-op (without fgd-jv) to bare object-literal keys outside JSX', () => {
       // const x = { height: 400, width: '100%' };
       const tree = root([
         span('pl-k', 'const'),
@@ -1935,19 +1935,19 @@ describe('extendSyntaxTokens', () => {
         (node): node is Element =>
           node.type === 'element' &&
           Array.isArray(node.properties?.className) &&
-          node.properties.className.includes('di-op'),
+          node.properties.className.includes('fgd-op'),
       );
       const keyTexts = keySpans.map((node) =>
         node.children.map((c) => (c.type === 'text' ? c.value : '')).join(''),
       );
       expect(keyTexts).toEqual(['height', 'width']);
-      // Outside JSX, di-op must NOT carry di-jv
+      // Outside JSX, fgd-op must NOT carry fgd-jv
       for (const node of keySpans) {
-        expect(getClasses(node)).not.toContain('di-jv');
+        expect(getClasses(node)).not.toContain('fgd-jv');
       }
     });
 
-    it('does not add di-jv to a ternary identifier inside JSX expression braces', () => {
+    it('does not add fgd-jv to a ternary identifier inside JSX expression braces', () => {
       // <X p={flag ? a : b} /> — `flag` is plain text after `{`, but no `:` follows it,
       // so it must not be tagged. `a` and `b` are pl-smi (already covered by existing rule).
       const tree = root([
@@ -1968,64 +1968,64 @@ describe('extendSyntaxTokens', () => {
       extendSyntaxTokens(tree, 'source.tsx');
 
       const allText = JSON.stringify(tree);
-      // No di-jv span containing the literal text "flag" should exist
-      expect(allText).not.toMatch(/"di-jv"[^}]*"flag"/);
+      // No fgd-jv span containing the literal text "flag" should exist
+      expect(allText).not.toMatch(/"fgd-jv"[^}]*"flag"/);
     });
   });
 
-  describe('property string enhancement (di-ps + di-op)', () => {
-    it('adds di-op + di-ps to pl-s span followed by : in object literal', () => {
+  describe('property string enhancement (fgd-ps + fgd-op)', () => {
+    it('adds fgd-op + fgd-ps to pl-s span followed by : in object literal', () => {
       // { 'aria-label': 'value' }
       const propKey = stringSpan("'", 'aria-label');
       const tree = root([textNode('{ '), propKey, textNode(": 'x' }")]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(propKey)).toContain('di-op');
-      expect(getClasses(propKey)).toContain('di-ps');
-      // Outside JSX, no di-jv
-      expect(getClasses(propKey)).not.toContain('di-jv');
+      expect(getClasses(propKey)).toContain('fgd-op');
+      expect(getClasses(propKey)).toContain('fgd-ps');
+      // Outside JSX, no fgd-jv
+      expect(getClasses(propKey)).not.toContain('fgd-jv');
     });
 
-    it('adds di-ps to pl-s followed by : with surrounding whitespace', () => {
+    it('adds fgd-ps to pl-s followed by : with surrounding whitespace', () => {
       const propKey = stringSpan('"', 'data-foo');
       const tree = root([textNode('{ '), propKey, textNode('  : 1 }')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(propKey)).toContain('di-ps');
+      expect(getClasses(propKey)).toContain('fgd-ps');
     });
 
-    it('does not add di-ps to a string value (not followed by :)', () => {
+    it('does not add fgd-ps to a string value (not followed by :)', () => {
       // { foo: 'value' }
       const value = stringSpan("'", 'value');
       const tree = root([textNode('{ foo: '), value, textNode(' }')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(value)).not.toContain('di-ps');
+      expect(getClasses(value)).not.toContain('fgd-ps');
     });
 
-    it('does not add di-ps to a string followed by other text', () => {
+    it('does not add fgd-ps to a string followed by other text', () => {
       const node = stringSpan("'", 'x');
       const tree = root([textNode('return '), node, textNode(';')]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(node)).not.toContain('di-ps');
+      expect(getClasses(node)).not.toContain('fgd-ps');
     });
 
-    it('does not add di-ps or di-op for non-JS grammars', () => {
+    it('does not add fgd-ps or fgd-op for non-JS grammars', () => {
       const node = stringSpan('"', 'foo');
       const tree = root([textNode('{ '), node, textNode(': red }')]);
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(getClasses(node)).not.toContain('di-ps');
-      expect(getClasses(node)).not.toContain('di-op');
+      expect(getClasses(node)).not.toContain('fgd-ps');
+      expect(getClasses(node)).not.toContain('fgd-op');
     });
 
-    it('adds di-ps + di-op + di-jv to nested property string inside JSX expression', () => {
+    it('adds fgd-ps + fgd-op + fgd-jv to nested property string inside JSX expression', () => {
       // <Box sx={{ 'a': { 'b': 1 } }}>
       const outer = stringSpan("'", 'a');
       const inner = stringSpan("'", 'b');
@@ -2047,16 +2047,16 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(outer)).toContain('di-ps');
-      expect(getClasses(outer)).toContain('di-op');
-      expect(getClasses(outer)).toContain('di-jv');
-      expect(getClasses(inner)).toContain('di-ps');
-      expect(getClasses(inner)).toContain('di-op');
-      expect(getClasses(inner)).toContain('di-jv');
+      expect(getClasses(outer)).toContain('fgd-ps');
+      expect(getClasses(outer)).toContain('fgd-op');
+      expect(getClasses(outer)).toContain('fgd-jv');
+      expect(getClasses(inner)).toContain('fgd-ps');
+      expect(getClasses(inner)).toContain('fgd-op');
+      expect(getClasses(inner)).toContain('fgd-jv');
     });
   });
 
-  describe('template literal interpolation (di-te / di-td)', () => {
+  describe('template literal interpolation (fgd-te / fgd-td)', () => {
     /**
      * Helper to create a `pl-pds` backtick delimiter span as starry-night emits
      * for the opening/closing of a template literal.
@@ -2078,30 +2078,30 @@ describe('extendSyntaxTokens', () => {
       };
     }
 
-    /** Expected `di-td` delimiter span (the `${` or `}` glyphs). */
+    /** Expected `fgd-td` delimiter span (the `${` or `}` glyphs). */
     function diTd(value: string): Element {
       return {
         type: 'element',
         tagName: 'span',
-        properties: { className: ['di-td'] },
+        properties: { className: ['fgd-td'] },
         children: [{ type: 'text', value }],
       };
     }
 
-    /** Expected `di-te` interpolation-region span wrapping the given children. */
+    /** Expected `fgd-te` interpolation-region span wrapping the given children. */
     function diTe(children: ElementContent[]): Element {
       return {
         type: 'element',
         tagName: 'span',
-        properties: { className: ['di-te'] },
+        properties: { className: ['fgd-te'] },
         children,
       };
     }
 
-    /** Returns the first `di-te` child of an element, or undefined. */
+    /** Returns the first `fgd-te` child of an element, or undefined. */
     function getDiTe(element: Element): Element | undefined {
       return element.children.find(
-        (node): node is Element => node.type === 'element' && getFirstClass(node) === 'di-te',
+        (node): node is Element => node.type === 'element' && getFirstClass(node) === 'fgd-te',
       );
     }
 
@@ -2115,7 +2115,7 @@ describe('extendSyntaxTokens', () => {
       return JSON.stringify(node).includes(`"${cls}"`);
     }
 
-    it('wraps a single interpolation in di-te with di-td delimiters', () => {
+    it('wraps a single interpolation in fgd-te with fgd-td delimiters', () => {
       // `a${b}c`
       const pls = templateString([
         backtick(),
@@ -2138,7 +2138,7 @@ describe('extendSyntaxTokens', () => {
     });
 
     it('resets bare punctuation inside the interpolation (member access)', () => {
-      // `${a.b}` — the `.` is a plain text node and must end up inside the di-te region
+      // `${a.b}` — the `.` is a plain text node and must end up inside the fgd-te region
       const pls = templateString([
         backtick(),
         textNode('${'),
@@ -2208,16 +2208,16 @@ describe('extendSyntaxTokens', () => {
       expect(regionChildren[0]).toEqual(diTd('${'));
       expect(regionChildren[regionChildren.length - 1]).toEqual(diTd('}'));
       expect(regionChildren).toContainEqual(textNode('}.'));
-      // The interpolated number still gets di-num from constant enhancement
+      // The interpolated number still gets fgd-num from constant enhancement
       const numberSpan = regionChildren.find(
         (node): node is Element => node.type === 'element' && getFirstClass(node) === 'pl-c1',
       );
       expect(numberSpan).toBeDefined();
-      expect(getClasses(numberSpan!)).toContain('di-num');
+      expect(getClasses(numberSpan!)).toContain('fgd-num');
     });
 
     it('applies constant enhancement to interpolated expressions', () => {
-      // `${42}` → number gets di-num and sits inside the region
+      // `${42}` → number gets fgd-num and sits inside the region
       const pls = templateString([
         backtick(),
         textNode('${'),
@@ -2233,19 +2233,19 @@ describe('extendSyntaxTokens', () => {
       const numberSpan = region!.children.find(
         (node): node is Element => node.type === 'element' && getFirstClass(node) === 'pl-c1',
       );
-      expect(getClasses(numberSpan!)).toEqual(['pl-c1', 'di-num']);
+      expect(getClasses(numberSpan!)).toEqual(['pl-c1', 'fgd-num']);
     });
 
-    it('does not add di-jv to interpolated identifiers', () => {
+    it('does not add fgd-jv to interpolated identifiers', () => {
       // A template interpolation is not a JSX attribute expression, so its
-      // identifiers must not receive di-jv.
+      // identifiers must not receive fgd-jv.
       const variable = span('pl-smi', 'value');
       const pls = templateString([backtick(), textNode('${'), variable, textNode('}'), backtick()]);
       const tree = root([pls]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(variable)).not.toContain('di-jv');
+      expect(getClasses(variable)).not.toContain('fgd-jv');
     });
 
     it('does not process interpolation syntax inside a regular double-quoted string', () => {
@@ -2260,8 +2260,8 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(hasClass(tree, 'di-te')).toBe(false);
-      expect(hasClass(tree, 'di-td')).toBe(false);
+      expect(hasClass(tree, 'fgd-te')).toBe(false);
+      expect(hasClass(tree, 'fgd-td')).toBe(false);
     });
 
     it('does not process interpolation syntax inside a single-quoted string', () => {
@@ -2275,7 +2275,7 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(hasClass(tree, 'di-te')).toBe(false);
+      expect(hasClass(tree, 'fgd-te')).toBe(false);
     });
 
     it('does not process template literals for non-JS grammars', () => {
@@ -2290,17 +2290,17 @@ describe('extendSyntaxTokens', () => {
 
       extendSyntaxTokens(tree, 'source.css');
 
-      expect(hasClass(tree, 'di-te')).toBe(false);
+      expect(hasClass(tree, 'fgd-te')).toBe(false);
     });
 
-    it('preserves empty-string di-n for an empty template literal', () => {
+    it('preserves empty-string fgd-n for an empty template literal', () => {
       // `` — two pl-pds backticks with nothing between still reads as nullish
       const pls = templateString([backtick(), backtick()]);
       const tree = root([pls]);
 
       extendSyntaxTokens(tree, 'source.tsx');
 
-      expect(getClasses(pls)).toEqual(['pl-s', 'di-n']);
+      expect(getClasses(pls)).toEqual(['pl-s', 'fgd-n']);
     });
 
     it('leaves an unterminated interpolation open without error', () => {
@@ -2339,14 +2339,14 @@ describe('extendSyntaxTokens', () => {
       // The outer region opens and closes with delimiters
       expect(outer!.children[0]).toEqual(diTd('${'));
       expect(outer!.children[outer!.children.length - 1]).toEqual(diTd('}'));
-      // A nested di-te region wraps the inner `${y}`
+      // A nested fgd-te region wraps the inner `${y}`
       const inner = getDiTe(outer!);
       expect(inner).toBeDefined();
       expect(inner!.children).toEqual([diTd('${'), span('pl-smi', 'y'), diTd('}')]);
     });
 
     describe('multi-line template literals', () => {
-      it('wraps a per-line di-te slice for an interpolation spanning lines', () => {
+      it('wraps a per-line fgd-te slice for an interpolation spanning lines', () => {
         // `line1 ${a}
         // line2 ${ b
         //  + c }`

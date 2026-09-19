@@ -1089,7 +1089,7 @@ export const demo = createDemo(import.meta.url, { Component }, { precompute: tru
         externals: {
           count: 42,
           enabled: true,
-          packageName: '"@mui/material"', // String literal - user provides quotes
+          packageName: '"@base-ui/react"', // String literal - user provides quotes
           globalVar: 'window', // Variable name - no quotes
           value: null,
         },
@@ -1101,7 +1101,7 @@ export const demo = createDemo(import.meta.url, { Component }, { precompute: tru
       // Should handle different primitive types correctly with proper quoting
       expect(result).toContain('count: 42');
       expect(result).toContain('enabled: true');
-      expect(result).toContain('packageName: "@mui/material"'); // String literal
+      expect(result).toContain('packageName: "@base-ui/react"'); // String literal
       expect(result).toContain('globalVar: window'); // Variable name
       expect(result).toContain('value: null');
     });
@@ -1171,7 +1171,7 @@ export const demo = createDemo(import.meta.url, { Component }, { precompute: tru
         externals: {
           React: 'React', // Valid identifier pointing to React global
           ReactDOM: 'ReactDOM', // Valid identifier pointing to ReactDOM global
-          muiPackage: '"@mui/material"', // User provides quoted string for scoped package name
+          muiPackage: '"@base-ui/react"', // User provides quoted string for scoped package name
           numericValue: 123,
           version: '"5.0.0"', // String literal for version
         },
@@ -1183,7 +1183,7 @@ export const demo = createDemo(import.meta.url, { Component }, { precompute: tru
       // Should handle identifiers and quoted strings properly
       expect(result).toContain('React: React'); // Variable name -> variable name
       expect(result).toContain('ReactDOM: ReactDOM'); // Variable name -> variable name
-      expect(result).toContain('muiPackage: "@mui/material"'); // String literal
+      expect(result).toContain('muiPackage: "@base-ui/react"'); // String literal
       expect(result).toContain('numericValue: 123');
       expect(result).toContain('version: "5.0.0"'); // String literal
 

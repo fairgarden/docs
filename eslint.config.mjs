@@ -81,10 +81,10 @@ const config = defineConfig(
     // nested "demo of demo" structure, demos/<slug>/demo-*/page.tsx).
     ignores: ['docs/app/**/demos/*/page.tsx', 'docs/app/**/demos/*/page.jsx'],
     plugins: {
-      'docs-infra': { rules: { 'require-demo-focus': lintJavascriptDemoFocus } },
+      'fairgarden-docs': { rules: { 'require-demo-focus': lintJavascriptDemoFocus } },
     },
     rules: {
-      'docs-infra/require-demo-focus': ['error', { wrapReturn: true }],
+      'fairgarden-docs/require-demo-focus': ['error', { wrapReturn: true }],
     },
   },
   {

@@ -86,7 +86,7 @@ export type LoaderOptions = {
    */
   notableCommentsPrefix?: string[];
   /**
-   * Marker option consumed by `pnpm docs-infra validate` (not by this loader).
+   * Marker option consumed by `pnpm docs validate` (not by this loader).
    *
    * When set on a demo `index.ts` rule, the validate command ensures every
    * matched demo has a sibling `client.ts` that imports `createDemoClient`
@@ -99,7 +99,7 @@ export type LoaderOptions = {
    */
   requireClient?: string;
   /**
-   * Marker option consumed by `pnpm docs-infra validate` (not by this loader).
+   * Marker option consumed by `pnpm docs validate` (not by this loader).
    *
    * When `true` on a demo `index.ts` rule, the validate command ensures every
    * matched demo has a sibling `page.tsx` that renders the demo as the route's

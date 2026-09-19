@@ -1,2 +1,2 @@
 // dog-food the demo content
-export * from '../../app/docs-infra/components/code-highlighter/demos/CodeContent';
+export * from '../../app/lib/components/code-highlighter/demos/CodeContent';

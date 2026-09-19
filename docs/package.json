@@ -8,9 +8,9 @@
     "lint": "pnpm build && pnpm link-check",
     "link-check": "tsx ./scripts/reportBrokenLinks.mts",
     "start": "serve ./export",
-    "docs-infra": "node ./scripts/runDocsInfra.mjs",
-    "validate": "pnpm docs-infra validate --command 'pnpm validate'",
-    "test:e2e": "pnpm docs-infra browser --script test:e2e:unconfined --playwright-version 1.61.1 --",
+    "docs": "node ./scripts/runFairGardenDocs.mjs",
+    "validate": "pnpm docs validate --command 'pnpm validate'",
+    "test:e2e": "pnpm docs browser --script test:e2e:unconfined --playwright-version 1.61.1 --",
     "test:e2e:unconfined": "playwright test",
     "test:e2e:codegen": "playwright codegen"
   },

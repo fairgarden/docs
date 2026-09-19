@@ -302,8 +302,8 @@ export interface ExportConfig {
    * Custom dependency resolution function
    * @example
    * resolveDependencies: (packageName, envVars) => {
-   *   if (packageName === '@mui/material') {
-   *     return { '@mui/material': 'latest', '@emotion/react': 'latest' };
+   *   if (packageName === '@base-ui/react') {
+   *     return { '@base-ui/react': 'latest', 'react-dom': 'latest' };
    *   }
    *   return { [packageName]: 'latest' };
    * }

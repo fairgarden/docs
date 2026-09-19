@@ -1,20 +1,20 @@
 import { createSitemap } from '@fairgarden/docs/createSitemap';
-import DocsInfraOverview from '../docs-infra/overview/page.mdx';
-import DocsInfraComponents from '../docs-infra/components/page.mdx';
-import DocsInfraHooks from '../docs-infra/hooks/page.mdx';
-import DocsInfraCommands from '../docs-infra/commands/page.mdx';
-import DocsInfraFactories from '../docs-infra/factories/page.mdx';
-import DocsInfraPatterns from '../docs-infra/patterns/page.mdx';
-import DocsInfraPipeline from '../docs-infra/pipeline/page.mdx';
-import DocsInfraConventions from '../docs-infra/conventions/page.mdx';
+import LibOverview from '../lib/overview/page.mdx';
+import LibComponents from '../lib/components/page.mdx';
+import LibHooks from '../lib/hooks/page.mdx';
+import LibCommands from '../lib/commands/page.mdx';
+import LibFactories from '../lib/factories/page.mdx';
+import LibPatterns from '../lib/patterns/page.mdx';
+import LibPipeline from '../lib/pipeline/page.mdx';
+import LibConventions from '../lib/conventions/page.mdx';
 
 export const sitemap = createSitemap(import.meta.url, {
-  DocsInfraOverview,
-  DocsInfraComponents,
-  DocsInfraHooks,
-  DocsInfraCommands,
-  DocsInfraFactories,
-  DocsInfraPatterns,
-  DocsInfraPipeline,
-  DocsInfraConventions,
+  LibOverview,
+  LibComponents,
+  LibHooks,
+  LibCommands,
+  LibFactories,
+  LibPatterns,
+  LibPipeline,
+  LibConventions,
 });

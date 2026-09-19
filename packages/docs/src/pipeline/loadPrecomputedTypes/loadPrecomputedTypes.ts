@@ -39,7 +39,7 @@ export type LoaderOptions = {
   /**
    * Directory path for socket and lock files used for IPC between workers.
    * Useful for Windows where the default temp directory may not support Unix domain sockets.
-   * @example '.next/docs-infra'
+   * @example '.next/fairgarden-docs'
    */
   socketDir?: string;
   /**
