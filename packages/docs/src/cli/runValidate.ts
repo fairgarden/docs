@@ -74,7 +74,7 @@ const runValidate: CommandModule<{}, Args> = {
       .option('command', {
         type: 'string',
         description: 'Command to suggest when indexes are out of date',
-        default: 'pnpm docs validate',
+        default: 'pnpm docs:run validate',
       })
       .option('indexes', {
         type: 'boolean',
@@ -107,7 +107,7 @@ const runValidate: CommandModule<{}, Args> = {
     const cwd = process.cwd();
     const {
       paths = [],
-      command = 'pnpm docs validate',
+      command = 'pnpm docs:run validate',
       indexes: indexesOnly = false,
       types: typesOnly = false,
       perf: perfEnabled = false,

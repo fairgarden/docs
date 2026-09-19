@@ -4,6 +4,12 @@ export default defineConfig({
   testDir: './app',
   testMatch: '**/test.ts',
   forbidOnly: !!process.env.CI,
+  // `trace: 'on-first-retry'` below only ever produces a trace if retries are
+  // allowed, and shared CI runners are slow enough that interactions race with
+  // re-rendering component trees. A test that passes on retry is still reported
+  // as flaky rather than green, and one that keeps failing now leaves a trace to
+  // diagnose from.
+  retries: process.env.CI ? 2 : 0,
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:3000',

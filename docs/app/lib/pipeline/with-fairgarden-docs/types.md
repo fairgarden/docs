@@ -158,7 +158,7 @@ type WithFairGardenDocsOptions = {
   /** Additional Turbopack rules to merge with the default FairGarden Docs rules. */
   additionalTurbopackRules?: Record<string, { loaders: string[] }>;
   /**
-   * When set, `pnpm docs validate` ensures every demo `index.ts` matched by a
+   * When set, `pnpm docs:run validate` ensures every demo `index.ts` matched by a
    * `loadPrecomputedCodeHighlighter` demo rule has a sibling `client.ts` that imports
    * `createDemoClient` from this path, and that the demo's `create*` factory call
    * receives a `ClientProvider` entry in its meta object.
@@ -173,7 +173,7 @@ type WithFairGardenDocsOptions = {
    */
   requireDemoClient?: string;
   /**
-   * When `true`, `pnpm docs validate` ensures every demo `index.ts` matched by a
+   * When `true`, `pnpm docs:run validate` ensures every demo `index.ts` matched by a
    * `loadPrecomputedCodeHighlighter` demo rule has a sibling `page.tsx` that renders
    * the demo as the route's default export, so each demo is browsable on its own page.
    *

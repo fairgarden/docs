@@ -5,7 +5,7 @@ The `validate` command ensures that committed files match the expected output. I
 ## Usage
 
 ```bash
-pnpm docs validate [paths...]
+pnpm run docs validate [paths...]
 ```
 
 ## Arguments
@@ -16,19 +16,19 @@ pnpm docs validate [paths...]
 
 ## Options
 
-| Option                    | Type      | Default              | Description                                     |
-| :------------------------ | :-------- | :------------------- | :---------------------------------------------- |
-| `--command`               | `string`  | `pnpm docs validate` | Command to suggest when indexes are out of date |
-| `--useVisibleDescription` | `boolean` | `false`              | Use first visible paragraph as description      |
-| `--indexes`               | `boolean` | `false`              | Only validate page.mdx index files              |
-| `--types`                 | `boolean` | `false`              | Only validate types.ts files                    |
+| Option                    | Type      | Default                  | Description                                     |
+| :------------------------ | :-------- | :----------------------- | :---------------------------------------------- |
+| `--command`               | `string`  | `pnpm run docs validate` | Command to suggest when indexes are out of date |
+| `--useVisibleDescription` | `boolean` | `false`                  | Use first visible paragraph as description      |
+| `--indexes`               | `boolean` | `false`                  | Only validate page.mdx index files              |
+| `--types`                 | `boolean` | `false`                  | Only validate types.ts files                    |
 
 ## Examples
 
 ### Validate All Indexes
 
 ```bash
-pnpm docs validate
+pnpm run docs validate
 ```
 
 Processes all `page.mdx` files in `src/app/` and `app/` directories.
@@ -36,7 +36,7 @@ Processes all `page.mdx` files in `src/app/` and `app/` directories.
 ### Validate Specific Sections
 
 ```bash
-pnpm docs validate lib/components lib/functions
+pnpm run docs validate lib/components lib/functions
 ```
 
 Only validates indexes under the specified paths.
@@ -44,7 +44,7 @@ Only validates indexes under the specified paths.
 ### Use Visible Description
 
 ```bash
-pnpm docs validate --useVisibleDescription
+pnpm run docs validate --useVisibleDescription
 ```
 
 Uses the first visible paragraph in each page as the description, instead of the meta tag.
@@ -52,7 +52,7 @@ Uses the first visible paragraph in each page as the description, instead of the
 ### Validate Only Indexes
 
 ```bash
-pnpm docs validate --indexes
+pnpm run docs validate --indexes
 ```
 
 Only processes `page.mdx` files, skipping types validation.
@@ -60,7 +60,7 @@ Only processes `page.mdx` files, skipping types validation.
 ### Validate Only Types
 
 ```bash
-pnpm docs validate --types
+pnpm run docs validate --types
 ```
 
 Only processes `types.ts` files, skipping index validation.
@@ -161,7 +161,7 @@ Total: 2 files updated
 
 ✗ Generated files are out of date. Run this command locally:
 
-  pnpm docs validate lib/components
+  pnpm run docs validate lib/components
 
 Then commit the results.
 ```

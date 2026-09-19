@@ -8,7 +8,7 @@ The `withFairGardenDocs` function is a Next.js configuration plugin that sets up
 - Sets up page extensions to support `.md`, `.mdx`, `.ts`, `.tsx`, `.js`, `.jsx` files
 - Enables export output mode by default for static site generation
 - Provides extensible patterns for custom demo file structures
-- Optionally auto-generates demo `client.ts` and `page.tsx` files via `pnpm docs validate`
+- Optionally auto-generates demo `client.ts` and `page.tsx` files via `pnpm docs:run validate`
 - Includes companion `getFairGardenDocsMdxOptions` for MDX plugin configuration
 
 ## Basic Usage
@@ -275,7 +275,7 @@ This will configure loaders for paths like:
 Live demos require a sibling `client.ts` next to each `index.ts` so the
 `ClientProvider` can carry the demo's externals into the browser bundle.
 Maintaining these files by hand is repetitive, so `withFairGardenDocs` accepts a
-`requireDemoClient` option that lets [`pnpm docs validate`](../../commands/validate/page.mdx)
+`requireDemoClient` option that lets [`pnpm docs:run validate`](../../commands/validate/page.mdx)
 create and wire them up automatically.
 
 ```js
@@ -335,7 +335,7 @@ Notes:
 
 Each demo can also be browsed on its own route. Rather than hand-writing a
 `page.tsx` next to every demo, `withFairGardenDocs` accepts a `requireDemoPage` option
-that lets [`pnpm docs validate`](../../commands/validate/page.mdx) create
+that lets [`pnpm docs:run validate`](../../commands/validate/page.mdx) create
 them automatically.
 
 ```js
