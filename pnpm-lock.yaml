@@ -16,7 +16,7 @@ importers:
         version: link:packages/docs/build
       '@mui/internal-code-infra':
         specifier: 0.0.4-canary.119
-        version: 0.0.4-canary.119(@next/eslint-plugin-next@16.3.5(eslint@10.10.0(jiti@2.7.0)))(@types/node@22.19.0)(@typescript-eslint/eslint-plugin@8.70.0(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@vitest/expect@4.1.9)(eslint-import-resolver-node@0.3.10)(eslint@10.10.0(jiti@2.7.0))(postcss@8.5.28)(prettier@3.8.3)(stylelint@17.14.0(typescript@6.0.3))(typescript@6.0.3)(vitest@4.1.9)
+        version: 0.0.4-canary.119(@next/eslint-plugin-next@16.3.5(eslint@10.10.0(jiti@2.7.0)))(@types/node@22.19.0)(@typescript-eslint/eslint-plugin@8.70.0(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@vitest/expect@4.1.9)(eslint@10.10.0(jiti@2.7.0))(postcss@8.5.28)(prettier@3.8.3)(stylelint@17.14.0(typescript@6.0.3))(typescript@6.0.3)(vitest@4.1.9)
       '@next/eslint-plugin-next':
         specifier: ^16.3.5
         version: 16.3.5(eslint@10.10.0(jiti@2.7.0))
@@ -7801,7 +7801,7 @@ snapshots:
       '@babel/core': 7.29.7
       resolve: 1.22.12
 
-  '@mui/internal-code-infra@0.0.4-canary.119(@next/eslint-plugin-next@16.3.5(eslint@10.10.0(jiti@2.7.0)))(@types/node@22.19.0)(@typescript-eslint/eslint-plugin@8.70.0(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@vitest/expect@4.1.9)(eslint-import-resolver-node@0.3.10)(eslint@10.10.0(jiti@2.7.0))(postcss@8.5.28)(prettier@3.8.3)(stylelint@17.14.0(typescript@6.0.3))(typescript@6.0.3)(vitest@4.1.9)':
+  '@mui/internal-code-infra@0.0.4-canary.119(@next/eslint-plugin-next@16.3.5(eslint@10.10.0(jiti@2.7.0)))(@types/node@22.19.0)(@typescript-eslint/eslint-plugin@8.70.0(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0))(typescript@6.0.3))(@vitest/expect@4.1.9)(eslint@10.10.0(jiti@2.7.0))(postcss@8.5.28)(prettier@3.8.3)(stylelint@17.14.0(typescript@6.0.3))(typescript@6.0.3)(vitest@4.1.9)':
     dependencies:
       '@argos-ci/core': 6.8.4(@types/node@22.19.0)
       '@babel/cli': 7.29.7(@babel/core@7.29.7)
