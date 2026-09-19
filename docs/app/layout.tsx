@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Metadata } from 'next';
 import { Google_Sans, JetBrains_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import styles from './layout.module.css';
 import './global.css';
 
@@ -45,6 +46,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="FG Docs" />
         <link rel="manifest" href="/site.webmanifest" />
         <Analytics />
+        <SpeedInsights />
       </head>
       <body className={`${fontClassNames} ${styles.body}`}>
         <div>{children}</div>
