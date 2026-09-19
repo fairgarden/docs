@@ -13,8 +13,14 @@ runs:
         node-version: '22.22.3'
         # https://github.com/actions/setup-node/blob/main/docs/advanced-usage.md#caching-packages-dependencies
         cache: 'pnpm'
-        registry-url: 'https://registry.npmjs.org'
         package-manager-cache: false
+        # `registry-url` is deliberately omitted. Setting it makes setup-node
+        # write an .npmrc containing `_authToken=${NODE_AUTH_TOKEN}` and, with no
+        # token supplied, export the placeholder `XXXXX-XXXXX-XXXXX-XXXXX`. npm
+        # then authenticates with that instead of exchanging the Actions OIDC
+        # token, and the registry answers `E404 Not Found - PUT` rather than 403.
+        # Publishing here relies on npm trusted publishing, so npm must find no
+        # credentials at all. registry.npmjs.org is already the default registry.
     # Ensure npm 11.5.1 or later is installed
     - name: Update npm
       shell: bash
