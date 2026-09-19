@@ -1,0 +1,89 @@
+.root {
+  margin-block: var(--size-5);
+}
+
+.root p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-3);
+  margin: 0;
+}
+
+.root p a,
+.root p a:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2);
+  padding: var(--size-2) var(--size-5);
+  border: var(--border-size-2) solid var(--purple-8);
+  border-radius: var(--radius-round);
+  background-color: transparent;
+  color: var(--purple-11);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-6);
+  line-height: var(--font-lineheight-3);
+  text-decoration: none;
+  transition:
+    background-color 0.2s var(--ease-3),
+    border-color 0.2s var(--ease-3);
+}
+
+.root p a:hover {
+  border-color: var(--purple-9);
+  background-color: var(--purple-4);
+}
+
+:global([data-centered]) .root p {
+  justify-content: center;
+}
+
+/* The first link is the primary action. */
+.root p a:first-child,
+.root p a:first-child:visited {
+  border-color: var(--purple-9);
+  background-color: var(--purple-9);
+  color: #fff;
+}
+
+.root p a:first-child:hover {
+  border-color: var(--purple-10);
+  background-color: var(--purple-10);
+}
+
+.root p a:focus-visible {
+  outline: var(--border-size-2) solid var(--purple-12);
+  outline-offset: var(--border-size-2);
+}
+
+/* Links that leave the site say so. */
+.root p a[href^='https://']::after {
+  content: '\2197';
+}
+
+/* Inside a solid band the buttons invert. */
+:global([data-landing-tone='solid']) .root p a,
+:global([data-landing-tone='solid']) .root p a:visited {
+  border-color: var(--purple-8);
+  color: #fff;
+}
+
+:global([data-landing-tone='solid']) .root p a:hover {
+  border-color: #fff;
+  background-color: var(--purple-11);
+}
+
+:global([data-landing-tone='solid']) .root p a:first-child,
+:global([data-landing-tone='solid']) .root p a:first-child:visited {
+  border-color: #fff;
+  background-color: #fff;
+  color: var(--purple-12);
+}
+
+:global([data-landing-tone='solid']) .root p a:first-child:hover {
+  border-color: var(--purple-4);
+  background-color: var(--purple-4);
+}
+
+:global([data-landing-tone='solid']) .root p a:focus-visible {
+  outline-color: #fff;
+}

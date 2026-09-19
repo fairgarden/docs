@@ -1,0 +1,18 @@
+/* Design tokens for the landing route.
+   Radix Colors supply the palette (the same purple and mauve steps the docs
+   hard-code elsewhere), Open Props supplies sizes, type, radii and easings. */
+@import '@radix-ui/colors/purple.css';
+@import '@radix-ui/colors/mauve.css';
+@import '@radix-ui/colors/plum.css';
+@import '@radix-ui/colors/crimson.css';
+@import '@radix-ui/colors/amber.css';
+@import 'open-props/sizes.min.css';
+@import 'open-props/fonts.min.css';
+@import 'open-props/borders.min.css';
+@import 'open-props/easings.min.css';
+
+:root {
+  /* Widest a band's content grows, and the gutter that keeps it off the edges. */
+  --landing-width: 1240px;
+  --landing-gutter: max(var(--size-3), min(4vw, var(--size-7)));
+}

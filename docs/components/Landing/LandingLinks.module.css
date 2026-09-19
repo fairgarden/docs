@@ -1,0 +1,57 @@
+/* `section.root` outranks the site-wide `.body ul` spacing. */
+section.root ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: var(--size-3);
+  margin: var(--size-7) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.root li {
+  position: relative;
+  padding: var(--size-4) var(--size-5);
+  border: var(--border-size-1) solid var(--purple-6);
+  border-radius: var(--radius-3);
+  background-color: var(--purple-1);
+  transition:
+    background-color 0.2s var(--ease-3),
+    border-color 0.2s var(--ease-3);
+}
+
+.root li:hover {
+  border-color: var(--purple-8);
+  background-color: var(--purple-3);
+}
+
+.root li:has(a:focus-visible) {
+  outline: var(--border-size-2) solid var(--purple-9);
+  outline-offset: var(--border-size-2);
+}
+
+.root ul li p {
+  margin: 0;
+  font-size: var(--font-size-1);
+  color: var(--mauve-11);
+}
+
+.root ul li p:first-child a,
+.root ul li p:first-child a:visited {
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-7);
+  color: var(--purple-11);
+  text-decoration: none;
+  outline: none;
+}
+
+/* Stretch the link over the card so the whole card is the target. */
+.root ul li p:first-child a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.root ul li p + p {
+  margin-top: var(--size-1);
+}

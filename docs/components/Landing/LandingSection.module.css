@@ -1,0 +1,94 @@
+.root {
+  padding: var(--size-fluid-5) var(--landing-gutter);
+}
+
+.root[data-landing-tone='tint'] {
+  border-block: var(--border-size-1) solid var(--purple-4);
+  background-color: var(--purple-2);
+}
+
+.root[data-landing-tone='solid'] {
+  background-color: var(--purple-12);
+  color: #fff;
+}
+
+.inner {
+  max-width: var(--landing-width);
+  margin-inline: auto;
+}
+
+.root[data-narrow] .inner {
+  max-width: 800px;
+}
+
+/* A code block is the only block a band renders as a bare `div`, so adjacent code
+   blocks can share a row while every other block keeps the full width. */
+@media (min-width: 900px) {
+  .root[data-columns] .inner {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--size-5);
+    align-items: start;
+  }
+
+  .root[data-columns] .inner > :not(div) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Only the band's own markdown is styled here, which is why every selector
+   stops at direct children: nested wrappers bring their own typography.
+   Headings arrive wrapped in an anchor. */
+.root .inner > a > h2 {
+  max-width: var(--size-header-3);
+  margin: 0 0 var(--size-3);
+  font-size: var(--font-size-fluid-2);
+  line-height: var(--font-lineheight-1);
+  color: var(--purple-12);
+  text-wrap: balance;
+}
+
+.inner > p {
+  max-width: var(--size-content-3);
+  margin: 0 0 var(--size-3);
+  font-size: var(--font-size-2);
+  line-height: var(--font-lineheight-3);
+}
+
+/* A paragraph that follows a block, such as a code fence, needs room above it. */
+.inner > :not(p, a) + p {
+  margin-top: var(--size-5);
+}
+
+/* The paragraph straight after the section heading is its lede. */
+.root .inner > a:first-child + p {
+  margin-bottom: var(--size-7);
+  font-size: var(--font-size-3);
+  color: var(--mauve-11);
+  text-wrap: pretty;
+}
+
+.root .inner > p > a,
+.root .inner > p > a:visited {
+  color: var(--purple-11);
+}
+
+.root[data-centered] .inner > a > h2,
+.root[data-centered] .inner > a:first-child + p {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.root[data-landing-tone='solid'] .inner > a > h2 {
+  color: #fff;
+}
+
+.root[data-landing-tone='solid'] .inner > p,
+.root[data-landing-tone='solid'] .inner > a:first-child + p {
+  color: var(--purple-5);
+}
+
+.root[data-landing-tone='solid'] .inner > p > a,
+.root[data-landing-tone='solid'] .inner > p > a:visited {
+  color: #fff;
+}

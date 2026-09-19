@@ -1,0 +1,27 @@
+.root {
+  padding: var(--size-7) var(--landing-gutter);
+  border-top: var(--border-size-1) solid var(--purple-5);
+  background-color: var(--purple-2);
+}
+
+.inner {
+  max-width: var(--landing-width);
+  margin-inline: auto;
+}
+
+.root .inner p {
+  max-width: var(--size-content-3);
+  margin: 0;
+  font-size: var(--font-size-1);
+  line-height: var(--font-lineheight-3);
+  color: var(--mauve-11);
+}
+
+.root .inner p + p {
+  margin-top: var(--size-2);
+}
+
+.root .inner a,
+.root .inner a:visited {
+  color: var(--purple-11);
+}

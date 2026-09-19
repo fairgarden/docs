@@ -8,6 +8,14 @@ type PreProps = {
   'data-slug'?: string;
   'data-precompute'?: string;
   'data-content-props'?: string;
+  /**
+   * Renders the code block. A wrapper can swap it, for example to give the
+   * blocks it holds a collapsible window.
+   * @default CodeContent
+   */
+  Content?: CodeHighlighterProps<object>['Content'];
+  /** Placeholder shown until a lazy `Content` loads. */
+  ContentLoading?: CodeHighlighterProps<object>['ContentLoading'];
 };
 
 export function Pre(props: PreProps) {
@@ -33,7 +41,8 @@ export function Pre(props: PreProps) {
       name={props['data-name']}
       slug={props['data-slug']}
       precompute={precompute}
-      Content={CodeContent}
+      Content={props.Content ?? CodeContent}
+      ContentLoading={props.ContentLoading}
       contentProps={contentProps}
     />
   );
