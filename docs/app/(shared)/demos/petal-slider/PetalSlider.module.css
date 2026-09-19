@@ -39,7 +39,9 @@
   border: var(--border-size-2) solid var(--purple-1);
 }
 
+/* Base UI renders the thumb as a `div` around a visually hidden range input, and the input
+   is what takes focus, so the ring follows the thumb's focused descendant. */
 .thumb:has(:focus-visible) {
-  outline: var(--border-size-2) solid var(--purple-8);
+  outline: var(--border-size-2) solid var(--purple-9);
   outline-offset: var(--border-size-2);
 }
