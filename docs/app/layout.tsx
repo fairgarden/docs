@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Metadata } from 'next';
 import { Google_Sans, JetBrains_Mono } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import styles from './layout.module.css';
 import './global.css';
 
@@ -43,6 +44,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-title" content="FG Docs" />
         <link rel="manifest" href="/site.webmanifest" />
+        <Analytics />
       </head>
       <body className={`${fontClassNames} ${styles.body}`}>
         <div>{children}</div>
