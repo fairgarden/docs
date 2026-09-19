@@ -69,26 +69,11 @@ jobs:
       - name: Stamp the canary version
         if: steps.published.outputs.skip == 'false'
         id: version
-        env:
-          RUN_NUMBER: ${{ github.run_number }}
-        run: |
-          node --input-type=module -e '
-            import { readFile, writeFile } from "node:fs/promises";
-
-            const manifestPath = "packages/docs/build/package.json";
-            const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-            // Canaries lead the next patch so they sort above the current
-            // release and below the release they are previewing.
-            const [major, minor, patch] = manifest.version.split("-")[0].split(".").map(Number);
-            const version = `${major}.${minor}.${patch + 1}-canary.${process.env.RUN_NUMBER}`;
-
-            manifest.version = version;
-            manifest.gitSha = process.env.GITHUB_SHA;
-            await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-
-            await writeFile(process.env.GITHUB_OUTPUT, `version=${version}\n`, { flag: "a" });
-            console.log(`@fairgarden/docs@${version}`);
-          '
+        # The suffix is the canary's position within its own release cycle, read
+        # from the registry — see scripts/canaryVersion.mjs. It is deliberately
+        # not a CI run counter: that leaked workflow bookkeeping into published
+        # versions and skipped numbers whenever a run failed or deduplicated.
+        run: node scripts/stampCanaryVersion.mjs packages/docs/build/package.json
 
       - name: Publish to npm
         if: steps.published.outputs.skip == 'false'
