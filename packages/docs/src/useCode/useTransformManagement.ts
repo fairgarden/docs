@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Code, VariantCode } from '../CodeHighlighter/types';
+import type { Code, Fallbacks, VariantCode } from '../CodeHighlighter/types';
 // `decodeHastSource` and `frameFallbackFromSpans` are already part of the
 // always-loaded `useCode` shell (via `Pre`, `sourceLineCounts`,
 // `useFileNavigation`, `useSourceEnhancing`). Passing them into the lazy
@@ -64,6 +64,11 @@ interface UseTransformManagementProps {
   effectiveCode: Code;
   selectedVariantKey: string;
   selectedVariant: VariantCode | null;
+  /**
+   * Per-file DEFLATE dictionaries for `selectedVariant` (keyed by file name),
+   * used to decode its `hastCompressed` sources before applying a transform.
+   */
+  fallbacks?: Fallbacks;
   initialTransform?: string;
   /**
    * When set to a positive number, the *swap* of `transformedFiles` to the
@@ -165,6 +170,7 @@ export function useTransformManagement({
   effectiveCode,
   selectedVariantKey,
   selectedVariant,
+  fallbacks,
   initialTransform,
   transformDelay,
   transformLayoutShift,
@@ -386,7 +392,7 @@ export function useTransformManagement({
     transformLayoutShift,
     selectedFileName,
     expanded,
-    fallbacks: context?.fallbacks,
+    fallbacks,
   });
   // eslint-disable-next-line react-hooks/refs
   layoutShiftPropsRef.current = {
@@ -394,7 +400,7 @@ export function useTransformManagement({
     transformLayoutShift,
     selectedFileName,
     expanded,
-    fallbacks: context?.fallbacks,
+    fallbacks,
   };
 
   // Plumb classifier props through `transformHasCollapsePlaceholder`
@@ -694,9 +700,9 @@ export function useTransformManagement({
       selectedVariant,
       delayedAppliedTransform,
       transformRuntimeDeps,
-      context?.fallbacks,
+      fallbacks,
     );
-  }, [precomputed, selectedVariant, delayedAppliedTransform, context?.fallbacks, transformEngine]);
+  }, [precomputed, selectedVariant, delayedAppliedTransform, fallbacks, transformEngine]);
 
   const result = {
     availableTransforms,

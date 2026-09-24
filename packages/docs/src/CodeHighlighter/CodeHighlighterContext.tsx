@@ -38,6 +38,14 @@ export interface CodeHighlighterContextType {
    */
   fallbacks?: Fallbacks;
   /**
+   * The same compact fallback data for every variant, keyed by variant and
+   * then fileName. A `hastCompressed` payload only decodes with its own file's
+   * dictionary, and variants often share file names, so a consumer that
+   * selects variants on its own (like `useCode`) reads the entry for the
+   * variant it renders rather than `fallbacks`.
+   */
+  variantFallbacks?: Record<string, Fallbacks>;
+  /**
    * Render-side readiness gate. `true` once the highlight trigger
    * (`init` / `hydration` / `idle` / `visible`) has fired *and* the
    * sync `parseCode` pass has resolved, so consumers like `<Pre>`

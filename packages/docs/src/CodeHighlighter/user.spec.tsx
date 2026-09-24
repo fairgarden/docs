@@ -33,6 +33,9 @@ import { CodeContext } from '../CodeProvider/CodeContext';
 import { parseControlledCode } from './parseControlledCode';
 import { createParseSource } from '../pipeline/parseSource';
 import { preloadSourceEditingEngine } from '../useCode/useSourceEditing';
+import { preloadTransformEngine } from '../useCode/transformEngineCache';
+import { compressHast } from '../pipeline/hastUtils/hastCompression';
+import { fallbackToText } from './fallbackFormat';
 import type { Code, ContentProps, ControlledCode, HastRoot, ParseSource } from './types';
 
 let parseSource: ParseSource;
@@ -254,6 +257,68 @@ describe('CodeHighlighter rendering', () => {
     // The toggle commits: the transform is selected and the file renamed.
     await waitFor(() => expect(screen.getByTestId('transform').textContent).toBe('js'));
     await waitFor(() => expect(screen.getByTestId('file').textContent).toBe('app.js'));
+  });
+
+  it('keeps a transform applied when the user switches to a variant whose file has the same name', async () => {
+    // Production payloads compress each file with its own `fallback` text as the
+    // DEFLATE dictionary. Both variants name their file `app.ts`, so the second
+    // must decode with ITS dictionary, not the first variant's same-named one.
+    await preloadTransformEngine();
+    const compressed = (text: string) => {
+      const fallback = [text];
+      return {
+        source: {
+          hastCompressed: compressHast(JSON.stringify(highlighted(text)), fallbackToText(fallback)),
+        },
+        fallback,
+        totalLines: 1,
+      };
+    };
+    const toJs = (text: string) => ({
+      js: {
+        fileName: 'app.js',
+        delta: {
+          children: {
+            _t: 'a',
+            0: { children: { _t: 'a', 0: { children: { _t: 'a', 0: { value: [text] } } } } },
+          },
+        },
+      },
+    });
+    const code = {
+      Plain: {
+        fileName: 'app.ts',
+        ...compressed('const answer: number = 42;'),
+        transforms: toJs('const answer = 42;'),
+      },
+      Doubled: {
+        fileName: 'app.ts',
+        ...compressed('const answer: number = 21 * 2;'),
+        transforms: toJs('const answer = 21 * 2;'),
+      },
+    } as unknown as Code;
+
+    render(
+      <CodeHighlighterClient variants={['Plain', 'Doubled']} precompute={code} url="file:///app.ts">
+        <Demo />
+      </CodeHighlighterClient>,
+    );
+
+    act(() => {
+      screen.getByTestId('transform:js').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const answer = 42;'),
+    );
+
+    act(() => {
+      screen.getByTestId('variant:Doubled').click();
+    });
+
+    // The incoming variant renders with the transform still applied.
+    await waitFor(() => expect(screen.getByTestId('code').textContent).toContain('21 * 2'));
+    expect(screen.getByTestId('code').textContent).toContain('const answer = 21 * 2;');
+    expect(screen.getByTestId('file').textContent).toBe('app.js');
   });
 
   it('re-highlights a controlled file after the user edits it', async () => {

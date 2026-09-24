@@ -14,12 +14,17 @@
  */
 import * as React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { render, renderHook, act, waitFor } from '@testing-library/react';
 import { useCode } from './useCode';
-import type { ContentProps, HastRoot } from '../CodeHighlighter/types';
+import type { UseCodeResult } from './useCode';
+import type { ContentProps, HastRoot, Transforms } from '../CodeHighlighter/types';
 import { CodeHighlighterContext } from '../CodeHighlighter/CodeHighlighterContext';
 import type { CodeHighlighterContextType } from '../CodeHighlighter/CodeHighlighterContext';
 import { CodeControllerContext } from '../CodeControllerContext/CodeControllerContext';
+import { compressHast } from '../pipeline/hastUtils/hastCompression';
+import { fallbackToText } from '../CodeHighlighter/fallbackFormat';
+import type { FallbackNode } from '../CodeHighlighter/fallbackFormat';
+import { preloadTransformEngine } from './transformEngineCache';
 
 describe('useCode integration tests', () => {
   let originalLocation: Location;
@@ -1334,6 +1339,166 @@ describe('useCode integration tests', () => {
         },
         { timeout: 1000 },
       );
+    });
+  });
+
+  describe('compressed sources across variants', () => {
+    // Each file is compressed with its own `fallback` text as the dictionary,
+    // so it decodes only with that same text.
+    function compressedFile(text: string) {
+      const root = {
+        type: 'root',
+        children: [
+          {
+            type: 'element',
+            tagName: 'span',
+            properties: {},
+            children: [{ type: 'text', value: text }],
+          },
+        ],
+      };
+      const fallback: FallbackNode[] = [text];
+      return {
+        source: { hastCompressed: compressHast(JSON.stringify(root), fallbackToText(fallback)) },
+        fallback,
+      };
+    }
+
+    function toJs(text: string): Transforms {
+      return {
+        js: {
+          delta: {
+            children: {
+              _t: 'a',
+              0: { children: { _t: 'a', 0: { value: [text] } } },
+            },
+          },
+          fileName: 'Button.jsx',
+        },
+      };
+    }
+
+    it('keeps the selected transform when switching to a variant whose file shares a name', async () => {
+      await preloadTransformEngine();
+      const first = compressedFile('const first: number = 1;');
+      const second = compressedFile('const second: number = 2;');
+
+      // A `ContentLoading` hoists each variant's dictionaries off `Code`, and the
+      // highlighter hands them back per variant alongside its own variant's map.
+      const context: CodeHighlighterContextType = {
+        code: {
+          First: {
+            fileName: 'Button.tsx',
+            source: first.source,
+            totalLines: 1,
+            transforms: toJs('const first = 1;'),
+          },
+          Second: {
+            fileName: 'Button.tsx',
+            source: second.source,
+            totalLines: 1,
+            transforms: toJs('const second = 2;'),
+          },
+        },
+        fallbacks: { 'Button.tsx': first.fallback },
+        variantFallbacks: {
+          First: { 'Button.tsx': first.fallback },
+          Second: { 'Button.tsx': second.fallback },
+        },
+      };
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(CodeHighlighterContext.Provider, { value: context }, children);
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      // `<Pre>` observes frame visibility, which jsdom doesn't implement.
+      const { IntersectionObserver: originalIntersectionObserver } = globalThis;
+      globalThis.IntersectionObserver = class {
+        observe() {}
+
+        unobserve() {}
+
+        disconnect() {}
+      } as unknown as typeof IntersectionObserver;
+
+      try {
+        let code: UseCodeResult | undefined;
+        function Viewer() {
+          code = useCode({ slug: 'button' });
+          return React.createElement('div', { 'data-testid': 'viewer' }, code.selectedFile);
+        }
+        const { getByTestId } = render(React.createElement(Viewer), { wrapper });
+
+        act(() => {
+          code!.selectTransform('js');
+        });
+        await waitFor(() => {
+          expect(getByTestId('viewer').textContent).toBe('const first = 1;');
+        });
+
+        act(() => {
+          code!.selectVariant('Second');
+        });
+        await waitFor(() => {
+          expect(getByTestId('viewer').textContent).toContain('second');
+        });
+
+        expect(getByTestId('viewer').textContent).toBe('const second = 2;');
+        expect(code!.selectedFileName).toBe('Button.jsx');
+        const transformErrors = errorSpy.mock.calls.filter(([message]) =>
+          String(message).includes('Transform failed'),
+        );
+        expect(transformErrors).toEqual([]);
+      } finally {
+        errorSpy.mockRestore();
+        globalThis.IntersectionObserver = originalIntersectionObserver;
+      }
+    });
+  });
+
+  describe('copy feedback', () => {
+    it('reports a recent copy of the file and of the Markdown separately', async () => {
+      const writes: string[] = [];
+      Object.defineProperty(window.navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            writes.push(text);
+          },
+        },
+      });
+      vi.useFakeTimers();
+      try {
+        const contentProps: ContentProps<{}> = {
+          name: 'Button',
+          code: { Default: { fileName: 'Button.tsx', source: 'const button = 1;' } },
+        };
+        const { result } = renderHook(() => useCode(contentProps, { copy: { timeout: 1000 } }));
+
+        expect(result.current.copyRecentlySuccessful).toBe(false);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(false);
+
+        await act(async () => {
+          await result.current.copy({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toEqual(['const button = 1;']);
+        expect(result.current.copyRecentlySuccessful).toBe(true);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(false);
+
+        // The feedback clears after the `copy.timeout`.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+        expect(result.current.copyRecentlySuccessful).toBe(false);
+
+        await act(async () => {
+          await result.current.copyMarkdown({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toHaveLength(2);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(true);
+        expect(result.current.copyRecentlySuccessful).toBe(false);
+      } finally {
+        vi.useRealTimers();
+        delete (window.navigator as { clipboard?: Clipboard }).clipboard;
+      }
     });
   });
 

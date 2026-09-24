@@ -436,8 +436,9 @@ export function toControlledCode(
     // The per-file `fallback` is the DEFLATE dictionary for a `hastCompressed`
     // source. It rides on the `VariantCode` in the no-`ContentLoading` path; on
     // the `ContentLoading` path the active variant's fallback is stripped off
-    // `Code` and lives in `context.fallbacks` (`activeFallbacks`) instead — so
-    // prefer that for the active variant, falling back to the variant's field.
+    // `Code` and is hoisted into the highlighter context instead, which `useCode`
+    // resolves for this variant (`activeFallbacks`) — so prefer that for the
+    // active variant, falling back to the variant's field.
     const variantFallbacks = key === activeVariantKey ? activeFallbacks : undefined;
     const mainFallback =
       (variant.fileName ? variantFallbacks?.[variant.fileName] : undefined) ?? variant.fallback;

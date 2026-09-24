@@ -1572,8 +1572,8 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
   const codeForFallback =
     overlaidCode || (controlled?.code ? undefined : resolvedPropsCode || resolvedStateCode);
 
-  // Resolve the active variant's fallbacks from the two places one can cross
-  // the server→client boundary: the hoisted copy (from a `ContentLoading`
+  // Resolve each variant's fallbacks from the two places one can cross the
+  // server→client boundary: the hoisted copy (from a `ContentLoading`
   // component, which had it stripped off `Code`) and the variant's own
   // `fallback` field on `Code` (present without a `ContentLoading`, or scattered
   // back from the residual blob). For most files only one is populated. When
@@ -1581,13 +1581,28 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
   // scatters the *full* fallback onto `Code` — the `Code` copy must win, since
   // the full text is the DEFLATE dictionary `hastCompressed` needs. So merge
   // with the derived (`Code`) copy taking precedence.
-  const activeFallbacks = React.useMemo(() => {
-    const merged = {
-      ...hoistedFallbackHasts[variantName],
-      ...deriveFallbacksFromCode(codeForFallback, variantName),
-    };
-    return Object.keys(merged).length > 0 ? merged : undefined;
-  }, [hoistedFallbackHasts, variantName, codeForFallback]);
+  //
+  // Kept per variant: `useCode` selects variants on its own, and variants often
+  // share file names, so a single file-name map would hand another variant's
+  // same-named file this variant's dictionary.
+  const variantFallbacks = React.useMemo(() => {
+    const byVariant: Record<string, Fallbacks> = {};
+    const names = new Set([
+      ...Object.keys(hoistedFallbackHasts),
+      ...Object.keys(codeForFallback ?? {}),
+    ]);
+    for (const name of names) {
+      const merged = {
+        ...hoistedFallbackHasts[name],
+        ...deriveFallbacksFromCode(codeForFallback, name),
+      };
+      if (Object.keys(merged).length > 0) {
+        byVariant[name] = merged;
+      }
+    }
+    return byVariant;
+  }, [hoistedFallbackHasts, codeForFallback]);
+  const activeFallbacks = variantFallbacks[variantName];
 
   const fallbackContext = React.useMemo(
     () => ({
@@ -1656,6 +1671,7 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       url: props.url,
       deferHighlight,
       fallbacks: activeFallbacks,
+      variantFallbacks,
       highlightReady,
       highlightAfter,
       editActivation,
@@ -1676,6 +1692,7 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       props.url,
       deferHighlight,
       activeFallbacks,
+      variantFallbacks,
       highlightReady,
       highlightAfter,
       editActivation,

@@ -1563,6 +1563,45 @@ function parseJSImports(
 }
 
 /**
+ * Finds where an import or export-from statement ends once its module path has
+ * been read, looking ahead from `pos` on the same line. Returns the index just
+ * past a `;` that ends it (block comments before the `;` stay inside the
+ * statement). Without a `;`, the end of the line ends the statement (automatic
+ * semicolon insertion), so returns the index of the line break, or of the first
+ * trailing comment so the comment is still scanned. Returns `-1` when something
+ * else follows on the line (e.g. an import attributes clause), so the caller
+ * keeps scanning.
+ */
+function findStatementEndAfterModulePath(text: string, pos: number): number {
+  const len = text.length;
+  let k = pos;
+  let firstCommentStart = -1;
+  for (;;) {
+    while (k < len && (text[k] === ' ' || text[k] === '\t' || text[k] === '\r')) {
+      k += 1;
+    }
+    if (k < len && text[k] === ';') {
+      return k + 1;
+    }
+    const lineEnds = k >= len || text[k] === '\n' || (text[k] === '/' && text[k + 1] === '/');
+    if (lineEnds) {
+      return firstCommentStart === -1 ? k : firstCommentStart;
+    }
+    if (text[k] !== '/' || text[k + 1] !== '*') {
+      return -1;
+    }
+    if (firstCommentStart === -1) {
+      firstCommentStart = k;
+    }
+    const commentEnd = text.indexOf('*/', k + 2);
+    if (commentEnd === -1) {
+      return firstCommentStart;
+    }
+    k = commentEnd + 2;
+  }
+}
+
+/**
  * Detects JavaScript import and export-from statements at a given position in source code.
  * @param sourceText - The source text to scan
  * @param pos - The current position in the text
@@ -1649,16 +1688,9 @@ function detectJavaScriptImport(
           foundFrom = true;
         }
         if (foundModulePath && braceDepth === 0 && /\s/.test(cj)) {
-          let k = j;
-          while (k < len && /\s/.test(sourceText[k])) {
-            k += 1;
-          }
-          if (k >= len || sourceText[k] === ';' || sourceText[k] === '\n') {
-            if (sourceText[k] === ';') {
-              j = k + 1;
-            } else {
-              j = k;
-            }
+          const end = findStatementEndAfterModulePath(sourceText, j);
+          if (end !== -1) {
+            j = end;
             break;
           }
         }
@@ -1812,7 +1844,9 @@ function detectJavaScriptImport(
         if (isStringStart(cj)) {
           importState = cj === '`' ? 'template' : 'string';
           importQuote = cj;
-          if (foundFrom) {
+          // The module path follows `from`, or is the quoted string that opens a
+          // side-effect import (`import './styles.css'`).
+          if (foundFrom || (cj !== '`' && sourceText.slice(pos + 6, j).trim() === '')) {
             foundModulePath = true;
           }
           j += 1;
@@ -1829,17 +1863,9 @@ function detectJavaScriptImport(
         }
         // If we found a module path and we're back to normal code, we might be done
         if (foundModulePath && braceDepth === 0 && /\s/.test(cj)) {
-          // Look ahead for semicolon or end of statement
-          let k = j;
-          while (k < len && /\s/.test(sourceText[k])) {
-            k += 1;
-          }
-          if (k >= len || sourceText[k] === ';' || sourceText[k] === '\n') {
-            if (sourceText[k] === ';') {
-              j = k + 1;
-            } else {
-              j = k;
-            }
+          const end = findStatementEndAfterModulePath(sourceText, j);
+          if (end !== -1) {
+            j = end;
             break;
           }
         }

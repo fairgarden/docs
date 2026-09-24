@@ -332,6 +332,142 @@ describe('parseImportsAndComments', () => {
     });
   });
 
+  describe('imports without semicolons', () => {
+    /** Position of a quoted module path in `code`, as the parser reports it. */
+    function positionOf(code: string, quotedPath: string, fromIndex = 0) {
+      const start = code.indexOf(quotedPath, fromIndex);
+      return { start, end: start + quotedPath.length };
+    }
+
+    it('detects every import form when each statement ends at a line break', () => {
+      const code = `import * as React from 'react'
+import Button, { type ButtonProps } from './Button'
+import type { Theme } from './theme'
+import {
+  Checkbox,
+  Radio as RadioInput,
+} from './inputs'
+import './setup'
+import styles from './Demo.module.css'
+
+export function Demo() {
+  return <Button className={styles.root} />
+}
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx');
+
+      expect(result).toEqual({
+        relative: {
+          './Button': {
+            url: 'file:///src/Button',
+            names: [
+              { name: 'Button', type: 'default' },
+              { name: 'ButtonProps', type: 'named', isType: true },
+            ],
+            positions: [positionOf(code, "'./Button'")],
+          },
+          './theme': {
+            url: 'file:///src/theme',
+            names: [{ name: 'Theme', type: 'named', isType: true }],
+            includeTypeDefs: true,
+            positions: [positionOf(code, "'./theme'")],
+          },
+          './inputs': {
+            url: 'file:///src/inputs',
+            names: [
+              { name: 'Checkbox', type: 'named' },
+              { name: 'Radio', alias: 'RadioInput', type: 'named' },
+            ],
+            positions: [positionOf(code, "'./inputs'")],
+          },
+          './setup': {
+            url: 'file:///src/setup',
+            names: [],
+            positions: [positionOf(code, "'./setup'")],
+          },
+          './Demo.module.css': {
+            url: 'file:///src/Demo.module.css',
+            names: [{ name: 'styles', type: 'default' }],
+            positions: [positionOf(code, "'./Demo.module.css'")],
+          },
+        },
+        externals: {
+          react: {
+            names: [{ name: 'React', type: 'namespace' }],
+            positions: [positionOf(code, "'react'")],
+          },
+        },
+      });
+    });
+
+    it('finds the same imports as the semicolon-terminated source', () => {
+      const withoutSemicolons = `'use client'
+
+import * as React from 'react'
+import { Button } from '@scope/design/button'
+import styles from './Counter.module.css'
+
+export function Counter() {
+  const [count, setCount] = React.useState(0)
+  return <Button className={styles.root} onClick={() => setCount(count + 1)} />
+}
+`;
+      const withSemicolons = withoutSemicolons.replace(/^(import .*|'use client')$/gm, '$1;');
+
+      const names = (code: string) => {
+        const { relative, externals } = parseImportsAndComments(code, '/src/Counter.tsx');
+        return {
+          relative: Object.fromEntries(
+            Object.entries(relative).map(([key, { names: n }]) => [key, n]),
+          ),
+          externals: Object.fromEntries(
+            Object.entries(externals).map(([key, { names: n }]) => [key, n]),
+          ),
+        };
+      };
+
+      expect(names(withoutSemicolons)).toEqual(names(withSemicolons));
+      expect(Object.keys(names(withoutSemicolons).relative)).toEqual(['./Counter.module.css']);
+    });
+
+    it('ends an import at a comment that follows it on the same line', () => {
+      const code = `import { Button } from './Button' // the trigger
+import { Dialog } from './Dialog' /* the popup */
+import './reset.css' // side effects only
+
+export const x = 1
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog', './reset.css']);
+      expect(result.relative['./Dialog'].positions).toEqual([positionOf(code, "'./Dialog'")]);
+      expect(result.relative['./reset.css'].positions).toEqual([positionOf(code, "'./reset.css'")]);
+    });
+
+    it('reads an import attributes clause without a semicolon', () => {
+      const code = `import data from './data.json' with { type: 'json' }
+import { Chart } from './Chart'
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx');
+
+      expect(Object.keys(result.relative)).toEqual(['./data.json', './Chart']);
+      expect(result.relative['./Chart'].names).toEqual([{ name: 'Chart', type: 'named' }]);
+    });
+
+    it('leaves a statement unchanged when a block comment comes before its semicolon', () => {
+      const code = `import { Button } from './Button' /* the trigger */;
+import { Dialog } from './Dialog';
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx', {
+        removeCommentsWithPrefix: ['the trigger'],
+      });
+
+      expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog']);
+      // The comment sits inside the semicolon-terminated statement, so it stays.
+      expect(result.code).toBeUndefined();
+    });
+  });
+
   describe('http(s) URL support', () => {
     it('should resolve relative imports against an https:// file URL', async () => {
       const code = `
@@ -3281,6 +3417,38 @@ const z = 3;`;
       8: ['@focus-end'],
     });
   });
+
+  it('collects emphasis comments after imports that have no semicolons', async () => {
+    const code = `import * as React from 'react'
+import styles from './Counter.module.css' // @highlight
+
+export function Counter() {
+  // @focus-start
+  const [count, setCount] = React.useState(0) // @highlight
+  return <button className={styles.root}>{count}</button>
+  // @focus-end
+}`;
+
+    const result = parseImportsAndComments(code, '/src/Counter.tsx', {
+      removeCommentsWithPrefix: ['@highlight', '@focus'],
+      notableCommentsPrefix: ['@highlight', '@focus'],
+    });
+
+    // The same code and line keys as the semicolon-terminated source produces.
+    expect(result.code).toBe(`import * as React from 'react'
+import styles from './Counter.module.css'
+
+export function Counter() {
+  const [count, setCount] = React.useState(0)
+  return <button className={styles.root}>{count}</button>
+}`);
+    expect(result.comments).toEqual({
+      2: ['@highlight'],
+      5: ['@focus-start', '@highlight'],
+      7: ['@focus-end'],
+    });
+    expect(Object.keys(result.relative)).toEqual(['./Counter.module.css']);
+  });
 });
 
 // Test cases for export-from statements
@@ -3506,6 +3674,11 @@ describe('Export-from statement parsing', () => {
           url: 'file:///src/Component',
           names: [{ name: 'Component', type: 'named' }],
           positions: [{ start: 26, end: 39 }],
+        },
+        './Button': {
+          url: 'file:///src/Button',
+          names: [{ name: 'Button', type: 'named' }],
+          positions: [{ start: 63, end: 73 }],
         },
       },
       externals: {},

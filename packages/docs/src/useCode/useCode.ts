@@ -189,10 +189,18 @@ export interface UseCodeResult<T extends {} = {}> {
   setExpanded: (expanded: boolean) => void;
   copy: (event: React.MouseEvent<Element>) => Promise<void>;
   /**
+   * `true` for a moment after `copy` succeeds — for the `copy.timeout` option,
+   * 2000 ms by default — to drive a toast or other notification confirming the
+   * copy. The `recentlySuccessful` of the `useCopier` behind `copy`.
+   */
+  copyRecentlySuccessful: boolean;
+  /**
    * Copies all files in the current variant to the clipboard as a Markdown
    * snippet (heading + per-file fenced code blocks).
    */
   copyMarkdown: (event: React.MouseEvent<Element>) => Promise<void>;
+  /** Like `copyRecentlySuccessful`, for `copyMarkdown`. */
+  copyMarkdownRecentlySuccessful: boolean;
   availableTransforms: string[];
   selectedTransform: string | null | undefined;
   selectTransform: (transformName: string | null) => void;
@@ -479,12 +487,21 @@ export function useCode<T extends {} = {}>(
   const renderedVariantKey =
     variantSelection.committedVariantKey || variantSelection.selectedVariantKey;
 
+  // Per-file DEFLATE dictionaries for the rendered variant. The highlighter's
+  // `fallbacks` belong to its own active variant, but the variant is selected
+  // here, and variants often share file names — so read the rendered variant's
+  // entry, or a same-named file would decode with another variant's dictionary.
+  const fallbacks = context?.variantFallbacks
+    ? context.variantFallbacks[renderedVariantKey]
+    : context?.fallbacks;
+
   // Sub-hook: Transform Management
   const transformManagement = useTransformManagement({
     context,
     effectiveCode,
     selectedVariantKey: renderedVariantKey,
     selectedVariant: renderedVariant,
+    fallbacks,
     initialTransform,
     transformDelay,
     transformLayoutShift,
@@ -498,6 +515,7 @@ export function useCode<T extends {} = {}>(
     selectedVariantKey: renderedVariantKey,
     effectiveCode,
     selectedVariant: renderedVariant,
+    fallbacks,
     disabled,
   });
 
@@ -621,7 +639,7 @@ export function useCode<T extends {} = {}>(
     saveVariantToLocalStorage: variantSelection.saveVariantToLocalStorage,
     hashVariant: variantSelection.hashVariant,
     sourceEnhancers: mergedEnhancers,
-    fallbacks: context?.fallbacks,
+    fallbacks,
     expanded: uiState.expanded,
     collapseToEmpty,
     expand,
@@ -638,9 +656,9 @@ export function useCode<T extends {} = {}>(
     selectedFile: fileNavigation.selectedFile,
     selectedVariant: renderedVariant,
     transformedFiles: transformManagement.transformedFiles,
-    // Per-file dictionaries for the active variant (decodes `hastCompressed`
+    // Per-file dictionaries for the rendered variant (decodes `hastCompressed`
     // sources back to text); `selectedFileFallback` covers the single-file copy.
-    fallbacks: context?.fallbacks,
+    fallbacks,
     selectedFileFallback: fileNavigation.selectedFileFallback,
     title: userProps.name,
     copyOpts,
@@ -667,7 +685,9 @@ export function useCode<T extends {} = {}>(
     expand,
     setExpanded,
     copy: copyFunctionality.copy,
+    copyRecentlySuccessful: copyFunctionality.copyRecentlySuccessful,
     copyMarkdown: copyFunctionality.copyMarkdown,
+    copyMarkdownRecentlySuccessful: copyFunctionality.copyMarkdownRecentlySuccessful,
     availableTransforms: transformManagement.availableTransforms,
     selectedTransform: transformManagement.selectedTransform,
     selectTransform: transformManagement.selectTransform,

@@ -1,8 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { Delta } from 'jsondiffpatch';
 import { createTransformedFiles, applyTransformToSource } from './TransformEngine';
 import type { TransformRuntimeDeps } from './TransformEngine';
 import { decodeHastSource } from '../pipeline/loadIsomorphicCodeVariant/decodeHastSource';
 import { frameFallbackFromSpans } from '../pipeline/hastUtils';
+import { compressHast } from '../pipeline/hastUtils/hastCompression';
+import { fallbackToText } from '../CodeHighlighter/fallbackFormat';
+import type { FallbackNode } from '../CodeHighlighter/fallbackFormat';
 import type { VariantCode } from '../CodeHighlighter/types';
 
 // Real hast helpers the engine takes injected (no mocks, per convention 3.5).
@@ -353,6 +357,104 @@ describe('TransformEngine', () => {
       );
 
       consoleSpy.mockRestore();
+    });
+
+    describe('compressed sources', () => {
+      // A `hastCompressed` source decodes only with the dictionary its own
+      // `fallback` text built, so each file here is compressed with its own.
+      function compressedFile(text: string) {
+        const root = {
+          type: 'root',
+          children: [
+            {
+              type: 'element',
+              tagName: 'span',
+              properties: {},
+              children: [{ type: 'text', value: text }],
+            },
+          ],
+        };
+        const fallback: FallbackNode[] = [text];
+        return {
+          source: { hastCompressed: compressHast(JSON.stringify(root), fallbackToText(fallback)) },
+          fallback,
+        };
+      }
+
+      function replaceText(text: string): Delta {
+        return {
+          children: {
+            _t: 'a',
+            0: { children: { _t: 'a', 0: { value: [text] } } },
+          },
+        };
+      }
+
+      function textOf(source: unknown) {
+        return (source as { children: { children: { value: string }[] }[] }).children[0].children[0]
+          .value;
+      }
+
+      it('decodes a variant with its own dictionary when fallbacks of another variant share the file name', () => {
+        const first = compressedFile('const first: number = 1;');
+        const second = compressedFile('const second: number = 2;');
+        const secondVariant: VariantCode = {
+          fileName: 'Button.tsx',
+          ...second,
+          transforms: { js: { delta: replaceText('const second = 2;'), fileName: 'Button.jsx' } },
+        };
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        // The per-file map handed in belongs to the first variant.
+        const result = createTransformedFiles(secondVariant, 'js', deps, {
+          'Button.tsx': first.fallback,
+        });
+
+        const errors = [...errorSpy.mock.calls];
+        errorSpy.mockRestore();
+        expect(errors).toEqual([]);
+        expect(result!.files.map((file) => file.name)).toEqual(['Button.jsx']);
+        expect(textOf(result!.files[0].source)).toBe('const second = 2;');
+      });
+
+      it('decodes an extra file with its own dictionary when fallbacks of another variant share the file name', () => {
+        const firstStyles = compressedFile('.first { color: red; }');
+        const secondStyles = compressedFile('.second { color: blue; }');
+        const secondVariant: VariantCode = {
+          fileName: 'Button.tsx',
+          source: 'const second = 2;',
+          extraFiles: {
+            'styles.css': {
+              ...secondStyles,
+              transforms: { js: { delta: replaceText('.second {}') } },
+            },
+          },
+        };
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        const result = createTransformedFiles(secondVariant, 'js', deps, {
+          'styles.css': firstStyles.fallback,
+        });
+
+        const errors = [...errorSpy.mock.calls];
+        errorSpy.mockRestore();
+        expect(errors).toEqual([]);
+        expect(result!.files.map((file) => file.name)).toEqual(['Button.tsx', 'styles.css']);
+        expect(textOf(result!.files[1].source)).toBe('.second {}');
+      });
+
+      it('uses the fallbacks map when the variant carries no dictionary of its own', () => {
+        const { source, fallback } = compressedFile('const only: number = 1;');
+        const variant: VariantCode = {
+          fileName: 'Button.tsx',
+          source,
+          transforms: { js: { delta: replaceText('const only = 1;'), fileName: 'Button.jsx' } },
+        };
+
+        const result = createTransformedFiles(variant, 'js', deps, { 'Button.tsx': fallback });
+
+        expect(textOf(result!.files[0].source)).toBe('const only = 1;');
+      });
     });
   });
 });

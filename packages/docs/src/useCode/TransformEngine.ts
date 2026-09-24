@@ -114,7 +114,9 @@ export function createTransformedFiles(
   // Per-file DEFLATE dictionaries hoisted from a `ContentLoading` component.
   // A file's fallback may live here (hoisted) instead of on the variant
   // (stripped) — applying a transform must decode `hastCompressed`, so resolve
-  // from both, preferring the hoisted copy.
+  // from both. The file's own `fallback` wins: it is the dictionary its source
+  // was compressed with, while this map is keyed by file name alone and so can
+  // hold a same-named file of another variant.
   fallbacks?: Fallbacks,
 ): TransformedFiles | undefined {
   // Only create transformed files when there's actually a transform selected
@@ -171,8 +173,8 @@ export function createTransformedFiles(
       selectedTransform,
       deps,
       selectedVariant.comments,
-      (selectedVariant.fileName ? fallbacks?.[selectedVariant.fileName] : undefined) ??
-        selectedVariant.fallback,
+      selectedVariant.fallback ??
+        (selectedVariant.fileName ? fallbacks?.[selectedVariant.fileName] : undefined),
     );
 
     const fileName = selectedVariant.fileName;
@@ -226,8 +228,8 @@ export function createTransformedFiles(
             selectedTransform,
             deps,
             fileComments,
-            fallbacks?.[extraFileName] ??
-              (typeof fileData === 'object' ? fileData.fallback : undefined),
+            (typeof fileData === 'object' ? fileData.fallback : undefined) ??
+              fallbacks?.[extraFileName],
           );
           transformedSource = result.source;
           transformedComments = result.comments;
