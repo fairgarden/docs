@@ -1641,6 +1641,7 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       // Only suppress when an external CodeController owns the code; static
       // `props.code` still needs the locally-computed list.
       availableTransforms: controlled?.code ? [] : availableTransforms,
+      availableTransformsVariant: variantName,
       url: props.url,
       deferHighlight,
       variantFallbacks,
@@ -1661,6 +1662,7 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       controlled?.errors,
       controlled?.code,
       availableTransforms,
+      variantName,
       props.url,
       deferHighlight,
       variantFallbacks,

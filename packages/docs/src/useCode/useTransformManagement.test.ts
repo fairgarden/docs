@@ -180,12 +180,16 @@ describe('useTransformManagement', () => {
     expect(result.current.selectedTransform).toBe('TypeScript');
   });
 
-  it('should use context availableTransforms when provided', async () => {
-    const context = { availableTransforms: ['CustomTransform'] };
+  it('should use context availableTransforms when provided for the selected variant', async () => {
+    const context = {
+      availableTransforms: ['CustomTransform'],
+      availableTransformsVariant: 'Default',
+    };
     (createTransformedFiles as any).mockReturnValue({ transformed: true });
 
     // Clear mocks before running test to ensure clean state
     vi.clearAllMocks();
+    (getAvailableTransforms as any).mockReturnValue([]);
 
     const { result } = renderHook(() =>
       useTransformManagement({
@@ -203,32 +207,13 @@ describe('useTransformManagement', () => {
     // `getAvailableTransforms`, so we don't assert call counts here.)
   });
 
-  it('should use context availableTransforms while its selection matches the selected variant', async () => {
-    const context = {
-      availableTransforms: ['CustomTransform'],
-      selection: { variant: 'Default' },
-    };
-    (getAvailableTransforms as any).mockReturnValue([]);
-    (createTransformedFiles as any).mockReturnValue({ transformed: true });
-
-    const { result } = renderHook(() =>
-      useTransformManagement({
-        context,
-        effectiveCode: mockEffectiveCode,
-        selectedVariantKey: 'Default',
-        selectedVariant: mockSelectedVariant,
-      }),
-    );
-
-    expect(result.current.availableTransforms).toEqual(['CustomTransform']);
-  });
-
   it('should compute availableTransforms for the selected variant when the context lists them for another variant', async () => {
-    // The highlighter lists transforms for its own selected variant, while
-    // `useCode` selects variants on its own, so the two can disagree.
+    // The highlighter lists transforms for the variant it considers current,
+    // while `useCode` selects the rendered variant on its own, so the two can
+    // disagree.
     const context = {
       availableTransforms: ['CustomTransform'],
-      selection: { variant: 'Default' },
+      availableTransformsVariant: 'Default',
     };
     vi.clearAllMocks();
     (getAvailableTransforms as any).mockReturnValue([]);
@@ -245,6 +230,51 @@ describe('useTransformManagement', () => {
 
     expect(result.current.availableTransforms).toEqual([]);
     expect(getAvailableTransforms).toHaveBeenCalledWith(mockEffectiveCode, 'Alternative');
+  });
+
+  it('should compute availableTransforms when only the context selection matches the selected variant', async () => {
+    // A controlled `variant` prop makes the highlighter list transforms for that
+    // variant while its `selection` still names another one, so a matching
+    // selection says nothing about whose list it is.
+    const context = {
+      availableTransforms: ['CustomTransform'],
+      availableTransformsVariant: 'Alternative',
+      selection: { variant: 'Default' },
+    };
+    vi.clearAllMocks();
+    (getAvailableTransforms as any).mockReturnValue([]);
+    (createTransformedFiles as any).mockReturnValue({ transformed: true });
+
+    const { result } = renderHook(() =>
+      useTransformManagement({
+        context,
+        effectiveCode: mockEffectiveCode,
+        selectedVariantKey: 'Default',
+        selectedVariant: mockSelectedVariant,
+      }),
+    );
+
+    expect(result.current.availableTransforms).toEqual([]);
+    expect(getAvailableTransforms).toHaveBeenCalledWith(mockEffectiveCode, 'Default');
+  });
+
+  it('should compute availableTransforms when the context does not say which variant its list belongs to', async () => {
+    const context = { availableTransforms: ['CustomTransform'] };
+    vi.clearAllMocks();
+    (getAvailableTransforms as any).mockReturnValue([]);
+    (createTransformedFiles as any).mockReturnValue({ transformed: true });
+
+    const { result } = renderHook(() =>
+      useTransformManagement({
+        context,
+        effectiveCode: mockEffectiveCode,
+        selectedVariantKey: 'Default',
+        selectedVariant: mockSelectedVariant,
+      }),
+    );
+
+    expect(result.current.availableTransforms).toEqual([]);
+    expect(getAvailableTransforms).toHaveBeenCalledWith(mockEffectiveCode, 'Default');
   });
 
   describe('localStorage persistence', () => {

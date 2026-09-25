@@ -27,7 +27,19 @@ export interface CodeHighlighterContextType {
    * `useDemo().error`.
    */
   errors?: Record<string, string | null>;
+  /**
+   * Transforms with a real delta for the variant named by
+   * `availableTransformsVariant`, i.e. the variant the highlighter considers
+   * current. Empty when a `CodeControllerContext` owns the code.
+   */
   availableTransforms?: string[];
+  /**
+   * The variant `availableTransforms` was computed for. That is not always
+   * `selection.variant` (a `variant` prop wins over it) nor the variant a
+   * consumer that selects variants on its own (like `useCode`) renders, so
+   * such a consumer reuses the list only when this names its rendered variant.
+   */
+  availableTransformsVariant?: string;
   url?: string;
   deferHighlight?: boolean;
   /**

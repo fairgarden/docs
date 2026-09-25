@@ -156,19 +156,87 @@ function stripCommentMarkers(commentText: string): string[] {
 }
 
 /**
- * Counts consecutive backticks starting at a given position (used for MDX code blocks).
- * @param sourceText - The source text to scan
- * @param startPos - The position to start counting from
- * @returns The number of consecutive backticks found
+ * Counts how many times `char` repeats starting at `start`.
  */
-function countBackticks(sourceText: string, startPos: number): number {
-  let count = 0;
-  let pos = startPos;
-  while (pos < sourceText.length && sourceText[pos] === '`') {
-    count += 1;
+function countRepeated(text: string, start: number, char: string): number {
+  let pos = start;
+  while (text[pos] === char) {
     pos += 1;
   }
-  return count;
+  return pos - start;
+}
+
+/**
+ * Whether nothing but whitespace follows `pos` up to the end of its line.
+ */
+function isRestOfLineBlank(text: string, pos: number): boolean {
+  let cursor = pos;
+  while (cursor < text.length && text[cursor] !== '\n') {
+    if (!/\s/.test(text[cursor])) {
+      return false;
+    }
+    cursor += 1;
+  }
+  return true;
+}
+
+/**
+ * Returns the length of the MDX code fence that opens at `pos`, or `0` when none
+ * does. Following CommonMark, a fence is a run of at least three backticks or
+ * three tildes that starts its line, and a backtick fence's info string can't
+ * contain a backtick (that's inline code instead). MDX has no indented code
+ * blocks, so any indentation may come before it.
+ */
+function getCodeFenceLength(text: string, pos: number): number {
+  const marker = text[pos];
+  if ((marker !== '`' && marker !== '~') || !isAtLineStart(text, pos)) {
+    return 0;
+  }
+  const length = countRepeated(text, pos, marker);
+  if (length < 3) {
+    return 0;
+  }
+  if (marker === '`') {
+    const lineEnd = text.indexOf('\n', pos);
+    const info = text.slice(pos + length, lineEnd === -1 ? text.length : lineEnd);
+    if (info.includes('`')) {
+      return 0;
+    }
+  }
+  return length;
+}
+
+/**
+ * Finds the end of an MDX inline code span whose opening run of `length`
+ * backticks ends at `pos`: just past the next run of exactly `length` backticks.
+ * A span stays within its paragraph, so a blank line or a line that opens a code
+ * fence ends the search. Returns `-1` when there's no closing run, in which case
+ * the opening backticks are plain text.
+ */
+function findCodeSpanEnd(text: string, pos: number, length: number): number {
+  let cursor = pos;
+  while (cursor < text.length) {
+    if (text[cursor] === '\n') {
+      const lineStart = cursor + 1;
+      let firstChar = lineStart;
+      while (text[firstChar] === ' ' || text[firstChar] === '\t') {
+        firstChar += 1;
+      }
+      if (isRestOfLineBlank(text, lineStart) || getCodeFenceLength(text, firstChar) > 0) {
+        return -1;
+      }
+      cursor = lineStart;
+    } else if (text[cursor] === '`') {
+      const runLength = countRepeated(text, cursor, '`');
+      if (runLength === length) {
+        return cursor + runLength;
+      }
+      cursor += runLength;
+    } else {
+      cursor += 1;
+    }
+  }
+  return -1;
 }
 
 /**
@@ -251,7 +319,9 @@ function scanForImports(
     | 'template'
     | 'codeblock' = 'code';
   let stringQuote: string | null = null;
-  let codeblockBacktickCount = 0; // Track how many backticks opened the current code block
+  // The marker and length of the fence that opened the current MDX code block
+  let codeFenceMarker = '';
+  let codeFenceLength = 0;
   // Comment stripping variables
   let commentStart = 0;
   let commentStartOutputLine = 0;
@@ -284,18 +354,29 @@ function scanForImports(
         continue;
       }
 
-      // Check for backtick sequences (3 or more backticks start code blocks in MDX)
-      if (isMdxFile && ch === '`') {
-        // Count consecutive backticks
-        const backtickCount = countBackticks(sourceCode, i);
-        if (backtickCount >= 3) {
+      // In MDX, a code fence opens a code block; any other run of backticks is
+      // inline code, which ends at the next run of the same length.
+      if (isMdxFile && (ch === '`' || ch === '~')) {
+        const fenceLength = getCodeFenceLength(sourceCode, i);
+        const backtickCount = ch === '`' ? countRepeated(sourceCode, i, '`') : 0;
+        let skipTo = i;
+        if (fenceLength > 0) {
           state = 'codeblock';
-          codeblockBacktickCount = backtickCount;
+          codeFenceMarker = ch;
+          codeFenceLength = fenceLength;
+          skipTo = i + fenceLength;
+        } else if (backtickCount > 0) {
+          const spanEnd = findCodeSpanEnd(sourceCode, i + backtickCount, backtickCount);
+          skipTo = spanEnd === -1 ? i + backtickCount : spanEnd;
+        }
+        if (skipTo > i) {
+          const skipped = sourceCode.slice(i, skipTo);
           if (shouldProcessComments) {
-            result += sourceCode.slice(i, i + backtickCount);
-            processedPos += backtickCount;
+            result += skipped;
+            processedPos += skipped.length;
           }
-          i += backtickCount;
+          outputLine += skipped.split('\n').length - 1;
+          i = skipTo;
           continue;
         }
       }
@@ -590,9 +671,8 @@ function scanForImports(
         i += 1;
         continue;
       }
-      // An escaped character (such as an escaped backtick) never ends a template
-      // literal. MDX inline code has no escapes, so a backslash there is literal.
-      if (ch === '\\' && !isMdxFile) {
+      // An escaped character (such as an escaped backtick) never ends a template literal.
+      if (ch === '\\') {
         if (next === '\n') {
           outputLine += 1;
         }
@@ -614,17 +694,18 @@ function scanForImports(
       if (ch === '\n') {
         outputLine += 1;
       }
-      // Look for closing backticks that match or exceed the opening count
-      if (ch === '`') {
-        const closingBacktickCount = countBackticks(sourceCode, i);
-        if (closingBacktickCount >= codeblockBacktickCount) {
+      // The closing fence is a line of the same marker, at least as long as the
+      // opening one, with nothing else on it. Without one, the block runs to the
+      // end of the file.
+      if (ch === codeFenceMarker && isAtLineStart(sourceCode, i)) {
+        const closingLength = countRepeated(sourceCode, i, ch);
+        if (closingLength >= codeFenceLength && isRestOfLineBlank(sourceCode, i + closingLength)) {
           state = 'code';
-          codeblockBacktickCount = 0;
           if (shouldProcessComments) {
-            result += sourceCode.slice(i, i + closingBacktickCount);
-            processedPos += closingBacktickCount;
+            result += sourceCode.slice(i, i + closingLength);
+            processedPos += closingLength;
           }
-          i += closingBacktickCount;
+          i += closingLength;
           continue;
         }
       }
@@ -1631,8 +1712,7 @@ function skipStringOrComment(text: string, pos: number): number {
  * (automatic semicolon insertion), so returns the index of the line break. When
  * comments come before either, returns the index of the first comment instead,
  * so they're still scanned for stripping and collection. Returns `-1` when
- * something else follows on the line (e.g. an import attributes clause), so the
- * caller keeps scanning.
+ * something else follows on the line (e.g. an import attributes clause).
  */
 function findStatementEndAfterModulePath(text: string, pos: number): number {
   const len = text.length;
@@ -1668,81 +1748,187 @@ function findStatementEndAfterModulePath(text: string, pos: number): number {
 }
 
 /**
+ * Words that can't name a binding. Outside the braces of an import clause, one
+ * means the statement ended without a module path: it's the start of the next
+ * statement, or prose.
+ */
+const RESERVED_WORDS = new Set([
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'instanceof',
+  'interface',
+  'let',
+  'new',
+  'null',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+]);
+
+/**
+ * Reads an import attributes clause (`with { … }`, or the older `assert { … }`)
+ * starting at `pos`, returning the index just past its closing brace, or `-1`
+ * when none starts there.
+ */
+function skipImportAttributes(text: string, pos: number): number {
+  const keyword = ['with', 'assert'].find((word) => isKeywordAt(text, pos, word));
+  if (!keyword) {
+    return -1;
+  }
+  let cursor = skipWhitespaceAndComments(text, pos + keyword.length);
+  if (text[cursor] !== '{') {
+    return -1;
+  }
+  cursor += 1;
+  while (cursor < text.length) {
+    if (text[cursor] === '}') {
+      return cursor + 1;
+    }
+    const skipped = skipStringOrComment(text, cursor);
+    cursor = skipped === cursor ? cursor + 1 : skipped;
+  }
+  return -1;
+}
+
+/**
+ * Finds the end of an import or export-from statement from `pos`, just past its
+ * module path: see `findStatementEndAfterModulePath`, plus an import attributes
+ * clause that may follow — on the same line, or on the next, since no statement
+ * can start with `with {` in module code, so no semicolon is inserted before
+ * it. Anything else after the module path isn't part of the statement.
+ */
+function findStatementEndFromModulePath(text: string, pos: number): number {
+  const end = findStatementEndAfterModulePath(text, pos);
+  const endsAtLineBreak = end !== -1 && text[end] === '\n' && text[end - 1] !== ';';
+  let clauseStart = -1;
+  if (end === -1) {
+    clauseStart = skipWhitespace(text, pos);
+  } else if (endsAtLineBreak) {
+    clauseStart = skipWhitespace(text, end);
+  }
+  const clauseEnd = clauseStart === -1 ? -1 : skipImportAttributes(text, clauseStart);
+  if (clauseEnd !== -1) {
+    const endAfterClause = findStatementEndAfterModulePath(text, clauseEnd);
+    return endAfterClause === -1 ? clauseEnd : endAfterClause;
+  }
+  return end === -1 ? pos : end;
+}
+
+/**
  * Finds the end of a static import or export-from statement whose keyword ends
- * at `start`. Strings, template literals and comments are skipped whole, so a
- * quote, brace, `;` or `from` inside one never counts. The statement ends at a
- * `;`; without one, at the end of the line holding its module path (see
- * `findStatementEndAfterModulePath`), or — for a statement with no `from` or
- * module path, such as TypeScript's `import x = require('./x')` — at its line
- * break.
+ * at `start`, or returns `-1` when what follows isn't one.
+ *
+ * A statement can't end before its module path (no semicolon is inserted inside
+ * the clause), so line breaks there never end it, and comments are skipped
+ * whole. The clause holds only binding names, `type`, `as`, `*`, commas and one
+ * `{ … }` of specifiers (whose names may be quoted), then `from` and the quoted
+ * path — or just the path, for a side-effect import. Anything else means this
+ * isn't an import statement: an incomplete import followed by other code, a
+ * TypeScript `import x = require('./x')`, or prose. Returning `-1` then lets
+ * that text be scanned as ordinary code instead of swallowing it.
  */
 function findModuleStatementEnd(text: string, start: number): number {
   const len = text.length;
   let cursor = start;
-  let braceDepth = 0;
-  let foundFrom = false;
-  let foundModulePath = false;
+  let inBraces = false;
+  let sawBraces = false;
   let sawToken = false;
+  let previousWord = '';
 
   while (cursor < len) {
     const ch = text[cursor];
-    if (ch === ';') {
-      return cursor + 1;
-    }
-    if (ch === '\n' && !foundFrom && !foundModulePath && braceDepth === 0) {
-      // Keep going only when the next line continues the statement.
-      const nextToken = skipWhitespace(text, cursor + 1);
-      if (
-        nextToken < len &&
-        !isKeywordAt(text, nextToken, 'from') &&
-        !isStringStart(text[nextToken])
-      ) {
-        return cursor + 1;
-      }
-    }
-
-    const skipped = skipStringOrComment(text, cursor);
-    if (skipped !== cursor) {
-      if (isStringStart(ch)) {
-        // The module path is the quoted string after `from`, or the one that
-        // opens a side-effect import (`import './styles.css'`).
-        const isModulePath =
-          ch !== '`' && braceDepth === 0 && !foundModulePath && (foundFrom || !sawToken);
-        sawToken = true;
-        if (isModulePath) {
-          foundModulePath = true;
-          const end = findStatementEndAfterModulePath(text, skipped);
-          if (end !== -1) {
-            return end;
-          }
-        }
-      }
-      cursor = skipped;
+    if (isWhitespace(ch)) {
+      cursor += 1;
       continue;
     }
-
-    if (ch === '{') {
-      braceDepth += 1;
-    } else if (ch === '}') {
-      braceDepth -= 1;
-    } else if (braceDepth === 0 && isKeywordAt(text, cursor, 'from')) {
-      foundFrom = true;
+    if (ch === '/' && (text[cursor + 1] === '/' || text[cursor + 1] === '*')) {
+      cursor = skipStringOrComment(text, cursor);
+      continue;
     }
-    if (!isWhitespace(ch)) {
-      sawToken = true;
-    }
-    // Past the module path, only an attributes clause (`with { … }`) may follow
-    // before the statement ends.
-    if (foundModulePath && braceDepth === 0) {
-      const end = findStatementEndAfterModulePath(text, cursor);
-      if (end !== -1) {
-        return end;
+    if (ch === "'" || ch === '"') {
+      if (!sawToken) {
+        // The path of a side-effect import (`import './styles.css'`).
+        return findStatementEndFromModulePath(text, skipStringOrComment(text, cursor));
       }
+      // Otherwise only a quoted name: a specifier inside the braces, or the
+      // namespace of `export * as 'name' from`.
+      if (!inBraces && previousWord !== 'as') {
+        return -1;
+      }
+      cursor = skipStringOrComment(text, cursor);
+      previousWord = '';
+      continue;
+    }
+    sawToken = true;
+    if (isIdentifierChar(ch) || ch.charCodeAt(0) > 127) {
+      let wordEnd = cursor;
+      while (wordEnd < len && (isIdentifierChar(text[wordEnd]) || text.charCodeAt(wordEnd) > 127)) {
+        wordEnd += 1;
+      }
+      const word = text.slice(cursor, wordEnd);
+      if (!inBraces && word === 'from') {
+        // `from` followed by a quoted path is the from clause; otherwise it's a
+        // binding that happens to be named `from`.
+        const modulePathStart = skipWhitespaceAndComments(text, wordEnd);
+        if (text[modulePathStart] === "'" || text[modulePathStart] === '"') {
+          return findStatementEndFromModulePath(text, skipStringOrComment(text, modulePathStart));
+        }
+      }
+      if (!inBraces && previousWord !== 'as' && RESERVED_WORDS.has(word)) {
+        return -1;
+      }
+      previousWord = word;
+      cursor = wordEnd;
+      continue;
+    }
+    previousWord = '';
+    if (ch === '{' && !sawBraces) {
+      inBraces = true;
+      sawBraces = true;
+    } else if (ch === '}' && inBraces) {
+      inBraces = false;
+    } else if (ch !== ',' && (ch !== '*' || inBraces)) {
+      return -1;
     }
     cursor += 1;
   }
 
-  return cursor;
+  return -1;
 }
 
 /**
@@ -1806,11 +1992,13 @@ function detectJavaScriptImport(
     isExportFromStatement(sourceText, pos + 6)
   ) {
     const end = findModuleStatementEnd(sourceText, pos + 6);
-    return {
-      found: true,
-      nextPos: end,
-      statement: { start: pos, end, text: sourceText.slice(pos, end) },
-    };
+    if (end !== -1) {
+      return {
+        found: true,
+        nextPos: end,
+        statement: { start: pos, end, text: sourceText.slice(pos, end) },
+      };
+    }
   }
 
   // Look for 'import' keyword (not part of an identifier, and not preceded by `@`
@@ -1898,11 +2086,13 @@ function detectJavaScriptImport(
     }
 
     const end = findModuleStatementEnd(sourceText, pos + 6);
-    return {
-      found: true,
-      nextPos: end,
-      statement: { start: importStart, end, text: sourceText.slice(importStart, end) },
-    };
+    if (end !== -1) {
+      return {
+        found: true,
+        nextPos: end,
+        statement: { start: importStart, end, text: sourceText.slice(importStart, end) },
+      };
+    }
   }
 
   return { found: false, nextPos: pos };
