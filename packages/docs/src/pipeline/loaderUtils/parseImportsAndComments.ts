@@ -285,18 +285,95 @@ function isMdxEsmStart(text: string, lineStart: number): boolean {
 
 /**
  * Returns where the MDX ESM block that starts at `lineStart` ends, or `lineStart`
- * when the line doesn't start one (see `isMdxEsmStart`). As in MDX, a block runs
- * until a blank line.
+ * when the line doesn't start one (see `isMdxEsmStart`). As in MDX, a block ends
+ * at a blank line where its code is complete: outside any bracket, string,
+ * template literal or comment. So a blank line between the properties of an
+ * exported object doesn't end it. When the code never completes (a syntax error,
+ * which MDX rejects), the block ends at its first blank line instead, and
+ * `incomplete` is set. With `continueIncomplete` false, the block ends at its first
+ * blank line regardless.
  */
-function findMdxEsmEnd(text: string, lineStart: number): number {
+function findMdxEsmEnd(
+  text: string,
+  lineStart: number,
+  continueIncomplete: boolean,
+): { end: number; incomplete: boolean } {
   if (!isMdxEsmStart(text, lineStart)) {
-    return lineStart;
+    return { end: lineStart, incomplete: false };
   }
-  let lineEnd = text.indexOf('\n', lineStart);
-  while (lineEnd !== -1 && !isRestOfLineBlank(text, lineEnd + 1)) {
-    lineEnd = text.indexOf('\n', lineEnd + 1);
+  const len = text.length;
+  let state: 'code' | 'string' | 'template' | 'line-comment' | 'block-comment' = 'code';
+  let quote = '';
+  // Open brackets, and the bracket depth at which each open `${…}` of a template
+  // literal began
+  let depth = 0;
+  const templateDepths: number[] = [];
+  let firstBlankLineEnd = -1;
+  let cursor = lineStart;
+  while (cursor < len) {
+    const ch = text[cursor];
+    if (ch === '\n') {
+      // A string can't hold a line break, nor a line comment run past one.
+      if (state === 'string' || state === 'line-comment') {
+        state = 'code';
+      }
+      if (isRestOfLineBlank(text, cursor + 1)) {
+        const complete = state === 'code' && depth === 0 && templateDepths.length === 0;
+        if (complete || !continueIncomplete) {
+          return { end: cursor + 1, incomplete: false };
+        }
+        if (firstBlankLineEnd === -1) {
+          firstBlankLineEnd = cursor + 1;
+        }
+      }
+      cursor += 1;
+    } else if (state === 'string' || state === 'template') {
+      if (ch === '\\') {
+        cursor += 2;
+        continue;
+      }
+      if (state === 'string' && ch === quote) {
+        state = 'code';
+      } else if (state === 'template' && ch === '`') {
+        state = 'code';
+      } else if (state === 'template' && ch === '$' && text[cursor + 1] === '{') {
+        templateDepths.push(depth);
+        state = 'code';
+        cursor += 1;
+      }
+      cursor += 1;
+    } else if (state === 'line-comment') {
+      cursor += 1;
+    } else if (state === 'block-comment') {
+      if (ch === '*' && text[cursor + 1] === '/') {
+        state = 'code';
+        cursor += 1;
+      }
+      cursor += 1;
+    } else {
+      if (ch === '/' && (text[cursor + 1] === '/' || text[cursor + 1] === '*')) {
+        state = text[cursor + 1] === '/' ? 'line-comment' : 'block-comment';
+        cursor += 1;
+      } else if (ch === "'" || ch === '"') {
+        state = 'string';
+        quote = ch;
+      } else if (ch === '`') {
+        state = 'template';
+      } else if (ch === '{' || ch === '(' || ch === '[') {
+        depth += 1;
+      } else if (ch === '}' && templateDepths[templateDepths.length - 1] === depth) {
+        templateDepths.pop();
+        state = 'template';
+      } else if ((ch === '}' || ch === ')' || ch === ']') && depth > 0) {
+        depth -= 1;
+      }
+      cursor += 1;
+    }
   }
-  return lineEnd === -1 ? text.length : lineEnd + 1;
+  if (state !== 'template' && state !== 'block-comment' && depth === 0) {
+    return { end: len, incomplete: false };
+  }
+  return { end: firstBlankLineEnd === -1 ? len : firstBlankLineEnd, incomplete: true };
 }
 
 /**
@@ -423,6 +500,10 @@ function scanForImports(
   // Where the current MDX ESM block ends. The block is JavaScript; the rest of
   // an MDX document outside code blocks is prose.
   let mdxEsmEnd = 0;
+  // Whether an ESM block can run on past a blank line inside unfinished code. Off
+  // once a block's code never finishes (invalid MDX), so the blocks after it end
+  // at their first blank line and the text is searched to its end only once.
+  let mdxEsmContinues = true;
   // Comment stripping variables
   let commentStart = 0;
   let commentStartOutputLine = 0;
@@ -463,7 +544,11 @@ function scanForImports(
       }
 
       if (isMdxFile && i >= mdxEsmEnd && (i === 0 || sourceCode[i - 1] === '\n')) {
-        mdxEsmEnd = findMdxEsmEnd(sourceCode, i);
+        const esmBlock = findMdxEsmEnd(sourceCode, i, mdxEsmContinues);
+        mdxEsmEnd = esmBlock.end;
+        if (esmBlock.incomplete) {
+          mdxEsmContinues = false;
+        }
       }
       const inMdxProse = isMdxFile && i >= mdxEsmEnd;
 

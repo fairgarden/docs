@@ -114,7 +114,7 @@ The hook manages internal state for copy feedback:
 - **Initial state**: `recentlySuccessful` is `false`
 - **On success**: State becomes `true` and the timeout countdown (re)starts
 - **After timeout**: State resets to `false`
-- **Copying again**: State stays `true` while the new write is in flight, so feedback keyed on it doesn't flicker; each successful write restarts the countdown, so the state stays `true` until `timeout` after the last write to finish. Use `onCopied` to react to every copy.
+- **Copying again**: State stays `true` while the new write is in flight, so feedback keyed on it doesn't flicker; each successful write restarts the countdown, so the state stays `true` until `timeout` after the last write to finish. A write still in flight `timeout` after it started ends the feedback, so a stalled write can't keep it on. Use `onCopied` to react to every copy.
 - **On error**: State becomes `false` and the error callback is fired
 - **On empty content**: Nothing is written and state becomes `false`; neither `onCopied` nor `onError` is fired, but `onClick` still is
 

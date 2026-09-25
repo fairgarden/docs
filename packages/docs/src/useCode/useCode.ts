@@ -470,7 +470,9 @@ export function useCode<T extends {} = {}>(
   // `highlightAfter === 'init'` bypass that prevents a visible flash
   // of unhighlighted code on first-paint variant swaps.
   const shouldHighlight = shouldHighlightForRender({
-    deferHighlight: context?.deferHighlight,
+    // The render-side gate, not the swap commit gate: the code published while
+    // transform deltas are computed is already highlighted where it can be.
+    deferHighlight: context?.deferHighlightRender ?? context?.deferHighlight,
     highlightReady: context?.highlightReady,
     pendingBootstrap: variantSelection.pendingBootstrap,
     highlightAfter: context?.highlightAfter,

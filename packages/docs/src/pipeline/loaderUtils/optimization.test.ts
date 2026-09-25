@@ -207,6 +207,17 @@ describe('parseImportsAndComments scales linearly', () => {
     expect(timeGrowth).toBeLessThan(maxTimeGrowth);
   });
 
+  it('ends unfinished MDX ESM blocks without searching the rest of the file for each', () => {
+    const { timeGrowth, result } = measureTimeGrowth(
+      (count) => "export const loaders = {\n  load: () => import('./chart'),\n\n".repeat(count),
+      250,
+      '/src/demo.mdx',
+    );
+
+    expect(Object.keys(result.relative)).toEqual(['./chart']);
+    expect(timeGrowth).toBeLessThan(maxTimeGrowth);
+  });
+
   it('gives up on an unclosed export list without searching the rest of the file', () => {
     const { timeGrowth, result } = measureTimeGrowth(
       (count) => 'export { first, second\nconst count = 1;\n'.repeat(count),

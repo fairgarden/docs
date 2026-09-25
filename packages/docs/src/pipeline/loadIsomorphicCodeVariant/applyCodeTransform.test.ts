@@ -273,6 +273,46 @@ describe('applyCodeTransform', () => {
     });
   });
 
+  describe('line deltas on highlighted sources', () => {
+    it('applies a line delta to the text of a highlighted source whose node delta is not computed yet', async () => {
+      // Right after a re-parse, a variant has a highlighted source but still the
+      // line delta `transformSource` computed; its node delta comes later.
+      const source = 'const typed: number = 1;\nexport default typed;\n';
+      const transforms = (await transformSource(source, 'Typed.tsx', [
+        {
+          extensions: ['tsx'],
+          transformer: async (text) => ({
+            js: { source: text.replace(': number', ''), fileName: 'Typed.jsx' },
+          }),
+        },
+      ]))!;
+      const highlighted: HastRoot = {
+        type: 'root',
+        children: [
+          {
+            type: 'element',
+            tagName: 'span',
+            properties: { className: ['line'] },
+            children: [
+              {
+                type: 'element',
+                tagName: 'span',
+                properties: { className: ['pl-k'] },
+                children: [{ type: 'text', value: 'const' }],
+              },
+              { type: 'text', value: ' typed: number = 1;' },
+            ],
+          },
+          { type: 'text', value: '\nexport default typed;\n' },
+        ],
+      };
+
+      expect(applyCodeTransform(highlighted, transforms, 'js')).toBe(
+        'const typed = 1;\nexport default typed;\n',
+      );
+    });
+  });
+
   describe('per-frame fallback regeneration', () => {
     // `diffHast` records a frame the transform rewrote as a content-less
     // *delete* of its `data.fallback` (the source keeps its own, so the delta

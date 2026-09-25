@@ -2859,6 +2859,22 @@ import { Button } from './Button';
         expect(importPathsOf(code)).toEqual(['./Button']);
       });
 
+      it('recognizes a fence indented four or more spaces, as MDX has no indented code', () => {
+        // MDX turns off CommonMark's indented code, and with it the three-space
+        // limit on a fence's indentation (as remark-mdx does).
+        for (const indent of ['    ', '        ', '\t']) {
+          const code = `# Setup
+
+${indent}\`\`\`tsx
+${indent}import { Fake } from './fake';
+${indent}\`\`\`
+
+import { Button } from './Button';
+`;
+          expect(importPathsOf(code)).toEqual(['./Button']);
+        }
+      });
+
       it('runs an unclosed fence to the end of the file', () => {
         const code = `import { Button } from './Button';
 
@@ -2936,6 +2952,117 @@ export const load = () => import('./Chart');
 </ChartProvider>
 `;
         expect(relativePathsOf(code)).toEqual([]);
+      });
+    });
+
+    describe('ESM block end', () => {
+      /** The relative import paths found in an MDX document. */
+      function relativePathsOf(code: string) {
+        return Object.keys(parseImportsAndComments(code, '/src/demo.mdx').relative);
+      }
+
+      // As in remark-mdx, a blank line ends an ESM block only where its code is
+      // complete, so the imports after one inside unfinished code still count.
+      it('runs on past a blank line inside braces', () => {
+        const code = `export const loaders = {
+  chart: () => import('./Chart'),
+
+  table: () => import('./Table'),
+};
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('runs on past a blank line inside parentheses', () => {
+        const code = `export const load = (
+  import('./Chart')
+
+    .then(() => import('./Table'))
+);
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('runs on past a blank line inside brackets', () => {
+        const code = `export const loaders = [
+  () => import('./Chart'),
+
+  () => import('./Table'),
+];
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('runs on past a blank line inside a static import clause', () => {
+        const code = `import {
+  Chart,
+
+  Table,
+} from './charts';
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./charts']);
+      });
+
+      it('runs on past a blank line inside a template literal', () => {
+        const code = `export const loaders = {
+  note: \`first
+
+import('./Fake')\`,
+  table: () => import('./Table'),
+};
+`;
+        expect(relativePathsOf(code)).toEqual(['./Table']);
+      });
+
+      it('runs on past a blank line inside a block comment', () => {
+        const code = `export const version = 1; /* a note
+
+import('./Fake') */ export const load = () => import('./Table');
+`;
+        expect(relativePathsOf(code)).toEqual(['./Table']);
+      });
+
+      it('does not count brackets in strings or line comments', () => {
+        const code = `export const open = '{'; // {
+
+Then call import('./Fake') from your own code.
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('ends at a blank line after a complete statement', () => {
+        const code = `export const version = 1;
+
+Then call import('./Fake') from your own code.
+
+export const load = () => import('./Table');
+
+import { Chart } from './Chart';
+`;
+        expect(relativePathsOf(code)).toEqual(['./Table', './Chart']);
+      });
+
+      it('ends unfinished code at its first blank line, without reading the rest as ESM', () => {
+        // Code that never completes is a syntax error in MDX. Rather than read the
+        // rest of the document as JavaScript, the block ends at its first blank line
+        // (and later blocks end at theirs).
+        const code = `export const loaders = {
+  chart: () => import('./Chart'),
+
+Then call import('./Fake') from your own code.
+
+export const other = {
+
+  table: () => import('./Other'),
+};
+
+import { Table } from './Table';
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
       });
     });
 

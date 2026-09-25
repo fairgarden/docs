@@ -5,7 +5,9 @@
  * deltas (`computeHastDeltas`) are still being computed, so a swap never paints
  * a tree that re-flows once they land. `useCode` picks the rendered variant on
  * its own, so the wait has to cover every variant of the block, not just the
- * variant the highlighter itself considers current.
+ * variant the highlighter itself considers current. Rendering doesn't wait for
+ * the deltas: the code shown meanwhile stays highlighted wherever it can be, and
+ * is never older than the loaded code.
  */
 import * as React from 'react';
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
@@ -128,10 +130,13 @@ function Demo(props: ContentProps<object>) {
   );
 }
 
-function renderBlock(code: Code, loader: ComputeHastDeltasLoader) {
+/**
+ * Renders a block, returning a function that replaces its `code` (as a new
+ * `code` prop, a `refresh()` or a lazily loaded variant does, starting a re-parse).
+ */
+function mountBlock(code: Code, loader: ComputeHastDeltasLoader) {
   commits = [];
-  const variants = Object.keys(code);
-  return render(
+  const block = (current: Code) => (
     <CodeContext.Provider
       value={{
         parseSource,
@@ -140,11 +145,13 @@ function renderBlock(code: Code, loader: ComputeHastDeltasLoader) {
         computeHastDeltasLoader: loader,
       }}
     >
-      <CodeHighlighterClient variants={variants} code={code} highlightAfter="init">
+      <CodeHighlighterClient variants={Object.keys(current)} code={current} highlightAfter="init">
         <Demo />
       </CodeHighlighterClient>
-    </CodeContext.Provider>,
+    </CodeContext.Provider>
   );
+  const view = render(block(code));
+  return (next: Code) => view.rerender(block(next));
 }
 
 /** Lets timers, frames and the coordinated swap barriers run their course. */
@@ -158,11 +165,32 @@ async function settle() {
 
 const renderedFileName = () => screen.getByTestId('file').textContent;
 const isDeferred = () => screen.getByTestId('defer').textContent === 'true';
+const renderedText = () => screen.getByTestId('code').textContent ?? '';
+/** Whether rendered code markup is highlighted (split into highlighted lines). */
+const isHighlighted = (markup: string) => markup.includes('class="line"');
+
+/**
+ * A TypeScript variant holding `const <name>: number = <value>`, with the TS →
+ * JS transform the build computes for exactly that source.
+ */
+async function typedVariantOf(name: string, value: number): Promise<VariantCode> {
+  const fileName = `${name}.tsx`;
+  const source = `const ${name.toLowerCase()}: number = ${value};\nexport default ${name.toLowerCase()};\n`;
+  const transforms = await transformSource(source, fileName, [
+    {
+      extensions: ['tsx'],
+      transformer: async (text) => ({
+        js: { source: text.replace(': number', ''), fileName: `${name}.jsx` },
+      }),
+    },
+  ]);
+  return { fileName, source, transforms };
+}
 
 describe('CodeHighlighterClient deferHighlight while transform deltas are computed', () => {
   it('holds a switch into a variant with transforms, and its JS toggle, until the deltas land', async () => {
     const deltas = createHeldDeltas();
-    renderBlock({ Plain: plainVariant(), Typed: typedVariant() }, deltas.loader);
+    mountBlock({ Plain: plainVariant(), Typed: typedVariant() }, deltas.loader);
     await waitFor(() => expect(deltas.pending).toHaveLength(1));
     await settle();
     expect(renderedFileName()).toBe('Plain.js');
@@ -205,7 +233,7 @@ describe('CodeHighlighterClient deferHighlight while transform deltas are comput
 
   it('holds a switch out of a variant with transforms into one without, until the deltas land', async () => {
     const deltas = createHeldDeltas();
-    renderBlock({ Typed: typedVariant(), Plain: plainVariant() }, deltas.loader);
+    mountBlock({ Typed: typedVariant(), Plain: plainVariant() }, deltas.loader);
     await waitFor(() => expect(deltas.pending).toHaveLength(1));
     expect(isDeferred()).toBe(true);
 
@@ -222,7 +250,7 @@ describe('CodeHighlighterClient deferHighlight while transform deltas are comput
 
   it('holds a switch between variants that all have transforms, until the deltas land', async () => {
     const deltas = createHeldDeltas();
-    renderBlock({ Typed: typedVariant(), Other: typedVariant('Other') }, deltas.loader);
+    mountBlock({ Typed: typedVariant(), Other: typedVariant('Other') }, deltas.loader);
     await waitFor(() => expect(deltas.pending).toHaveLength(1));
     expect(isDeferred()).toBe(true);
 
@@ -239,7 +267,7 @@ describe('CodeHighlighterClient deferHighlight while transform deltas are comput
 
   it('never waits for the deltas when no variant has transforms', async () => {
     const deltas = createHeldDeltas();
-    renderBlock({ Plain: plainVariant(), Other: plainVariant('Other') }, deltas.loader);
+    mountBlock({ Plain: plainVariant(), Other: plainVariant('Other') }, deltas.loader);
     await waitFor(() => expect(deltas.pending).toHaveLength(1));
     expect(isDeferred()).toBe(false);
 
@@ -251,5 +279,134 @@ describe('CodeHighlighterClient deferHighlight while transform deltas are comput
     expect(isDeferred()).toBe(false);
 
     await deltas.resolveAll();
+  });
+});
+
+describe('CodeHighlighterClient rendering while the deltas of a re-parse are computed', () => {
+  /**
+   * Renders `code`, lets its first deltas land, applies `before` (e.g. a
+   * transform toggle), then replaces the code with `next` and returns the commits
+   * made from then on, with the deltas for `next` still pending.
+   */
+  async function replaceWhileDeltasPending(code: Code, next: Code, before?: () => Promise<void>) {
+    const deltas = createHeldDeltas();
+    const replace = mountBlock(code, deltas.loader);
+    await waitFor(() => expect(deltas.pending).toHaveLength(1));
+    await deltas.resolveAll();
+    await settle();
+    await before?.();
+    expect(isHighlighted(screen.getByTestId('code').innerHTML)).toBe(true);
+
+    const commitsBefore = commits.length;
+    act(() => {
+      replace(next);
+    });
+    await waitFor(() => expect(deltas.pending).toHaveLength(1));
+    await settle();
+    expect(isDeferred()).toBe(true);
+    return { deltas, commitsAfterReplace: () => commits.slice(commitsBefore) };
+  }
+
+  it('keeps a variant without transforms highlighted, with its new content, in a mixed block', async () => {
+    const typed = await typedVariantOf('Typed', 1);
+    const { deltas, commitsAfterReplace } = await replaceWhileDeltasPending(
+      { Plain: plainVariant(), Typed: typed },
+      { Plain: { ...plainVariant(), source: 'const plain = 2;\n' }, Typed: { ...typed } },
+    );
+
+    expect(renderedText()).toContain('const plain = 2;');
+    expect(commitsAfterReplace().length).toBeGreaterThan(0);
+    for (const { markup } of commitsAfterReplace()) {
+      expect(isHighlighted(markup)).toBe(true);
+      expect(markup).not.toContain('= <span class="pl-c1 fgd-num">1</span>');
+    }
+
+    await deltas.resolveAll();
+    expect(renderedText()).toContain('const plain = 2;');
+    expect(isHighlighted(screen.getByTestId('code').innerHTML)).toBe(true);
+  });
+
+  it('keeps TypeScript highlighted, with its new content, in a block where every variant has transforms', async () => {
+    const other = await typedVariantOf('Other', 1);
+    const { deltas, commitsAfterReplace } = await replaceWhileDeltasPending(
+      { Typed: await typedVariantOf('Typed', 1), Other: other },
+      { Typed: await typedVariantOf('Typed', 5), Other: { ...other } },
+    );
+
+    expect(renderedText()).toContain('const typed: number = 5;');
+    expect(commitsAfterReplace().length).toBeGreaterThan(0);
+    for (const { markup } of commitsAfterReplace()) {
+      expect(isHighlighted(markup)).toBe(true);
+    }
+
+    await deltas.resolveAll();
+    expect(renderedText()).toContain('const typed: number = 5;');
+    expect(isHighlighted(screen.getByTestId('code').innerHTML)).toBe(true);
+  });
+
+  const selectJavaScript = async () => {
+    act(() => {
+      screen.getByTestId('js').click();
+    });
+    await waitFor(() => expect(renderedFileName()).toBe('Typed.jsx'));
+    await settle();
+  };
+
+  it('keeps the JavaScript tree highlighted when a re-parse leaves the content unchanged', async () => {
+    const typed = await typedVariantOf('Typed', 1);
+    const other = await typedVariantOf('Other', 1);
+    const { deltas, commitsAfterReplace } = await replaceWhileDeltasPending(
+      { Typed: typed, Other: other },
+      { Typed: structuredClone(typed), Other: structuredClone(other) },
+      selectJavaScript,
+    );
+
+    expect(renderedFileName()).toBe('Typed.jsx');
+    expect(renderedText()).toContain('const typed = 1;');
+    for (const { markup } of commitsAfterReplace()) {
+      expect(isHighlighted(markup)).toBe(true);
+    }
+
+    await deltas.resolveAll();
+    expect(renderedText()).toContain('const typed = 1;');
+    expect(isHighlighted(screen.getByTestId('code').innerHTML)).toBe(true);
+  });
+
+  it('shows changed JavaScript as plain text until its deltas land, never the old or untransformed code', async () => {
+    const other = await typedVariantOf('Other', 1);
+    const { deltas, commitsAfterReplace } = await replaceWhileDeltasPending(
+      { Typed: await typedVariantOf('Typed', 1), Other: other },
+      { Typed: await typedVariantOf('Typed', 5), Other: { ...other } },
+      selectJavaScript,
+    );
+
+    expect(renderedFileName()).toBe('Typed.jsx');
+    expect(commitsAfterReplace().length).toBeGreaterThan(0);
+    for (const { fileName, markup } of commitsAfterReplace()) {
+      expect(fileName).toBe('Typed.jsx');
+      expect(markup).toContain('const typed = 5;');
+      expect(markup).not.toContain('number');
+    }
+
+    await deltas.resolveAll();
+    await settle();
+    expect(renderedFileName()).toBe('Typed.jsx');
+    expect(renderedText()).toContain('const typed = 5;');
+    expect(renderedText()).not.toContain('number');
+    expect(isHighlighted(screen.getByTestId('code').innerHTML)).toBe(true);
+  });
+
+  it('renders the first load as it did, plain until the first deltas land', async () => {
+    const deltas = createHeldDeltas();
+    mountBlock({ Plain: plainVariant(), Typed: await typedVariantOf('Typed', 1) }, deltas.loader);
+    await waitFor(() => expect(deltas.pending).toHaveLength(1));
+    await settle();
+
+    expect(screen.getByTestId('code').innerHTML).toBe(
+      '<pre spellcheck="false"><code data-total-lines="2" data-focused-lines="2"><span data-frame-type="focus" class="frame">const plain = 1;\n</span></code></pre>',
+    );
+
+    await deltas.resolveAll();
+    expect(isHighlighted(screen.getByTestId('code').innerHTML)).toBe(true);
   });
 });

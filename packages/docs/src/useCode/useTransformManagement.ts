@@ -335,7 +335,18 @@ export function useTransformManagement({
   // `deferHighlight` flips false, the receiver flow opens its barrier
   // and the collapse animation plays once, against a fully-parsed
   // target tree.
-  const effectiveStoredValue = context?.deferHighlight ? null : storedValue;
+  //
+  // The gate is a one-way latch, like `useVariantSelection`'s
+  // `allowStoredBootstrap`: it only holds the value until the highlighter
+  // first settles. A later deferral (the deltas window of a re-parse) must
+  // not mask the transform already applied, or the block would swap back to
+  // the untransformed code once it ends; `awaitHighlight` below already holds
+  // any swap until the pending work lands.
+  const [highlightSettled, setHighlightSettled] = React.useState(!context?.deferHighlight);
+  if (!highlightSettled && !context?.deferHighlight) {
+    setHighlightSettled(true);
+  }
+  const effectiveStoredValue = context?.deferHighlight && !highlightSettled ? null : storedValue;
 
   // Resolved view of the raw preference. This is the value
   // `useCoordinated` sees as its "external source of truth"; when it

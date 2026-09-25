@@ -272,6 +272,94 @@ describe('useCopier', () => {
       }
     });
 
+    it('keeps the feedback on while a later write outlasts the current window', async () => {
+      const { pending, restore } = stubDeferredClipboard();
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useCopier('Button', { timeout: 2000 }));
+
+        // The first copy finishes at t=0, so its window would end at t=2000.
+        let firstCopy: Promise<void> | undefined;
+        act(() => {
+          firstCopy = result.current.copy(clickEvent);
+        });
+        await act(async () => {
+          pending[0].resolve();
+          await firstCopy;
+        });
+
+        // A second copy starts at t=1500 and its write finishes at t=3000.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1500);
+        });
+        let secondCopy: Promise<void> | undefined;
+        act(() => {
+          secondCopy = result.current.copy(clickEvent);
+        });
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1499);
+        });
+        expect(result.current.recentlySuccessful).toBe(true);
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1);
+          pending[1].resolve();
+          await secondCopy;
+        });
+        expect(result.current.recentlySuccessful).toBe(true);
+
+        // …and the feedback lasts until 2000 ms after that, t=5000.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1999);
+        });
+        expect(result.current.recentlySuccessful).toBe(true);
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1);
+        });
+        expect(result.current.recentlySuccessful).toBe(false);
+      } finally {
+        vi.useRealTimers();
+        restore();
+      }
+    });
+
+    it('ends the feedback when a later write stalls for longer than the timeout', async () => {
+      // A write that never settles (e.g. a clipboard permission prompt left open)
+      // doesn't keep claiming a recent copy.
+      const { pending, restore } = stubDeferredClipboard();
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useCopier('Button', { timeout: 2000 }));
+
+        let firstCopy: Promise<void> | undefined;
+        act(() => {
+          firstCopy = result.current.copy(clickEvent);
+        });
+        await act(async () => {
+          pending[0].resolve();
+          await firstCopy;
+        });
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1500);
+        });
+        act(() => {
+          result.current.copy(clickEvent);
+        });
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1999);
+        });
+        expect(result.current.recentlySuccessful).toBe(true);
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1);
+        });
+        expect(result.current.recentlySuccessful).toBe(false);
+        expect(pending).toHaveLength(2);
+      } finally {
+        vi.useRealTimers();
+        restore();
+      }
+    });
+
     it('drops the feedback when a later copy fails', async () => {
       let fail = false;
       Object.defineProperty(window.navigator, 'clipboard', {

@@ -41,7 +41,21 @@ export interface CodeHighlighterContextType {
    */
   availableTransformsVariant?: string;
   url?: string;
+  /**
+   * Commit gate for swaps: `true` while the highlighter is still parsing, or
+   * computing the transform deltas of a block where any variant has transforms.
+   * Variant and transform swaps (and a deferred `expand()`) wait for it, so they
+   * never paint a tree that re-flows once the pending work lands.
+   */
   deferHighlight?: boolean;
+  /**
+   * Render-side counterpart of `deferHighlight`: `true` only while the parse is
+   * in flight. The code published during the transform-deltas window is already
+   * highlighted wherever it can be (see `getPendingTransformedCode`), so
+   * rendering doesn't wait for the deltas. Consumers fall back to
+   * `deferHighlight` when it's absent.
+   */
+  deferHighlightRender?: boolean;
   /**
    * Compact fallback data for every variant, keyed by variant and then
    * fileName. Used to render the fallback and as the text dictionary for

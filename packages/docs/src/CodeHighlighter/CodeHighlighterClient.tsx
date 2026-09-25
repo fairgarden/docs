@@ -33,6 +33,7 @@ import {
   getAvailableTransforms,
   hasAnyVariantTransforms,
 } from '../pipeline/loadIsomorphicCodeVariant/getAvailableTransforms';
+import { getPendingTransformedCode } from './getPendingTransformedCode';
 import { useSpeculativeCodePreload } from './useSpeculativeCodePreload';
 import { useSpeculativeEditingPreload } from './useSpeculativeEditingPreload';
 import { useSpeculativeUseCodePreload } from './useSpeculativeUseCodePreload';
@@ -684,6 +685,7 @@ function useCodeTransforms({
   // callers detect staleness with reference equality.
   const [transformedState, setTransformedState] = React.useState<{
     input?: Code;
+    loaded?: Code;
     output?: Code;
   }>({});
 
@@ -717,7 +719,7 @@ function useCodeTransforms({
     const commit = (output: Code) => {
       if (!settled) {
         settled = true;
-        setTransformedState({ input: parsedCode, output });
+        setTransformedState({ input: parsedCode, loaded: loadedCode, output });
       }
     };
 
@@ -753,18 +755,27 @@ function useCodeTransforms({
       settled = true; // a newer run (or unmount) supersedes this one; ignore late writes
       clearTimeout(timer);
     };
-  }, [parsedCode, sourceParser, computeHastDeltasLoader]);
+  }, [parsedCode, loadedCode, sourceParser, computeHastDeltasLoader]);
 
-  // When the full async pipeline is wired, expose the cached output regardless
-  // of whether `parsedCode` changed since the last computation — falling back
-  // to `undefined` here would yank the currently-displayed HAST for a frame
-  // while the async pipeline catches up. Staleness is signalled via
+  // When the full async pipeline is wired, expose the finished output. While the
+  // deltas for a new `parsedCode` are still being computed, expose the finished
+  // output for variants whose content is unchanged and the new parse for the rest
+  // (see `getPendingTransformedCode`), so the code shown stays highlighted without
+  // ever being older than the loaded code. Staleness is still signalled via
   // `waitingForTransformedCode` so downstream gates (e.g.
   // `useTransformManagement` / `useVariantSelection`) hold off committing a
   // swap until fresh deltas land. Without the pipeline, `transformedCode` is a
   // synchronous pass-through of `parsedCode` derived during render.
   const hasAsyncPipeline = !!parsedCode && !!sourceParser && !!computeHastDeltasLoader;
-  const transformedCode = hasAsyncPipeline ? transformedState.output : parsedCode;
+  const transformedCode = React.useMemo(() => {
+    if (!hasAsyncPipeline || !parsedCode) {
+      return parsedCode;
+    }
+    if (transformedState.input === parsedCode) {
+      return transformedState.output;
+    }
+    return getPendingTransformedCode(parsedCode, loadedCode, transformedState);
+  }, [hasAsyncPipeline, parsedCode, loadedCode, transformedState]);
 
   // Async hast-deltas pipeline status. While true, consumers (notably
   // `useTransformManagement`'s `deferHighlight` gate) should treat
@@ -1658,6 +1669,7 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       availableTransformsVariant: variantName,
       url: props.url,
       deferHighlight,
+      deferHighlightRender: deferHighlightForParsing,
       variantFallbacks,
       highlightReady,
       highlightAfter,
@@ -1679,6 +1691,7 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       variantName,
       props.url,
       deferHighlight,
+      deferHighlightForParsing,
       variantFallbacks,
       highlightReady,
       highlightAfter,
