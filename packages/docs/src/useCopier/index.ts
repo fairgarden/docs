@@ -15,12 +15,28 @@ export function useCopier(contents: (() => string | undefined) | string, opts?: 
   const { onCopied, onError, onClick, timeout = 2000 } = opts || {};
 
   const copyTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+  const mountedRef = React.useRef(false);
   const [recentlySuccessful, setRecentlySuccessful] = React.useState(false);
+
+  // Clear the feedback timer on unmount, and let an in-flight write that
+  // finishes afterwards know not to start a new one.
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
   const copy = React.useCallback(
     async (event: React.MouseEvent<Element>) => {
-      clearTimeout(copyTimeoutRef.current);
-      setRecentlySuccessful(false);
+      // Ends the feedback now, for a copy that wrote nothing or failed.
+      const endFeedback = () => {
+        clearTimeout(copyTimeoutRef.current);
+        if (mountedRef.current) {
+          setRecentlySuccessful(false);
+        }
+      };
 
       try {
         const content = typeof contents === 'function' ? contents() : contents;
@@ -29,15 +45,22 @@ export function useCopier(contents: (() => string | undefined) | string, opts?: 
         if (content) {
           await copyToClipboard(content);
 
-          setRecentlySuccessful(true);
+          // Each successful write restarts the window, whichever copy it
+          // belongs to, so the feedback lasts `timeout` after the last write
+          // to finish. The flag stays on in between, so it doesn't flicker.
+          clearTimeout(copyTimeoutRef.current);
+          if (mountedRef.current) {
+            setRecentlySuccessful(true);
+            copyTimeoutRef.current = setTimeout(() => {
+              setRecentlySuccessful(false);
+            }, timeout);
+          }
           onCopied?.();
-
-          copyTimeoutRef.current = setTimeout(() => {
-            clearTimeout(copyTimeoutRef.current);
-            setRecentlySuccessful(false);
-          }, timeout);
+        } else {
+          endFeedback();
         }
       } catch (error) {
+        endFeedback();
         onError?.(error);
       }
 

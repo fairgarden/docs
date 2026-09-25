@@ -29,7 +29,10 @@ import {
   scatterResidualFallbacks,
 } from './fallbackCompression';
 import { mergeCodeMetadata } from '../pipeline/loadIsomorphicCodeVariant/mergeCodeMetadata';
-import { getAvailableTransforms } from '../pipeline/loadIsomorphicCodeVariant/getAvailableTransforms';
+import {
+  getAvailableTransforms,
+  hasAnyVariantTransforms,
+} from '../pipeline/loadIsomorphicCodeVariant/getAvailableTransforms';
 import { useSpeculativeCodePreload } from './useSpeculativeCodePreload';
 import { useSpeculativeEditingPreload } from './useSpeculativeEditingPreload';
 import { useSpeculativeUseCodePreload } from './useSpeculativeUseCodePreload';
@@ -690,6 +693,13 @@ function useCodeTransforms({
     [parsedCode, loadedCode, variantName],
   );
 
+  // Whether any variant has transforms, so has deltas worth waiting for. Not
+  // just `variantName`'s: `useCode` picks the rendered variant on its own.
+  const hasAnyTransforms = React.useMemo(
+    () => hasAnyVariantTransforms(parsedCode ?? loadedCode),
+    [parsedCode, loadedCode],
+  );
+
   // Effect to compute transformations for all variants. Only runs when the
   // full async pipeline is wired (`parsedCode` + worker + deltas computer);
   // the no-async case is derived during render below instead of being stored,
@@ -774,7 +784,7 @@ function useCodeTransforms({
   // until its deltas land.
   const waitingForTransformedCode = hasAsyncPipeline && transformedState.input !== parsedCode;
 
-  return { transformedCode, availableTransforms, waitingForTransformedCode };
+  return { transformedCode, availableTransforms, hasAnyTransforms, waitingForTransformedCode };
 }
 
 function useControlledCodeParsing({
@@ -1475,11 +1485,12 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
     url: props.url,
   });
 
-  const { transformedCode, availableTransforms, waitingForTransformedCode } = useCodeTransforms({
-    parsedCode,
-    loadedCode: codeWithGlobals,
-    variantName,
-  });
+  const { transformedCode, availableTransforms, hasAnyTransforms, waitingForTransformedCode } =
+    useCodeTransforms({
+      parsedCode,
+      loadedCode: codeWithGlobals,
+      variantName,
+    });
 
   // Combined highlight-readiness gate consumed via context (notably by
   // `useTransformManagement`). Stay deferred while either the sync
@@ -1488,11 +1499,14 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
   // pending causes the incoming pre to first render without the
   // transform deltas and then re-flow a frame or two later when the
   // deltas land, producing a visible jump on top of the collapse
-  // animation. The wait only matters for highlighters with at least one
-  // applicable transform; plain (variant-only) highlighters skip it so
-  // their stored-preference resolution doesn't pay the deltas latency.
+  // animation. The wait only matters for blocks with at least one
+  // applicable transform in ANY variant: `useCode` selects the rendered
+  // variant itself, so this highlighter's `variantName` may be a variant
+  // without transforms while the one being switched to has them. Blocks
+  // with no transforms anywhere skip it so their stored-preference
+  // resolution doesn't pay the deltas latency.
   const deferHighlight =
-    deferHighlightForParsing || (availableTransforms.length > 0 && waitingForTransformedCode);
+    deferHighlightForParsing || (hasAnyTransforms && waitingForTransformedCode);
 
   // The fallback↔content swap, generalized into `useCoordinatedSwap`: it owns
   // the force-mount-once behavior, nested-fallback suppression (via the shared

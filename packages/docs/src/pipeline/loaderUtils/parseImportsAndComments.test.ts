@@ -2938,6 +2938,34 @@ export const load = () => import('./Chart');
         expect(relativePathsOf(code)).toEqual([]);
       });
     });
+
+    describe('ESM start', () => {
+      /** The relative import paths found in an MDX document. */
+      function relativePathsOf(code: string) {
+        return Object.keys(parseImportsAndComments(code, '/src/demo.mdx').relative);
+      }
+
+      // As in MDX, a line starts ESM only when the keyword is followed by a space.
+      it('reads a line that starts with the keyword and a space', () => {
+        expect(relativePathsOf(`import './reset.css'\n\nSome text.\n`)).toEqual(['./reset.css']);
+      });
+
+      it('does not read a keyword directly followed by a brace as ESM', () => {
+        const code = `import{Fake}from './fake'
+
+export{Other}from './other'
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('does not read a keyword followed by a line break as ESM', () => {
+        expect(relativePathsOf(`import\n{ Fake } from './fake'\n`)).toEqual([]);
+      });
+
+      it('does not read a keyword followed by a tab as ESM', () => {
+        expect(relativePathsOf(`import\t{ Fake } from './fake'\n`)).toEqual([]);
+      });
+    });
   });
 });
 

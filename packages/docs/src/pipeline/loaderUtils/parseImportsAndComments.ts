@@ -207,13 +207,28 @@ function getCodeFenceLength(text: string, pos: number): number {
 }
 
 /**
+ * What a code span search saw of the rest of its paragraph: where it stopped,
+ * and where the last run of backticks of each length starts before that.
+ */
+interface CodeSpanSearch {
+  stop: number;
+  lastRunStarts: Map<number, number>;
+}
+
+/**
  * Finds the end of an MDX inline code span whose opening run of `length`
  * backticks ends at `pos`: just past the next run of exactly `length` backticks.
  * A span stays within its paragraph, so a blank line or a line that opens a code
  * fence ends the search. Returns `-1` when there's no closing run, in which case
- * the opening backticks are plain text.
+ * the opening backticks are plain text. Records what it saw in `search`.
  */
-function findCodeSpanEnd(text: string, pos: number, length: number): number {
+function findCodeSpanEnd(
+  text: string,
+  pos: number,
+  length: number,
+  search: CodeSpanSearch,
+): number {
+  search.lastRunStarts.clear();
   let cursor = pos;
   while (cursor < text.length) {
     if (text[cursor] === '\n') {
@@ -223,7 +238,7 @@ function findCodeSpanEnd(text: string, pos: number, length: number): number {
         firstChar += 1;
       }
       if (isRestOfLineBlank(text, lineStart) || getCodeFenceLength(text, firstChar) > 0) {
-        return -1;
+        break;
       }
       cursor = lineStart;
     } else if (text[cursor] === '`') {
@@ -231,11 +246,13 @@ function findCodeSpanEnd(text: string, pos: number, length: number): number {
       if (runLength === length) {
         return cursor + runLength;
       }
+      search.lastRunStarts.set(runLength, cursor);
       cursor += runLength;
     } else {
       cursor += 1;
     }
   }
+  search.stop = cursor;
   return -1;
 }
 
@@ -251,34 +268,35 @@ function isAtLineStart(text: string, pos: number): boolean {
 }
 
 /**
- * Returns where the MDX ESM block that starts at `lineStart` ends, or `lineStart`
- * when the line doesn't start one. As in MDX, a block starts with `import ` or
- * `export ` (the keyword and then whitespace) and runs until a blank line.
+ * Whether an MDX ESM block starts at `lineStart`. As in MDX, the line must begin
+ * with `import` or `export` followed by a space. (Indentation before the keyword
+ * is also accepted.)
  */
-function findMdxEsmEnd(text: string, lineStart: number): number {
+function isMdxEsmStart(text: string, lineStart: number): boolean {
   let cursor = lineStart;
   while (text[cursor] === ' ' || text[cursor] === '\t') {
     cursor += 1;
   }
-  const keywordEnd = cursor + 6;
-  const startsBlock =
+  return (
     (text.startsWith('import', cursor) || text.startsWith('export', cursor)) &&
-    (text[keywordEnd] === ' ' || text[keywordEnd] === '\t');
-  if (!startsBlock) {
+    text[cursor + 6] === ' '
+  );
+}
+
+/**
+ * Returns where the MDX ESM block that starts at `lineStart` ends, or `lineStart`
+ * when the line doesn't start one (see `isMdxEsmStart`). As in MDX, a block runs
+ * until a blank line.
+ */
+function findMdxEsmEnd(text: string, lineStart: number): number {
+  if (!isMdxEsmStart(text, lineStart)) {
     return lineStart;
   }
-  let lineEnd = text.indexOf('\n', keywordEnd);
+  let lineEnd = text.indexOf('\n', lineStart);
   while (lineEnd !== -1 && !isRestOfLineBlank(text, lineEnd + 1)) {
     lineEnd = text.indexOf('\n', lineEnd + 1);
   }
   return lineEnd === -1 ? text.length : lineEnd + 1;
-}
-
-/**
- * Whether a dynamic `import(…)` starts at `pos`.
- */
-function isDynamicImportAt(text: string, pos: number): boolean {
-  return text.startsWith('import', pos) && text[skipWhitespace(text, pos + 6)] === '(';
 }
 
 /**
@@ -314,13 +332,56 @@ function scanForImports(
   const shouldProcessComments = !!(removeCommentsWithPrefix || notableCommentsPrefix);
   // Only map positions when actually stripping comments (code will differ from source)
   const shouldMapPositions = !!removeCommentsWithPrefix;
-  let result = shouldProcessComments ? '' : sourceCode;
+  // The processed output (after comment removal), kept as its finished lines plus
+  // its current line, which is split into everything up to its last
+  // non-whitespace character and the whitespace after that. A comment can then
+  // take back, trim or check its line in constant time, however long the line.
+  let finishedOutput = '';
+  let lineOutput = '';
+  let lineTrailingSpace = '';
+  const appendOutput = (text: string) => {
+    const lineStart = text.lastIndexOf('\n') + 1;
+    if (lineStart > 0) {
+      finishedOutput += lineOutput + lineTrailingSpace + text.slice(0, lineStart);
+      lineOutput = '';
+      lineTrailingSpace = '';
+    }
+    let contentEnd = text.length;
+    while (contentEnd > lineStart && isWhitespace(text[contentEnd - 1])) {
+      contentEnd -= 1;
+    }
+    if (contentEnd > lineStart) {
+      lineOutput += lineTrailingSpace + text.slice(lineStart, contentEnd);
+      lineTrailingSpace = text.slice(contentEnd);
+    } else {
+      lineTrailingSpace += text.slice(lineStart);
+    }
+  };
+  // `appendOutput` for a single character, the scanner's most common append.
+  const appendOutputChar = (ch: string) => {
+    if (ch === '\n') {
+      finishedOutput += lineOutput + lineTrailingSpace + ch;
+      lineOutput = '';
+      lineTrailingSpace = '';
+    } else if (isWhitespace(ch)) {
+      lineTrailingSpace += ch;
+    } else {
+      lineOutput += lineTrailingSpace + ch;
+      lineTrailingSpace = '';
+    }
+  };
   // Track whether any comment was actually stripped (not just that the option was provided)
   let anyCommentStripped = false;
 
-  // Position mapping from original source to processed source (after comment removal)
-  const positionMapping = new Map<number, number>();
-  let processedPos = 0;
+  // Where each detected statement starts in the source and in the processed
+  // output. A statement is copied to the output unchanged, so a position inside
+  // one maps by its offset from the statement's start.
+  const statementSourceStarts: number[] = [];
+  const statementOutputStarts: number[] = [];
+  let detectionSourceStart = 0;
+  let detectionOutputStart = 0;
+  const detectionPositionMapper = (originalPos: number): number =>
+    shouldMapPositions ? detectionOutputStart + (originalPos - detectionSourceStart) : originalPos;
 
   // Helper to check if a comment matches notable prefix
   const matchesNotablePrefix = (commentText: string): boolean => {
@@ -353,23 +414,37 @@ function scanForImports(
   // The marker and length of the fence that opened the current MDX code block
   let codeFenceMarker = '';
   let codeFenceLength = 0;
+  // What the last failed code span search saw of its paragraph. A later opening
+  // run there that's the last run of its length has no closing run either, so it's
+  // known to be plain text without searching again: each paragraph is searched
+  // through at most once for unclosed runs.
+  let failedCodeSpanSearch: CodeSpanSearch = { stop: -1, lastRunStarts: new Map() };
+  let codeSpanSearch: CodeSpanSearch = { stop: -1, lastRunStarts: new Map() };
   // Where the current MDX ESM block ends. The block is JavaScript; the rest of
   // an MDX document outside code blocks is prose.
   let mdxEsmEnd = 0;
   // Comment stripping variables
   let commentStart = 0;
   let commentStartOutputLine = 0;
+  // The output line taken back when a comment starts: its content up to the last
+  // non-whitespace character, and the whitespace after that
   let preCommentContent = '';
+  let preCommentTrailingSpace = '';
 
   // Takes back what the current output line already holds, so a comment's
   // handler can re-add it (trimmed, or not at all for a comment-only line). It's
   // read from the output rather than the source: a comment stripped earlier on
   // the same line is already gone from the output.
   const takeBackOutputLine = () => {
-    const outputLineStart = result.lastIndexOf('\n') + 1;
-    preCommentContent = result.slice(outputLineStart);
-    result = result.slice(0, outputLineStart);
-    processedPos -= preCommentContent.length;
+    preCommentContent = lineOutput;
+    preCommentTrailingSpace = lineTrailingSpace;
+    lineOutput = '';
+    lineTrailingSpace = '';
+  };
+  // Puts the taken-back line back, with or without its trailing whitespace.
+  const restoreOutputLine = (keepTrailingSpace: boolean) => {
+    lineOutput = preCommentContent;
+    lineTrailingSpace = keepTrailingSpace ? preCommentTrailingSpace : '';
   };
 
   while (i < len) {
@@ -380,8 +455,7 @@ function scanForImports(
       // Track line numbers for newlines in code
       if (ch === '\n') {
         if (shouldProcessComments) {
-          result += ch;
-          processedPos += 1;
+          appendOutputChar(ch);
         }
         outputLine += 1;
         i += 1;
@@ -405,14 +479,21 @@ function scanForImports(
           codeFenceLength = fenceLength;
           skipTo = i + fenceLength;
         } else if (backtickCount > 0) {
-          const spanEnd = findCodeSpanEnd(sourceCode, i + backtickCount, backtickCount);
+          const knownUnclosed =
+            i < failedCodeSpanSearch.stop &&
+            failedCodeSpanSearch.lastRunStarts.get(backtickCount) === i;
+          const spanEnd = knownUnclosed
+            ? -1
+            : findCodeSpanEnd(sourceCode, i + backtickCount, backtickCount, codeSpanSearch);
+          if (spanEnd === -1 && !knownUnclosed) {
+            [failedCodeSpanSearch, codeSpanSearch] = [codeSpanSearch, failedCodeSpanSearch];
+          }
           skipTo = spanEnd === -1 ? i + backtickCount : spanEnd;
         }
         if (skipTo > i) {
           const skipped = sourceCode.slice(i, skipTo);
           if (shouldProcessComments) {
-            result += skipped;
-            processedPos += skipped.length;
+            appendOutput(skipped);
           }
           outputLine += skipped.split('\n').length - 1;
           i = skipTo;
@@ -446,53 +527,39 @@ function scanForImports(
         state = ch === '`' ? 'template' : 'string';
         stringQuote = ch;
         if (shouldProcessComments) {
-          result += ch;
-          processedPos += 1;
+          appendOutputChar(ch);
         }
         i += 1;
         continue;
       }
 
-      // Update position mapping for current position
-      if (shouldProcessComments) {
-        positionMapping.set(i, processedPos);
+      // Record where a statement found here would start, for mapping positions
+      // inside it to the processed output.
+      if (shouldMapPositions) {
+        detectionSourceStart = i;
+        detectionOutputStart = finishedOutput.length + lineOutput.length + lineTrailingSpace.length;
       }
 
-      // Create position mapper function
-      const positionMapper = (originalPos: number): number => {
-        if (!shouldMapPositions) {
-          return originalPos; // No comment stripping, positions are unchanged
-        }
-        // Find the closest mapped position
-        let closest = 0;
-        positionMapping.forEach((procPos, origPos) => {
-          if (origPos <= originalPos && origPos > closest) {
-            closest = origPos;
-          }
-        });
-        const offset = originalPos - closest;
-        return (positionMapping.get(closest) || 0) + offset;
-      };
-
-      // Use the provided import detector on the original source code. In MDX
-      // prose, only a static statement at the start of a line can be one: any
-      // other `import` is text (e.g. "each import's path", or `import()` in a
-      // sentence), which must not swallow the text after it — and with it the
-      // start of a code block. Inside an ESM block, every import counts.
-      const isMdxProseText =
-        inMdxProse && (!isAtLineStart(sourceCode, i) || isDynamicImportAt(sourceCode, i));
-      const detection = isMdxProseText
+      // Use the provided import detector on the original source code. MDX prose
+      // holds no statements: any `import` or `export` there is text (e.g. "each
+      // import's path", or `import()` in a sentence), which must not swallow the
+      // text after it — and with it the start of a code block. A line that starts
+      // ESM begins an ESM block, where every import counts.
+      const detection = inMdxProse
         ? { found: false, nextPos: i }
-        : importDetector(sourceCode, i, positionMapper);
+        : importDetector(sourceCode, i, detectionPositionMapper);
       if (detection.found) {
         if (detection.statement) {
           statements.push(detection.statement);
         }
+        if (shouldMapPositions) {
+          statementSourceStarts.push(detectionSourceStart);
+          statementOutputStarts.push(detectionOutputStart);
+        }
         // Copy the detected import to result if we're building one
         if (shouldProcessComments) {
           const importText = sourceCode.slice(i, detection.nextPos);
-          result += importText;
-          processedPos += importText.length;
+          appendOutput(importText);
           // Count newlines in multi-line imports to keep outputLine accurate
           for (let j = 0; j < importText.length; j += 1) {
             if (importText[j] === '\n') {
@@ -505,8 +572,7 @@ function scanForImports(
       }
 
       if (shouldProcessComments) {
-        result += ch;
-        processedPos += 1;
+        appendOutputChar(ch);
       }
       i += 1;
       continue;
@@ -538,7 +604,7 @@ function scanForImports(
           if (shouldStrip) {
             anyCommentStripped = true;
             // Check if comment is the only thing on its line (ignoring whitespace)
-            const isCommentOnlyLine = preCommentContent.trim() === '';
+            const isCommentOnlyLine = preCommentContent === '';
 
             if (isCommentOnlyLine) {
               // Don't add the pre-comment content or newline for comment-only lines
@@ -547,17 +613,15 @@ function scanForImports(
               // Comment is inline, keep the pre-comment content (with trailing whitespace trimmed) and newline.
               // A CRLF line's `\r` is the comment's last character, so restore it with the newline.
               const lineBreak = sourceCode[i - 1] === '\r' ? '\r\n' : '\n';
-              result += preCommentContent.trimEnd();
-              result += lineBreak;
-              processedPos += preCommentContent.trimEnd().length + lineBreak.length;
+              restoreOutputLine(false);
+              appendOutput(lineBreak);
               outputLine += 1;
             }
           } else {
             // Keep the comment and newline
-            result += preCommentContent;
-            result += commentText;
-            result += '\n';
-            processedPos += preCommentContent.length + commentText.length + 1;
+            restoreOutputLine(true);
+            appendOutput(commentText);
+            appendOutput('\n');
             outputLine += 1;
           }
           preCommentContent = '';
@@ -593,69 +657,58 @@ function scanForImports(
 
           if (shouldStrip) {
             anyCommentStripped = true;
-            // Find the end of the comment and check what's after
+            // Check what follows the comment on its line: its first non-whitespace
+            // character, and whether the rest of the line is blank
             const afterCommentPos = i + 2;
-            let afterCommentContent = '';
-            let nextNewlinePos = sourceCode.indexOf('\n', afterCommentPos);
-            if (nextNewlinePos === -1) {
-              nextNewlinePos = sourceCode.length;
+            let afterCommentStart = afterCommentPos;
+            while (
+              afterCommentStart < len &&
+              sourceCode[afterCommentStart] !== '\n' &&
+              isWhitespace(sourceCode[afterCommentStart])
+            ) {
+              afterCommentStart += 1;
             }
-            afterCommentContent = sourceCode.slice(afterCommentPos, nextNewlinePos);
 
             // Check for JSX comment syntax: {/* comment */}
-            // preCommentContent ends with '{' (ignoring whitespace) and afterCommentContent starts with '}' (ignoring whitespace)
-            const trimmedPreComment = preCommentContent.trimEnd();
-            const trimmedAfterComment = afterCommentContent.trimStart();
+            // preCommentContent ends with '{' (ignoring whitespace) and the comment is followed by '}' (ignoring whitespace)
             const isJsxComment =
-              trimmedPreComment.endsWith('{') && trimmedAfterComment.startsWith('}');
+              sourceCode[afterCommentStart] === '}' && preCommentContent.endsWith('{');
 
             // For JSX comments, check if removing the braces leaves only whitespace
             const preCommentWithoutBrace = isJsxComment
-              ? trimmedPreComment.slice(0, -1)
+              ? preCommentContent.slice(0, -1).trimEnd()
               : preCommentContent;
-            const afterCommentWithoutBrace = isJsxComment
-              ? trimmedAfterComment.slice(1)
-              : afterCommentContent;
+            const afterCommentIsBlank = isJsxComment
+              ? isRestOfLineBlank(sourceCode, afterCommentStart + 1)
+              : isRestOfLineBlank(sourceCode, afterCommentPos);
 
-            const isCommentOnlyLines =
-              preCommentWithoutBrace.trim() === '' && afterCommentWithoutBrace.trim() === '';
+            const isCommentOnlyLines = preCommentWithoutBrace === '' && afterCommentIsBlank;
 
             if (isCommentOnlyLines) {
               // Skip the entire comment and everything up to and including the next newline
               // For JSX comments, this also skips the surrounding braces
-              i = nextNewlinePos;
-              if (i < len && sourceCode[i] === '\n') {
-                // Skip the newline entirely - advance to the character after it
-                i += 1;
-              }
+              const nextNewlinePos = sourceCode.indexOf('\n', afterCommentPos);
+              i = nextNewlinePos === -1 ? len : nextNewlinePos + 1;
               state = 'code';
               preCommentContent = '';
               continue;
             } else if (isJsxComment) {
               // JSX comment is inline with other code - strip the braces too
               // e.g., `<Footer /> {/* @highlight */}` -> `<Footer />`
-              result += preCommentWithoutBrace.trimEnd();
-              processedPos += preCommentWithoutBrace.trimEnd().length;
+              preCommentContent = preCommentWithoutBrace;
+              restoreOutputLine(false);
               // Skip past the closing brace after the comment
-              i = afterCommentPos;
-              while (i < nextNewlinePos && /\s/.test(sourceCode[i])) {
-                i += 1;
-              }
-              if (i < nextNewlinePos && sourceCode[i] === '}') {
-                i += 1; // Skip the closing brace
-              }
+              i = afterCommentStart + 1;
               // Don't advance past here - let the main loop continue from i
             } else {
               // Comment is inline or mixed with code, add pre-comment content (with trailing whitespace trimmed)
-              result += preCommentContent.trimEnd();
-              processedPos += preCommentContent.trimEnd().length;
+              restoreOutputLine(false);
               i += 2;
             }
           } else {
             // Keep the comment - add pre-comment content and comment
-            result += preCommentContent;
-            result += commentText;
-            processedPos += preCommentContent.length + commentText.length;
+            restoreOutputLine(true);
+            appendOutput(commentText);
             // Count newlines in the kept comment to update output line
             const newlineCount = (commentText.match(/\n/g) || []).length;
             outputLine += newlineCount;
@@ -688,8 +741,7 @@ function scanForImports(
           outputLine += 1;
         }
         if (shouldProcessComments) {
-          result += sourceCode.slice(i, i + 2);
-          processedPos += 2;
+          appendOutput(sourceCode.slice(i, i + 2));
         }
         i += 2;
         continue;
@@ -699,8 +751,7 @@ function scanForImports(
         stringQuote = null;
       }
       if (shouldProcessComments) {
-        result += ch;
-        processedPos += 1;
+        appendOutputChar(ch);
       }
       i += 1;
       continue;
@@ -713,8 +764,7 @@ function scanForImports(
         state = 'code';
         stringQuote = null;
         if (shouldProcessComments) {
-          result += ch;
-          processedPos += 1;
+          appendOutputChar(ch);
         }
         i += 1;
         continue;
@@ -725,15 +775,13 @@ function scanForImports(
           outputLine += 1;
         }
         if (shouldProcessComments) {
-          result += sourceCode.slice(i, i + 2);
-          processedPos += 2;
+          appendOutput(sourceCode.slice(i, i + 2));
         }
         i += 2;
         continue;
       }
       if (shouldProcessComments) {
-        result += ch;
-        processedPos += 1;
+        appendOutputChar(ch);
       }
       i += 1;
       continue;
@@ -750,23 +798,20 @@ function scanForImports(
         if (closingLength >= codeFenceLength && isRestOfLineBlank(sourceCode, i + closingLength)) {
           state = 'code';
           if (shouldProcessComments) {
-            result += sourceCode.slice(i, i + closingLength);
-            processedPos += closingLength;
+            appendOutput(sourceCode.slice(i, i + closingLength));
           }
           i += closingLength;
           continue;
         }
       }
       if (shouldProcessComments) {
-        result += ch;
-        processedPos += 1;
+        appendOutputChar(ch);
       }
       i += 1;
       continue;
     }
     if (shouldProcessComments) {
-      result += ch;
-      processedPos += 1;
+      appendOutputChar(ch);
     }
     i += 1;
   }
@@ -794,28 +839,35 @@ function scanForImports(
     // comment is stripped), which was taken back from the output when the comment began.
     if (shouldStrip) {
       anyCommentStripped = true;
-      result += preCommentContent.trimEnd();
-      processedPos += preCommentContent.trimEnd().length;
+      restoreOutputLine(false);
     } else {
-      result += preCommentContent + commentText;
-      processedPos += preCommentContent.length + commentText.length;
+      restoreOutputLine(true);
+      appendOutput(commentText);
     }
   }
 
-  // Create the final position mapper for return
+  // Create the final position mapper for return: positions inside a statement map
+  // by their offset from the start of the last statement at or before them.
   const finalPositionMapper = (originalPos: number): number => {
     if (!shouldMapPositions) {
       return originalPos; // No comment stripping, positions are unchanged
     }
-    // Find the closest mapped position
-    let closest = 0;
-    positionMapping.forEach((procPos, origPos) => {
-      if (origPos <= originalPos && origPos > closest) {
-        closest = origPos;
+    let low = 0;
+    let high = statementSourceStarts.length - 1;
+    let match = -1;
+    while (low <= high) {
+      const middle = Math.floor((low + high) / 2);
+      if (statementSourceStarts[middle] <= originalPos) {
+        match = middle;
+        low = middle + 1;
+      } else {
+        high = middle - 1;
       }
-    });
-    const offset = originalPos - closest;
-    return (positionMapping.get(closest) || 0) + offset;
+    }
+    if (match === -1) {
+      return originalPos;
+    }
+    return statementOutputStarts[match] + (originalPos - statementSourceStarts[match]);
   };
 
   // Only return code/comments/positionMapper when comments were actually stripped
@@ -825,7 +877,7 @@ function scanForImports(
   return {
     statements,
     ...(anyCommentStripped && {
-      code: result,
+      code: finishedOutput + lineOutput + lineTrailingSpace,
       ...(Object.keys(comments).length > 0 && { comments }),
       positionMapper: finalPositionMapper,
     }),
@@ -879,6 +931,14 @@ function isIdentifierChar(ch: string): boolean {
  * @returns True if the character is whitespace
  */
 function isWhitespace(ch: string): boolean {
+  if (!ch) {
+    return false;
+  }
+  // The same characters as `/\s/`, with ASCII answered without the regex.
+  const code = ch.charCodeAt(0);
+  if (code < 128) {
+    return code === 32 || (code >= 9 && code <= 13);
+  }
   return /\s/.test(ch);
 }
 
@@ -2003,9 +2063,19 @@ function isExportFromStatement(text: string, pos: number): boolean {
     }
   } else if (text[cursor] === '{') {
     cursor += 1;
+    // The braces hold only names (maybe quoted), `as`, `type` and commas, so stop
+    // at anything else rather than searching the rest of the file for a `}`.
     while (cursor < text.length && text[cursor] !== '}') {
       const skipped = skipStringOrComment(text, cursor);
-      cursor = skipped === cursor ? cursor + 1 : skipped;
+      if (skipped !== cursor) {
+        cursor = skipped;
+        continue;
+      }
+      const ch = text[cursor];
+      if (ch !== ',' && !isIdentifierChar(ch) && !isWhitespace(ch) && ch.charCodeAt(0) < 128) {
+        return false;
+      }
+      cursor += 1;
     }
     cursor = skipWhitespaceAndComments(text, cursor + 1);
   } else {

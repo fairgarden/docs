@@ -53,3 +53,14 @@ export function getAvailableTransforms(
 
   return Array.from(transforms);
 }
+
+/**
+ * Whether any variant of `code` has an available transform (see
+ * `getAvailableTransforms`).
+ */
+export function hasAnyVariantTransforms(code: Code | undefined): boolean {
+  return (
+    !!code &&
+    Object.keys(code).some((variantName) => getAvailableTransforms(code, variantName).length > 0)
+  );
+}
