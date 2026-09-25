@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseImportsAndComments } from './parseImportsAndComments';
+import type { ImportName } from './parseImportsAndComments';
 
 describe('parseImportsAndComments', () => {
   it('should resolve relative import paths and group by import path', async () => {
@@ -329,6 +330,322 @@ describe('parseImportsAndComments', () => {
           positions: [{ start: 78, end: 106 }],
         },
       },
+    });
+  });
+
+  describe('imports without semicolons', () => {
+    /** Position of a quoted module path in `code`, as the parser reports it. */
+    function positionOf(code: string, quotedPath: string, fromIndex = 0) {
+      const start = code.indexOf(quotedPath, fromIndex);
+      return { start, end: start + quotedPath.length };
+    }
+
+    it('detects every import form when each statement ends at a line break', () => {
+      const code = `import * as React from 'react'
+import Button, { type ButtonProps } from './Button'
+import type { Theme } from './theme'
+import {
+  Checkbox,
+  Radio as RadioInput,
+} from './inputs'
+import './setup'
+import styles from './Demo.module.css'
+
+export function Demo() {
+  return <Button className={styles.root} />
+}
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx');
+
+      expect(result).toEqual({
+        relative: {
+          './Button': {
+            url: 'file:///src/Button',
+            names: [
+              { name: 'Button', type: 'default' },
+              { name: 'ButtonProps', type: 'named', isType: true },
+            ],
+            positions: [positionOf(code, "'./Button'")],
+          },
+          './theme': {
+            url: 'file:///src/theme',
+            names: [{ name: 'Theme', type: 'named', isType: true }],
+            includeTypeDefs: true,
+            positions: [positionOf(code, "'./theme'")],
+          },
+          './inputs': {
+            url: 'file:///src/inputs',
+            names: [
+              { name: 'Checkbox', type: 'named' },
+              { name: 'Radio', alias: 'RadioInput', type: 'named' },
+            ],
+            positions: [positionOf(code, "'./inputs'")],
+          },
+          './setup': {
+            url: 'file:///src/setup',
+            names: [],
+            positions: [positionOf(code, "'./setup'")],
+          },
+          './Demo.module.css': {
+            url: 'file:///src/Demo.module.css',
+            names: [{ name: 'styles', type: 'default' }],
+            positions: [positionOf(code, "'./Demo.module.css'")],
+          },
+        },
+        externals: {
+          react: {
+            names: [{ name: 'React', type: 'namespace' }],
+            positions: [positionOf(code, "'react'")],
+          },
+        },
+      });
+    });
+
+    it('finds the same imports as the semicolon-terminated source', () => {
+      const withoutSemicolons = `'use client'
+
+import * as React from 'react'
+import { Button } from '@scope/design/button'
+import styles from './Counter.module.css'
+
+export function Counter() {
+  const [count, setCount] = React.useState(0)
+  return <Button className={styles.root} onClick={() => setCount(count + 1)} />
+}
+`;
+      const withSemicolons = withoutSemicolons.replace(/^(import .*|'use client')$/gm, '$1;');
+
+      const names = (code: string) => {
+        const { relative, externals } = parseImportsAndComments(code, '/src/Counter.tsx');
+        return {
+          relative: Object.fromEntries(
+            Object.entries(relative).map(([key, { names: importNames }]) => [key, importNames]),
+          ),
+          externals: Object.fromEntries(
+            Object.entries(externals).map(([key, { names: importNames }]) => [key, importNames]),
+          ),
+        };
+      };
+
+      expect(names(withoutSemicolons)).toEqual(names(withSemicolons));
+      expect(Object.keys(names(withoutSemicolons).relative)).toEqual(['./Counter.module.css']);
+    });
+
+    it('ends an import at a comment that follows it on the same line', () => {
+      const code = `import { Button } from './Button' // the trigger
+import { Dialog } from './Dialog' /* the popup */
+import './reset.css' // side effects only
+
+export const x = 1
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog', './reset.css']);
+      expect(result.relative['./Dialog'].positions).toEqual([positionOf(code, "'./Dialog'")]);
+      expect(result.relative['./reset.css'].positions).toEqual([positionOf(code, "'./reset.css'")]);
+    });
+
+    it('reads an import attributes clause without a semicolon', () => {
+      const code = `import data from './data.json' with { type: 'json' }
+import { Chart } from './Chart'
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx');
+
+      expect(Object.keys(result.relative)).toEqual(['./data.json', './Chart']);
+      expect(result.relative['./Chart'].names).toEqual([{ name: 'Chart', type: 'named' }]);
+    });
+  });
+
+  describe('statements split across lines', () => {
+    // A statement can't end before its module path, so a line break inside the
+    // clause never ends it. Each case is followed by another import with an
+    // emphasis comment, which must still be read on its own.
+    const cases: Array<{
+      title: string;
+      statement: string;
+      modulePath: string;
+      names: ImportName[];
+      includeTypeDefs?: true;
+    }> = [
+      {
+        title: 'a default import with named imports on the next line',
+        statement: `import React,\n  { useState } from 'react'`,
+        modulePath: 'react',
+        names: [
+          { name: 'React', type: 'default' },
+          { name: 'useState', type: 'named' },
+        ],
+      },
+      {
+        title: 'a namespace import on the line after the keyword',
+        statement: `import\n  * as React from 'react'`,
+        modulePath: 'react',
+        names: [{ name: 'React', type: 'namespace' }],
+      },
+      {
+        title: 'a type-only import with its braces on the next line',
+        statement: `import type\n  { Props } from './types'`,
+        modulePath: './types',
+        names: [{ name: 'Props', type: 'named', isType: true }],
+        includeTypeDefs: true,
+      },
+      {
+        title: 'a default import with the comma leading the next line',
+        statement: `import Checkbox\n  , { CheckboxProps } from './Checkbox'`,
+        modulePath: './Checkbox',
+        names: [
+          { name: 'Checkbox', type: 'default' },
+          { name: 'CheckboxProps', type: 'named' },
+        ],
+      },
+      {
+        title: 'a side-effect import with its path on the next line',
+        statement: `import\n  './reset.css'`,
+        modulePath: './reset.css',
+        names: [],
+      },
+      {
+        title: 'a namespace re-export with `from` on the next line',
+        statement: `export * as Icons\n  from './icons'`,
+        modulePath: './icons',
+        names: [{ name: 'Icons', type: 'namespace' }],
+      },
+      {
+        title: 'a type-only re-export with its braces on the next line',
+        statement: `export type\n  { Props } from './types'`,
+        modulePath: './types',
+        names: [{ name: 'Props', type: 'named', isType: true }],
+        includeTypeDefs: true,
+      },
+      {
+        title: 'an import attributes clause on the same line',
+        statement: `import data from './data.json' with { type: 'json' }`,
+        modulePath: './data.json',
+        names: [{ name: 'data', type: 'default' }],
+      },
+      {
+        title: 'an import attributes clause on the next line',
+        statement: `import data from './data.json'\n  with { type: 'json' }`,
+        modulePath: './data.json',
+        names: [{ name: 'data', type: 'default' }],
+      },
+    ];
+
+    describe.each([
+      ['without semicolons', ''],
+      ['with semicolons', ';'],
+    ])('%s', (_label, semicolon) => {
+      it.each(cases.map((testCase) => [testCase.title, testCase] as const))(
+        'reads %s',
+        (_title, { statement, modulePath, names, includeTypeDefs }) => {
+          const code = `${statement}${semicolon}
+import { Button } from './Button'${semicolon} // @highlight
+
+export const count = 1${semicolon}
+`;
+          const result = parseImportsAndComments(code, '/src/Demo.tsx', {
+            removeCommentsWithPrefix: ['@highlight'],
+            notableCommentsPrefix: ['@highlight'],
+          });
+
+          const quotedPath = `'${modulePath}'`;
+          const start = code.indexOf(quotedPath);
+          const positions = [{ start, end: start + quotedPath.length }];
+          if (modulePath.startsWith('./')) {
+            expect(result.relative[modulePath]).toEqual({
+              url: `file:///src/${modulePath.slice(2)}`,
+              names,
+              ...(includeTypeDefs && { includeTypeDefs }),
+              positions,
+            });
+          } else {
+            expect(result.externals[modulePath]).toEqual({ names, positions });
+          }
+          // The next import and its comment are read after the statement.
+          expect(result.relative['./Button'].names).toEqual([{ name: 'Button', type: 'named' }]);
+          expect(result.code).toBe(code.replace(' // @highlight', ''));
+          expect(result.comments).toEqual({
+            [statement.split('\n').length + 1]: ['@highlight'],
+          });
+        },
+      );
+    });
+
+    it('reads a multiline attributes clause after a line break', () => {
+      const code = `import data from './data.json'
+  with {
+    type: 'json',
+  }
+import { Button } from './Button' // @highlight
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.tsx', {
+        removeCommentsWithPrefix: ['@highlight'],
+      });
+
+      expect(Object.keys(result.relative)).toEqual(['./data.json', './Button']);
+      expect(result.comments).toEqual({ 5: ['@highlight'] });
+    });
+
+    it('does not continue into a call of a function named assert', () => {
+      const code = `import assert from 'node:assert'
+assert(import.meta.url)
+import { Button } from './Button'
+`;
+      const result = parseImportsAndComments(code, '/src/Demo.test.ts');
+
+      expect(Object.keys(result.externals)).toEqual(['node:assert']);
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
+    });
+
+    it('keeps an incomplete import from swallowing the code after it', () => {
+      const code = `import { Button
+
+export function App() {
+  return <Checkbox /> // @highlight
+}
+
+import { Checkbox } from './Checkbox'
+`;
+      const result = parseImportsAndComments(code, '/src/App.tsx', {
+        removeCommentsWithPrefix: ['@highlight'],
+      });
+
+      expect(Object.keys(result.relative)).toEqual(['./Checkbox']);
+      expect(result.comments).toEqual({ 4: ['@highlight'] });
+      expect(result.code).toBe(code.replace(' // @highlight', ''));
+    });
+
+    it('keeps an import without a module path from joining the next import', () => {
+      const code = `import Button
+import { Checkbox } from './Checkbox'
+const count = 1 // @highlight
+`;
+      const result = parseImportsAndComments(code, '/src/App.tsx', {
+        removeCommentsWithPrefix: ['@highlight'],
+      });
+
+      expect(result.relative).toEqual({
+        './Checkbox': {
+          url: 'file:///src/Checkbox',
+          names: [{ name: 'Checkbox', type: 'named' }],
+          positions: [{ start: 39, end: 51 }],
+        },
+      });
+      expect(result.comments).toEqual({ 3: ['@highlight'] });
+    });
+
+    it('does not read prose that starts with import as a statement', () => {
+      const code = `import { Button } from './Button';
+
+import the data from the server, then render it: // @highlight
+<Button />
+`;
+      const result = parseImportsAndComments(code, '/src/demo.mdx', {
+        removeCommentsWithPrefix: ['@highlight'],
+      });
+
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
+      expect(result.comments).toEqual({ 3: ['@highlight'] });
     });
   });
 
@@ -953,6 +1270,58 @@ export default function CheckboxBasic() {
           },
         },
       });
+    });
+
+    it('reads the imports after a comment with an apostrophe inside import braces', () => {
+      const code = `import {
+  Button, // don't wrap
+  Checkbox,
+} from './Button';
+import { Dialog } from './Dialog';
+`;
+      const result = parseImportsAndComments(code, '/src/demo.ts');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog']);
+      expect(result.relative['./Button'].names).toEqual([
+        { name: 'Button', type: 'named' },
+        { name: 'Checkbox', type: 'named' },
+      ]);
+    });
+
+    it('does not read import.meta as an import', () => {
+      const code = `import { createDemo } from './createDemo';
+import { Button } from './Button';
+
+export const DemoButton = createDemo(import.meta.url, Button, {
+  description: "Reads rows from './rows.json'", // @highlight
+});
+`;
+      const result = parseImportsAndComments(code, '/src/index.ts', {
+        removeCommentsWithPrefix: ['@highlight'],
+      });
+
+      expect(Object.keys(result.relative)).toEqual(['./createDemo', './Button']);
+      expect(result.comments).toEqual({ 5: ['@highlight'] });
+    });
+
+    it('reads an import after a string with an escaped quote', () => {
+      const code = `const label = 'it\\'s';
+import { Button } from './Button';
+`;
+      const result = parseImportsAndComments(code, '/src/demo.ts');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
+    });
+
+    it('reads an MDX import after inline code that ends in a backslash', () => {
+      // Markdown code spans have no escapes, so the backslash doesn't escape the backtick.
+      const code = `Type \`\\\` to escape a character.
+
+import { Button } from './Button';
+`;
+      const result = parseImportsAndComments(code, '/src/demo.mdx');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
     });
   });
 
@@ -2232,14 +2601,16 @@ export default function CheckboxBasic() {
     });
 
     it('should handle inline code blocks (triple backticks on same line)', async () => {
+      // Inline code may continue past a line break within its paragraph. A run of
+      // backticks alone on its own line would instead open a code fence.
       const code = `
         import React from 'react';
-        
+
         # Component Examples
-        
+
         Here's an inline code block: \`\`\`tsx import { InlineComponent } from './inline';\`\`\`
-        
-        And another: \`\`\`jsx\nimport { AnotherInline } from './another-inline';\n\`\`\`
+
+        And another: \`\`\`jsx import { AnotherInline }\nfrom './another-inline';\`\`\`
         
         Multiple on one line: \`\`\`js import a from './a';\`\`\` and \`\`\`ts import b from './b';\`\`\`
         
@@ -2253,7 +2624,7 @@ export default function CheckboxBasic() {
           './actual': {
             url: 'file:///src/actual',
             names: [{ name: 'ActualImport', type: 'named' }],
-            positions: [{ start: 414, end: 424 }],
+            positions: [{ start: 389, end: 399 }],
           },
         },
         externals: {
@@ -2352,6 +2723,374 @@ export default function CheckboxBasic() {
             positions: [{ start: 27, end: 34 }],
           },
         },
+      });
+    });
+
+    it('ignores the word import in prose, so code blocks after it stay code blocks', () => {
+      const code = `import { Button } from './Button';
+
+Each import's \`url\` is resolved. Then import 'setup' before anything else.
+
+\`\`\`ts
+import { Checkbox } from './Checkbox';
+import styles from './styles.module.css';
+\`\`\`
+
+Pass the 'flat' mode.
+`;
+      const result = parseImportsAndComments(code, '/src/demo.mdx');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
+      expect(result.externals).toEqual({});
+    });
+
+    describe('code fences', () => {
+      /** The import paths found in an MDX document. */
+      function importPathsOf(code: string) {
+        const result = parseImportsAndComments(code, '/src/demo.mdx');
+        return [...Object.keys(result.relative), ...Object.keys(result.externals)];
+      }
+
+      it('treats triple backticks inside inline code as inline code, not a fence', () => {
+        const code = `Set it per block (\` \`\`\`ts expanded \` / \` \`\`\`ts expanded=false \`), or globally.
+
+\`\`\`js
+import { createFake } from '@scope/fake';
+\`\`\`
+
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('reads an import after a fence that follows inline triple backticks', () => {
+        const code = `- Put options in the metadata: \` \`\`\`js transform\` not \` \`\`\`js\`
+
+\`\`\`html
+<pre><code>const count = 1;</code></pre>
+\`\`\`
+
+import { TypesButton } from './types';
+`;
+        expect(importPathsOf(code)).toEqual(['./types']);
+      });
+
+      it('treats an unclosed run of triple backticks in prose as plain text', () => {
+        const code = `Open a block with \`\`\`jsx and close it later.
+
+\`\`\`
+import { Fake } from './fake';
+\`\`\`
+
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('recognizes tilde fences', () => {
+        const code = `~~~tsx
+import { Fake } from './fake';
+\`\`\`
+import { StillFake } from './still-fake';
+~~~
+
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('closes a fence with a longer run of the same marker', () => {
+        const code = `\`\`\`tsx
+import { Fake } from './fake';
+\`\`\`\`\`
+
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('does not close a fence with another marker or a shorter run', () => {
+        const code = `\`\`\`tsx
+import { FakeA } from './fake-a';
+~~~
+import { FakeB } from './fake-b';
+\`\`\`
+
+\`\`\`\`md
+\`\`\`tsx
+import { FakeC } from './fake-c';
+\`\`\`
+\`\`\`\`
+
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('does not close a fence on a line with more than the fence', () => {
+        const code = `\`\`\`tsx
+import { Fake } from './fake';
+\`\`\` not a closing fence
+\`\`\`
+
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('does not open a fence when the info string holds a backtick', () => {
+        const code = `\`\`\`tsx \`inline\`
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('recognizes indented fences in list items', () => {
+        const code = `1. Install it:
+
+   \`\`\`tsx
+   import { Fake } from './fake';
+   \`\`\`
+
+2. Use it.
+
+import { Button } from './Button';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+
+      it('recognizes a fence indented four or more spaces, as MDX has no indented code', () => {
+        // MDX turns off CommonMark's indented code, and with it the three-space
+        // limit on a fence's indentation (as remark-mdx does).
+        for (const indent of ['    ', '        ', '\t']) {
+          const code = `# Setup
+
+${indent}\`\`\`tsx
+${indent}import { Fake } from './fake';
+${indent}\`\`\`
+
+import { Button } from './Button';
+`;
+          expect(importPathsOf(code)).toEqual(['./Button']);
+        }
+      });
+
+      it('runs an unclosed fence to the end of the file', () => {
+        const code = `import { Button } from './Button';
+
+\`\`\`tsx
+import { Fake } from './fake';
+`;
+        expect(importPathsOf(code)).toEqual(['./Button']);
+      });
+    });
+
+    describe('dynamic imports', () => {
+      /** The relative import paths found in an MDX document. */
+      function relativePathsOf(code: string) {
+        return Object.keys(parseImportsAndComments(code, '/src/demo.mdx').relative);
+      }
+
+      it('reads a dynamic import inside an ESM export', () => {
+        const code = `import { Button } from './Button';
+
+export const load = () => import('./Chart');
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./Button', './Chart']);
+        expect(relativePathsOf(code.replaceAll(';', ''))).toEqual(['./Button', './Chart']);
+      });
+
+      it('reads dynamic imports on later lines of the same ESM block', () => {
+        const code = `export const loaders = {
+  chart: () => import('./Chart'),
+  table: () =>
+    import('./Table'),
+};
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('ends the ESM block at a blank line', () => {
+        const code = `export const load = () => import('./Chart')
+
+Then call import('./Table') from your own code.
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart']);
+      });
+
+      it('ignores import() in prose, even at the start of a line', () => {
+        const code = `Load it with import('./Chart') when it's needed.
+
+import('./Table') at the start of a line is text too: ESM needs a space after the keyword.
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('ignores import() in a code fence', () => {
+        const code = `\`\`\`js
+export const load = () => import('./Chart');
+\`\`\`
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('ignores import() written inside a string in an ESM block', () => {
+        const code = `export const note = "Call import('./Chart') later";
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('does not read dynamic imports in JSX expressions', () => {
+        // MDX evaluates \`{…}\` expressions as the page renders; like remark-mdx,
+        // only ESM blocks count as the document's module code.
+        const code = `<ChartProvider load={() => import('./Chart')}>
+  {import('./Table')}
+</ChartProvider>
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+    });
+
+    describe('ESM block end', () => {
+      /** The relative import paths found in an MDX document. */
+      function relativePathsOf(code: string) {
+        return Object.keys(parseImportsAndComments(code, '/src/demo.mdx').relative);
+      }
+
+      // As in remark-mdx, a blank line ends an ESM block only where its code is
+      // complete, so the imports after one inside unfinished code still count.
+      it('runs on past a blank line inside braces', () => {
+        const code = `export const loaders = {
+  chart: () => import('./Chart'),
+
+  table: () => import('./Table'),
+};
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('runs on past a blank line inside parentheses', () => {
+        const code = `export const load = (
+  import('./Chart')
+
+    .then(() => import('./Table'))
+);
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('runs on past a blank line inside brackets', () => {
+        const code = `export const loaders = [
+  () => import('./Chart'),
+
+  () => import('./Table'),
+];
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('runs on past a blank line inside a static import clause', () => {
+        const code = `import {
+  Chart,
+
+  Table,
+} from './charts';
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./charts']);
+      });
+
+      it('runs on past a blank line inside a template literal', () => {
+        const code = `export const loaders = {
+  note: \`first
+
+import('./Fake')\`,
+  table: () => import('./Table'),
+};
+`;
+        expect(relativePathsOf(code)).toEqual(['./Table']);
+      });
+
+      it('runs on past a blank line inside a block comment', () => {
+        const code = `export const version = 1; /* a note
+
+import('./Fake') */ export const load = () => import('./Table');
+`;
+        expect(relativePathsOf(code)).toEqual(['./Table']);
+      });
+
+      it('does not count brackets in strings or line comments', () => {
+        const code = `export const open = '{'; // {
+
+Then call import('./Fake') from your own code.
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('ends at a blank line after a complete statement', () => {
+        const code = `export const version = 1;
+
+Then call import('./Fake') from your own code.
+
+export const load = () => import('./Table');
+
+import { Chart } from './Chart';
+`;
+        expect(relativePathsOf(code)).toEqual(['./Table', './Chart']);
+      });
+
+      it('ends unfinished code at its first blank line, without reading the rest as ESM', () => {
+        // Code that never completes is a syntax error in MDX. Rather than read the
+        // rest of the document as JavaScript, the block ends at its first blank line
+        // (and later blocks end at theirs).
+        const code = `export const loaders = {
+  chart: () => import('./Chart'),
+
+Then call import('./Fake') from your own code.
+
+export const other = {
+
+  table: () => import('./Other'),
+};
+
+import { Table } from './Table';
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+    });
+
+    describe('ESM start', () => {
+      /** The relative import paths found in an MDX document. */
+      function relativePathsOf(code: string) {
+        return Object.keys(parseImportsAndComments(code, '/src/demo.mdx').relative);
+      }
+
+      // As in MDX, a line starts ESM only when the keyword is followed by a space.
+      it('reads a line that starts with the keyword and a space', () => {
+        expect(relativePathsOf(`import './reset.css'\n\nSome text.\n`)).toEqual(['./reset.css']);
+      });
+
+      it('does not read a keyword directly followed by a brace as ESM', () => {
+        const code = `import{Fake}from './fake'
+
+export{Other}from './other'
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('does not read a keyword followed by a line break as ESM', () => {
+        expect(relativePathsOf(`import\n{ Fake } from './fake'\n`)).toEqual([]);
+      });
+
+      it('does not read a keyword followed by a tab as ESM', () => {
+        expect(relativePathsOf(`import\t{ Fake } from './fake'\n`)).toEqual([]);
       });
     });
   });
@@ -2660,6 +3399,110 @@ import { Button } from '@scope/design';`;
         positions: [{ start: 81, end: 96 }],
       },
     });
+  });
+
+  it('keeps a line that has a stripped block comment followed by a stripped line comment', () => {
+    const code = `import { Button } from './Button' /* @highlight */ // eslint-disable-line
+import { Checkbox } from './Checkbox'
+const count = 1; /* @highlight */ // eslint-disable-line
+const total = 2;
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight', 'eslint-disable'],
+      notableCommentsPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`import { Button } from './Button'
+import { Checkbox } from './Checkbox'
+const count = 1;
+const total = 2;
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'], 3: ['@highlight'] });
+    // Import positions point into the stripped code.
+    const checkboxStart = result.code!.indexOf("'./Checkbox'");
+    expect(result.relative['./Checkbox'].positions).toEqual([
+      { start: checkboxStart, end: checkboxStart + "'./Checkbox'".length },
+    ]);
+  });
+
+  it('keeps the last line when it ends in a comment and the file has no trailing newline', () => {
+    const stripped = parseImportsAndComments(
+      `import * as React from 'react'
+import { Button } from './Button' // @highlight`,
+      '/src/test.tsx',
+      { removeCommentsWithPrefix: ['@highlight'] },
+    );
+    const kept = parseImportsAndComments(
+      `const count = 1; // @highlight
+const total = 2; // the sum`,
+      '/src/test.tsx',
+      { removeCommentsWithPrefix: ['@highlight'] },
+    );
+
+    expect(stripped.code).toBe(`import * as React from 'react'
+import { Button } from './Button'`);
+    expect(stripped.comments).toEqual({ 2: ['@highlight'] });
+    expect(kept.code).toBe(`const count = 1;
+const total = 2; // the sum`);
+  });
+
+  it('strips a comment written directly after the module path', () => {
+    const code = `import { Button } from './Button'// @highlight
+const count = 1
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`import { Button } from './Button'
+const count = 1
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'] });
+  });
+
+  it('strips a matching block comment between the module path and the semicolon', () => {
+    const code = `import { Button } from './Button' /* @highlight */;
+import { Dialog } from './Dialog';
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`import { Button } from './Button';
+import { Dialog } from './Dialog';
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'] });
+    expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog']);
+  });
+
+  it('keeps CRLF line endings on lines whose trailing comment is stripped', () => {
+    const code = `import { Button } from './Button' // @highlight\r\nconst count = 1; // @highlight\r\nconst total = 2;\r\n`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(
+      `import { Button } from './Button'\r\nconst count = 1;\r\nconst total = 2;\r\n`,
+    );
+  });
+
+  it('strips a comment that follows a string with an escaped quote', () => {
+    const code = `const label = 'it\\'s'; // @highlight
+const count = 1; // @highlight
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`const label = 'it\\'s';
+const count = 1;
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'], 2: ['@highlight'] });
   });
 });
 
@@ -3281,6 +4124,38 @@ const z = 3;`;
       8: ['@focus-end'],
     });
   });
+
+  it('collects emphasis comments after imports that have no semicolons', async () => {
+    const code = `import * as React from 'react'
+import styles from './Counter.module.css' // @highlight
+
+export function Counter() {
+  // @focus-start
+  const [count, setCount] = React.useState(0) // @highlight
+  return <button className={styles.root}>{count}</button>
+  // @focus-end
+}`;
+
+    const result = parseImportsAndComments(code, '/src/Counter.tsx', {
+      removeCommentsWithPrefix: ['@highlight', '@focus'],
+      notableCommentsPrefix: ['@highlight', '@focus'],
+    });
+
+    // The same code and line keys as the semicolon-terminated source produces.
+    expect(result.code).toBe(`import * as React from 'react'
+import styles from './Counter.module.css'
+
+export function Counter() {
+  const [count, setCount] = React.useState(0)
+  return <button className={styles.root}>{count}</button>
+}`);
+    expect(result.comments).toEqual({
+      2: ['@highlight'],
+      5: ['@focus-start', '@highlight'],
+      7: ['@focus-end'],
+    });
+    expect(Object.keys(result.relative)).toEqual(['./Counter.module.css']);
+  });
 });
 
 // Test cases for export-from statements
@@ -3420,6 +4295,56 @@ describe('Export-from statement parsing', () => {
     });
   });
 
+  it('ignores a `from` in the body of an exported declaration', () => {
+    const withoutSemicolons = `import * as React from 'react'
+
+export function Button() {
+  // Adapted from "a design guide"
+  const label = 'from the theme'
+  return <p>Loaded from './data.json'</p>
+}
+
+export { Checkbox } from './Checkbox'
+`;
+    const withSemicolons = `import * as React from 'react';
+
+export function Button() {
+  // Adapted from "a design guide"
+  const label = 'from the theme';
+  return <p>Loaded from './data.json'</p>;
+}
+
+export { Checkbox } from './Checkbox';
+`;
+
+    for (const code of [withoutSemicolons, withSemicolons]) {
+      const result = parseImportsAndComments(code, '/src/Button.tsx');
+      expect(Object.keys(result.relative)).toEqual(['./Checkbox']);
+      expect(Object.keys(result.externals)).toEqual(['react']);
+    }
+  });
+
+  it('should parse namespace and type-only star re-exports', () => {
+    const code = `export * as Icons from './icons'
+export type * from './types'
+`;
+    const result = parseImportsAndComments(code, '/src/index.ts');
+
+    expect(result.relative).toEqual({
+      './icons': {
+        url: 'file:///src/icons',
+        names: [{ name: 'Icons', type: 'namespace' }],
+        positions: [{ start: 23, end: 32 }],
+      },
+      './types': {
+        url: 'file:///src/types',
+        names: [],
+        includeTypeDefs: true,
+        positions: [{ start: 52, end: 61 }],
+      },
+    });
+  });
+
   it('should parse mixed import and export-from statements', async () => {
     const code = `
       import React from 'react';
@@ -3506,6 +4431,11 @@ describe('Export-from statement parsing', () => {
           url: 'file:///src/Component',
           names: [{ name: 'Component', type: 'named' }],
           positions: [{ start: 26, end: 39 }],
+        },
+        './Button': {
+          url: 'file:///src/Button',
+          names: [{ name: 'Button', type: 'named' }],
+          positions: [{ start: 63, end: 73 }],
         },
       },
       externals: {},

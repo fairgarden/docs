@@ -1504,6 +1504,131 @@ describe('useCode integration tests', () => {
     });
   });
 
+  describe('copy feedback', () => {
+    it('reports a recent copy of the file and of the Markdown separately', async () => {
+      const writes: string[] = [];
+      Object.defineProperty(window.navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            writes.push(text);
+          },
+        },
+      });
+      vi.useFakeTimers();
+      try {
+        const contentProps: ContentProps<{}> = {
+          name: 'Button',
+          code: { Default: { fileName: 'Button.tsx', source: 'const button = 1;' } },
+        };
+        const { result } = renderHook(() => useCode(contentProps, { copy: { timeout: 1000 } }));
+
+        expect(result.current.copyRecentlySuccessful).toBe(false);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(false);
+
+        await act(async () => {
+          await result.current.copy({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toEqual(['const button = 1;']);
+        expect(result.current.copyRecentlySuccessful).toBe(true);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(false);
+
+        // The feedback clears after the `copy.timeout`.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+        expect(result.current.copyRecentlySuccessful).toBe(false);
+
+        await act(async () => {
+          await result.current.copyMarkdown({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toHaveLength(2);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(true);
+        expect(result.current.copyRecentlySuccessful).toBe(false);
+      } finally {
+        vi.useRealTimers();
+        delete (window.navigator as { clipboard?: Clipboard }).clipboard;
+      }
+    });
+
+    it('does not report a Markdown copy when the variant has no file name to copy', async () => {
+      const writes: string[] = [];
+      Object.defineProperty(window.navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            writes.push(text);
+          },
+        },
+      });
+      try {
+        const contentProps: ContentProps<{}> = {
+          name: 'Button',
+          code: { Default: { source: 'const button = 1;' } },
+        };
+        const { result } = renderHook(() => useCode(contentProps));
+
+        await act(async () => {
+          await result.current.copyMarkdown({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toEqual([]);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(false);
+
+        // The file itself still copies.
+        await act(async () => {
+          await result.current.copy({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toEqual(['const button = 1;']);
+        expect(result.current.copyRecentlySuccessful).toBe(true);
+      } finally {
+        delete (window.navigator as { clipboard?: Clipboard }).clipboard;
+      }
+    });
+
+    it('keeps a separate feedback window for the file copy and the Markdown copy', async () => {
+      Object.defineProperty(window.navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: async () => {} },
+      });
+      vi.useFakeTimers();
+      try {
+        const contentProps: ContentProps<{}> = {
+          name: 'Button',
+          code: { Default: { fileName: 'Button.tsx', source: 'const button = 1;' } },
+        };
+        const { result } = renderHook(() => useCode(contentProps, { copy: { timeout: 1000 } }));
+
+        await act(async () => {
+          await result.current.copy({} as React.MouseEvent<Element>);
+        });
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(500);
+        });
+        await act(async () => {
+          await result.current.copyMarkdown({} as React.MouseEvent<Element>);
+        });
+        expect(result.current.copyRecentlySuccessful).toBe(true);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(true);
+
+        // The file copy's window ends on its own schedule…
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(500);
+        });
+        expect(result.current.copyRecentlySuccessful).toBe(false);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(true);
+
+        // …and the Markdown copy's 1000 ms after it was made.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(500);
+        });
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(false);
+      } finally {
+        vi.useRealTimers();
+        delete (window.navigator as { clipboard?: Clipboard }).clipboard;
+      }
+    });
+  });
+
   describe('deferred expand during swap', () => {
     it('defers expand() until the variant swap completes', async () => {
       vi.useFakeTimers();
