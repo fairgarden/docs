@@ -216,8 +216,12 @@ function CopyControls(props) {
 
 Both are wired through [`useCopier`](../use-copier/page.mdx); pass the `copy`
 option (`UseCopierOpts`) to configure success-state timing and callbacks for
-both. Compressed sources are decoded back to text on demand, so neither copy
-forces an early decompression of the block.
+both. Each also exposes its copier's `recentlySuccessful` flag, as
+`copyRecentlySuccessful` and `copyMarkdownRecentlySuccessful`: `true` for the
+`copy.timeout` (2000 ms by default) after a copy succeeds. They're meant for
+driving a toast or other notification that confirms the copy. Compressed sources
+are decoded back to text on demand, so neither copy forces an early
+decompression of the block.
 
 > [!NOTE]
 > For lists and standalone chunks, the lower-level

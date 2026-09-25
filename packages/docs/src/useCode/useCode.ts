@@ -189,10 +189,18 @@ export interface UseCodeResult<T extends {} = {}> {
   setExpanded: (expanded: boolean) => void;
   copy: (event: React.MouseEvent<Element>) => Promise<void>;
   /**
+   * `true` for a moment after `copy` succeeds — for the `copy.timeout` option,
+   * 2000 ms by default — to drive a toast or other notification confirming the
+   * copy. The `recentlySuccessful` of the `useCopier` behind `copy`.
+   */
+  copyRecentlySuccessful: boolean;
+  /**
    * Copies all files in the current variant to the clipboard as a Markdown
    * snippet (heading + per-file fenced code blocks).
    */
   copyMarkdown: (event: React.MouseEvent<Element>) => Promise<void>;
+  /** Like `copyRecentlySuccessful`, for `copyMarkdown`. */
+  copyMarkdownRecentlySuccessful: boolean;
   availableTransforms: string[];
   selectedTransform: string | null | undefined;
   selectTransform: (transformName: string | null) => void;
@@ -667,7 +675,9 @@ export function useCode<T extends {} = {}>(
     expand,
     setExpanded,
     copy: copyFunctionality.copy,
+    copyRecentlySuccessful: copyFunctionality.copyRecentlySuccessful,
     copyMarkdown: copyFunctionality.copyMarkdown,
+    copyMarkdownRecentlySuccessful: copyFunctionality.copyMarkdownRecentlySuccessful,
     availableTransforms: transformManagement.availableTransforms,
     selectedTransform: transformManagement.selectedTransform,
     selectTransform: transformManagement.selectTransform,

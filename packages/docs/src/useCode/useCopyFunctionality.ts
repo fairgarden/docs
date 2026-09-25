@@ -26,11 +26,15 @@ interface UseCopyFunctionalityProps {
 
 export interface UseCopyFunctionalityResult {
   copy: (event: React.MouseEvent<Element>) => Promise<void>;
+  /** `useCopier`'s `recentlySuccessful` for `copy`. */
+  copyRecentlySuccessful: boolean;
   /**
    * Copies all files in the current variant to the clipboard as a Markdown
    * snippet (heading + per-file fenced code blocks).
    */
   copyMarkdown: (event: React.MouseEvent<Element>) => Promise<void>;
+  /** `useCopier`'s `recentlySuccessful` for `copyMarkdown`. */
+  copyMarkdownRecentlySuccessful: boolean;
 }
 
 export function collectVariantFiles(
@@ -132,11 +136,19 @@ export function useCopyFunctionality({
     return generateVariantMarkdown({ title, files });
   }, [selectedVariant, transformedFiles, fallbacks, title]);
 
-  const { copy } = useCopier(sourceFileToText, copyOpts);
-  const { copy: copyMarkdown } = useCopier(variantToMarkdown, copyOpts);
+  const { copy, recentlySuccessful: copyRecentlySuccessful } = useCopier(
+    sourceFileToText,
+    copyOpts,
+  );
+  const { copy: copyMarkdown, recentlySuccessful: copyMarkdownRecentlySuccessful } = useCopier(
+    variantToMarkdown,
+    copyOpts,
+  );
 
   return {
     copy,
+    copyRecentlySuccessful,
     copyMarkdown,
+    copyMarkdownRecentlySuccessful,
   };
 }
