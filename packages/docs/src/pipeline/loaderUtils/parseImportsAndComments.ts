@@ -251,6 +251,37 @@ function isAtLineStart(text: string, pos: number): boolean {
 }
 
 /**
+ * Returns where the MDX ESM block that starts at `lineStart` ends, or `lineStart`
+ * when the line doesn't start one. As in MDX, a block starts with `import ` or
+ * `export ` (the keyword and then whitespace) and runs until a blank line.
+ */
+function findMdxEsmEnd(text: string, lineStart: number): number {
+  let cursor = lineStart;
+  while (text[cursor] === ' ' || text[cursor] === '\t') {
+    cursor += 1;
+  }
+  const keywordEnd = cursor + 6;
+  const startsBlock =
+    (text.startsWith('import', cursor) || text.startsWith('export', cursor)) &&
+    (text[keywordEnd] === ' ' || text[keywordEnd] === '\t');
+  if (!startsBlock) {
+    return lineStart;
+  }
+  let lineEnd = text.indexOf('\n', keywordEnd);
+  while (lineEnd !== -1 && !isRestOfLineBlank(text, lineEnd + 1)) {
+    lineEnd = text.indexOf('\n', lineEnd + 1);
+  }
+  return lineEnd === -1 ? text.length : lineEnd + 1;
+}
+
+/**
+ * Whether a dynamic `import(…)` starts at `pos`.
+ */
+function isDynamicImportAt(text: string, pos: number): boolean {
+  return text.startsWith('import', pos) && text[skipWhitespace(text, pos + 6)] === '(';
+}
+
+/**
  * Generic function to scan source code character-by-character, finding import statements
  * while correctly handling strings, comments, and template literals. Optionally processes
  * comments for removal and collection.
@@ -322,6 +353,9 @@ function scanForImports(
   // The marker and length of the fence that opened the current MDX code block
   let codeFenceMarker = '';
   let codeFenceLength = 0;
+  // Where the current MDX ESM block ends. The block is JavaScript; the rest of
+  // an MDX document outside code blocks is prose.
+  let mdxEsmEnd = 0;
   // Comment stripping variables
   let commentStart = 0;
   let commentStartOutputLine = 0;
@@ -354,9 +388,14 @@ function scanForImports(
         continue;
       }
 
-      // In MDX, a code fence opens a code block; any other run of backticks is
-      // inline code, which ends at the next run of the same length.
-      if (isMdxFile && (ch === '`' || ch === '~')) {
+      if (isMdxFile && i >= mdxEsmEnd && (i === 0 || sourceCode[i - 1] === '\n')) {
+        mdxEsmEnd = findMdxEsmEnd(sourceCode, i);
+      }
+      const inMdxProse = isMdxFile && i >= mdxEsmEnd;
+
+      // In MDX prose, a code fence opens a code block; any other run of backticks
+      // is inline code, which ends at the next run of the same length.
+      if (inMdxProse && (ch === '`' || ch === '~')) {
         const fenceLength = getCodeFenceLength(sourceCode, i);
         const backtickCount = ch === '`' ? countRepeated(sourceCode, i, '`') : 0;
         let skipTo = i;
@@ -403,7 +442,7 @@ function scanForImports(
         continue;
       }
       // Start of string
-      if (isStringStart(ch, isMdxFile)) {
+      if (isStringStart(ch, inMdxProse)) {
         state = ch === '`' ? 'template' : 'string';
         stringQuote = ch;
         if (shouldProcessComments) {
@@ -435,14 +474,16 @@ function scanForImports(
         return (positionMapping.get(closest) || 0) + offset;
       };
 
-      // Use the provided import detector on the original source code. In MDX, an
-      // `import` or `export` is ESM only at the start of a line; elsewhere it's
-      // prose (e.g. "each import's path"), which must not swallow the text after
-      // it — and with it the start of a code block.
-      const detection =
-        isMdxFile && !isAtLineStart(sourceCode, i)
-          ? { found: false, nextPos: i }
-          : importDetector(sourceCode, i, positionMapper);
+      // Use the provided import detector on the original source code. In MDX
+      // prose, only a static statement at the start of a line can be one: any
+      // other `import` is text (e.g. "each import's path", or `import()` in a
+      // sentence), which must not swallow the text after it — and with it the
+      // start of a code block. Inside an ESM block, every import counts.
+      const isMdxProseText =
+        inMdxProse && (!isAtLineStart(sourceCode, i) || isDynamicImportAt(sourceCode, i));
+      const detection = isMdxProseText
+        ? { found: false, nextPos: i }
+        : importDetector(sourceCode, i, positionMapper);
       if (detection.found) {
         if (detection.statement) {
           statements.push(detection.statement);
@@ -631,6 +672,13 @@ function scanForImports(
       continue;
     }
     if (state === 'string') {
+      // A JavaScript string can't hold a line break, so in MDX, where one opens
+      // only inside an ESM block, a stray quote can't run on past its line.
+      if (ch === '\n' && isMdxFile) {
+        state = 'code';
+        stringQuote = null;
+        continue;
+      }
       if (ch === '\n') {
         outputLine += 1;
       }

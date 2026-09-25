@@ -2868,6 +2868,76 @@ import { Fake } from './fake';
         expect(importPathsOf(code)).toEqual(['./Button']);
       });
     });
+
+    describe('dynamic imports', () => {
+      /** The relative import paths found in an MDX document. */
+      function relativePathsOf(code: string) {
+        return Object.keys(parseImportsAndComments(code, '/src/demo.mdx').relative);
+      }
+
+      it('reads a dynamic import inside an ESM export', () => {
+        const code = `import { Button } from './Button';
+
+export const load = () => import('./Chart');
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./Button', './Chart']);
+        expect(relativePathsOf(code.replaceAll(';', ''))).toEqual(['./Button', './Chart']);
+      });
+
+      it('reads dynamic imports on later lines of the same ESM block', () => {
+        const code = `export const loaders = {
+  chart: () => import('./Chart'),
+  table: () =>
+    import('./Table'),
+};
+
+# Charts
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart', './Table']);
+      });
+
+      it('ends the ESM block at a blank line', () => {
+        const code = `export const load = () => import('./Chart')
+
+Then call import('./Table') from your own code.
+`;
+        expect(relativePathsOf(code)).toEqual(['./Chart']);
+      });
+
+      it('ignores import() in prose, even at the start of a line', () => {
+        const code = `Load it with import('./Chart') when it's needed.
+
+import('./Table') at the start of a line is text too: ESM needs a space after the keyword.
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('ignores import() in a code fence', () => {
+        const code = `\`\`\`js
+export const load = () => import('./Chart');
+\`\`\`
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('ignores import() written inside a string in an ESM block', () => {
+        const code = `export const note = "Call import('./Chart') later";
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+
+      it('does not read dynamic imports in JSX expressions', () => {
+        // MDX evaluates \`{…}\` expressions as the page renders; like remark-mdx,
+        // only ESM blocks count as the document's module code.
+        const code = `<ChartProvider load={() => import('./Chart')}>
+  {import('./Table')}
+</ChartProvider>
+`;
+        expect(relativePathsOf(code)).toEqual([]);
+      });
+    });
   });
 });
 
