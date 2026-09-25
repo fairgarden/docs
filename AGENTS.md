@@ -142,10 +142,6 @@ Nesting the markdown exposes a few pipeline limits:
 - A `types.ts` outside an indexed docs section must pass `{ excludeFromIndex: true }`, or the
   types loader creates a parent index page (`docs/app/page.mdx` shadowed the landing route).
   It must also import the component by relative path; the loader resolves `@/` as a package.
-- In fenced code, a trailing `// @highlight` on the **last** line drops that line, and
-  `createDemo(import.meta.url, X, {` followed by emphasis comments disables them for the
-  block. Wrap the statement in `@highlight-start` / `@highlight-end`, or put each argument
-  on its own line.
 - The landing demos use their own `createDemo` (`docs/app/(shared)/demos/createDemo.ts`) with
   `fallbackUsesExtraFiles`, so the page backs its claim that every file of a demo is in the
   initial HTML as plain text. A `ContentLoading` must take `extraSource` from
