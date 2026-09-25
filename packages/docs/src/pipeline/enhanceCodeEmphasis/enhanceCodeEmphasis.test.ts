@@ -119,7 +119,7 @@ const e = 5; // @highlight`,
         </span><span class="frame" data-lined=""><span class="line" data-ln="2"><span class="pl-k">const</span> <span class="pl-c1">b</span> <span class="pl-k fgd-pu">=</span> <span class="pl-c1 fgd-num">2</span>;</span>
         </span><span class="frame" data-lined="" data-frame-type="highlighted-unfocused"><span class="line" data-ln="3"><span class="pl-k">const</span> <span class="pl-c1">c</span> <span class="pl-k fgd-pu">=</span> <span class="pl-c1 fgd-num">3</span>;</span>
         </span><span class="frame" data-lined=""><span class="line" data-ln="4"><span class="pl-k">const</span> <span class="pl-c1">d</span> <span class="pl-k fgd-pu">=</span> <span class="pl-c1 fgd-num">4</span>;</span>
-        </span>"
+        </span><span class="frame" data-lined="" data-frame-type="highlighted-unfocused"><span class="line" data-ln="5"><span class="pl-k">const</span> <span class="pl-c1">e</span> <span class="pl-k fgd-pu">=</span> <span class="pl-c1 fgd-num">5</span>;</span></span>"
       `,
       );
     });
@@ -488,7 +488,7 @@ const e = 5; // @highlight`,
       );
 
       expect(result).toMatchInlineSnapshot(
-        `"<span class="frame" data-lined="" data-frame-type="focus"><span class="line" data-ln="1">&#x3C;<span class="pl-c1 fgd-jsx">Input</span> <mark class="pl-e fgd-ak">value</mark><span class="pl-k fgd-pu fgd-ae">=</span><span class="pl-pse">{</span><span class="pl-smi fgd-jv">a</span><span class="pl-pse">}</span> /> &#x3C;<span class="pl-c1 fgd-jsx">Input</span> <mark class="pl-e fgd-ak">value</mark><span class="pl-k fgd-pu fgd-ae">=</span><span class="pl-pse">{</span><span class="pl-smi fgd-jv">b</span><span class="pl-pse">}</span> /> <span class="pl-c">// @highlight-text "<mark>value</mark>"</span></span></span>"`,
+        `"<span class="frame" data-lined="" data-frame-type="focus"><span class="line" data-ln="1">&#x3C;<span class="pl-c1 fgd-jsx">Input</span> <mark class="pl-e fgd-ak">value</mark><span class="pl-k fgd-pu fgd-ae">=</span><span class="pl-pse">{</span><span class="pl-smi fgd-jv">a</span><span class="pl-pse">}</span> /> &#x3C;<span class="pl-c1 fgd-jsx">Input</span> <mark class="pl-e fgd-ak">value</mark><span class="pl-k fgd-pu fgd-ae">=</span><span class="pl-pse">{</span><span class="pl-smi fgd-jv">b</span><span class="pl-pse">}</span> /></span></span>"`,
       );
     });
 
@@ -530,7 +530,8 @@ const e = 5; // @highlight`,
         createEnhanceCodeEmphasis({ strictHighlightText: true }),
       );
 
-      expect(result).toContain('<mark>');
+      // The element itself becomes the mark, keeping its classes.
+      expect(result).toContain('<mark class="pl-e fgd-ak">value</mark>');
       expect(result).not.toContain('data-hl-part');
     });
 
@@ -623,7 +624,7 @@ const another = 99; // @highlight`,
         <span class="line" data-ln="4">  <span class="pl-k">const</span> <span class="pl-c1">y</span> <span class="pl-k fgd-pu">=</span> <span class="pl-c1 fgd-num">2</span>;</span>
         </span><span class="frame" data-lined=""><span class="line" data-ln="5">  <span class="pl-k">return</span> <span class="pl-smi">x</span> <span class="pl-k fgd-pu">+</span> <span class="pl-smi">y</span>;</span>
         <span class="line" data-ln="6">}</span>
-        </span>"
+        </span><span class="frame" data-lined="" data-frame-type="highlighted-unfocused"><span class="line" data-ln="7"><span class="pl-k">const</span> <span class="pl-c1">another</span> <span class="pl-k fgd-pu">=</span> <span class="pl-c1 fgd-num">99</span>;</span></span>"
       `);
     });
 
