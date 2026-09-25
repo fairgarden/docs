@@ -487,13 +487,11 @@ export function useCode<T extends {} = {}>(
   const renderedVariantKey =
     variantSelection.committedVariantKey || variantSelection.selectedVariantKey;
 
-  // Per-file DEFLATE dictionaries for the rendered variant. The highlighter's
-  // `fallbacks` belong to its own active variant, but the variant is selected
-  // here, and variants often share file names — so read the rendered variant's
-  // entry, or a same-named file would decode with another variant's dictionary.
-  const fallbacks = context?.variantFallbacks
-    ? context.variantFallbacks[renderedVariantKey]
-    : context?.fallbacks;
+  // Per-file DEFLATE dictionaries for the rendered variant. The variant is
+  // selected here rather than by the highlighter, and variants often share file
+  // names — so read the rendered variant's entry, or a same-named file would
+  // decode with another variant's dictionary.
+  const fallbacks = context?.variantFallbacks?.[renderedVariantKey];
 
   // Sub-hook: Transform Management
   const transformManagement = useTransformManagement({

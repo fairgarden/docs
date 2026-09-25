@@ -51,9 +51,9 @@ export function collectVariantFiles(
   // `fallbacks` (hoisted from a `ContentLoading` component) and the variant's
   // own per-file `fallback` fields (kept on `Code` when not stripped — e.g. the
   // standalone `useCode`/`useDemo` path with no `CodeHighlighter` context, so
-  // `context?.fallbacks` is undefined). Without this merge, copy-as-markdown
-  // throws on a `hastCompressed` source whose dictionary lives on the
-  // `VariantCode`. The variant copy wins so the full text — the dictionary
+  // `context?.variantFallbacks` is undefined). Without this merge,
+  // copy-as-markdown throws on a `hastCompressed` source whose dictionary lives
+  // on the `VariantCode`. The variant copy wins so the full text — the dictionary
   // `hastCompressed` needs — is used when a `fallbackCollapsed` block hoisted
   // only the visible window.
   const resolvedFallbacks: Fallbacks = { ...fallbacks };

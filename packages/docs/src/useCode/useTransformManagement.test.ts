@@ -203,6 +203,50 @@ describe('useTransformManagement', () => {
     // `getAvailableTransforms`, so we don't assert call counts here.)
   });
 
+  it('should use context availableTransforms while its selection matches the selected variant', async () => {
+    const context = {
+      availableTransforms: ['CustomTransform'],
+      selection: { variant: 'Default' },
+    };
+    (getAvailableTransforms as any).mockReturnValue([]);
+    (createTransformedFiles as any).mockReturnValue({ transformed: true });
+
+    const { result } = renderHook(() =>
+      useTransformManagement({
+        context,
+        effectiveCode: mockEffectiveCode,
+        selectedVariantKey: 'Default',
+        selectedVariant: mockSelectedVariant,
+      }),
+    );
+
+    expect(result.current.availableTransforms).toEqual(['CustomTransform']);
+  });
+
+  it('should compute availableTransforms for the selected variant when the context lists them for another variant', async () => {
+    // The highlighter lists transforms for its own selected variant, while
+    // `useCode` selects variants on its own, so the two can disagree.
+    const context = {
+      availableTransforms: ['CustomTransform'],
+      selection: { variant: 'Default' },
+    };
+    vi.clearAllMocks();
+    (getAvailableTransforms as any).mockReturnValue([]);
+    (createTransformedFiles as any).mockReturnValue({ transformed: true });
+
+    const { result } = renderHook(() =>
+      useTransformManagement({
+        context,
+        effectiveCode: mockEffectiveCode,
+        selectedVariantKey: 'Alternative',
+        selectedVariant: mockSelectedVariant,
+      }),
+    );
+
+    expect(result.current.availableTransforms).toEqual([]);
+    expect(getAvailableTransforms).toHaveBeenCalledWith(mockEffectiveCode, 'Alternative');
+  });
+
   describe('localStorage persistence', () => {
     it('should load transform from localStorage when no initialTransform provided', async () => {
       // Mock localStorage

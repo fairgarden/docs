@@ -24,17 +24,19 @@ export function useCopier(contents: (() => string | undefined) | string, opts?: 
 
       try {
         const content = typeof contents === 'function' ? contents() : contents;
+        // Nothing to copy: leave the clipboard untouched and report no copy, so
+        // `recentlySuccessful` only ever means that something was written.
         if (content) {
           await copyToClipboard(content);
+
+          setRecentlySuccessful(true);
+          onCopied?.();
+
+          copyTimeoutRef.current = setTimeout(() => {
+            clearTimeout(copyTimeoutRef.current);
+            setRecentlySuccessful(false);
+          }, timeout);
         }
-
-        setRecentlySuccessful(true);
-        onCopied?.();
-
-        copyTimeoutRef.current = setTimeout(() => {
-          clearTimeout(copyTimeoutRef.current);
-          setRecentlySuccessful(false);
-        }, timeout);
       } catch (error) {
         onError?.(error);
       }

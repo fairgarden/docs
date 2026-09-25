@@ -21,9 +21,7 @@ import type { ContentProps, HastRoot, Transforms } from '../CodeHighlighter/type
 import { CodeHighlighterContext } from '../CodeHighlighter/CodeHighlighterContext';
 import type { CodeHighlighterContextType } from '../CodeHighlighter/CodeHighlighterContext';
 import { CodeControllerContext } from '../CodeControllerContext/CodeControllerContext';
-import { compressHast } from '../pipeline/hastUtils/hastCompression';
-import { fallbackToText } from '../CodeHighlighter/fallbackFormat';
-import type { FallbackNode } from '../CodeHighlighter/fallbackFormat';
+import { createCompressedFile } from '../pipeline/hastUtils/hastCompression.testUtils';
 import { preloadTransformEngine } from './transformEngineCache';
 
 describe('useCode integration tests', () => {
@@ -1343,26 +1341,8 @@ describe('useCode integration tests', () => {
   });
 
   describe('compressed sources across variants', () => {
-    // Each file is compressed with its own `fallback` text as the dictionary,
-    // so it decodes only with that same text.
-    function compressedFile(text: string) {
-      const root = {
-        type: 'root',
-        children: [
-          {
-            type: 'element',
-            tagName: 'span',
-            properties: {},
-            children: [{ type: 'text', value: text }],
-          },
-        ],
-      };
-      const fallback: FallbackNode[] = [text];
-      return {
-        source: { hastCompressed: compressHast(JSON.stringify(root), fallbackToText(fallback)) },
-        fallback,
-      };
-    }
+    // Each file is compressed with its own `fallback` text as the dictionary
+    // (`createCompressedFile`), so it decodes only with that same text.
 
     function toJs(text: string): Transforms {
       return {
@@ -1380,8 +1360,8 @@ describe('useCode integration tests', () => {
 
     it('keeps the selected transform when switching to a variant whose file shares a name', async () => {
       await preloadTransformEngine();
-      const first = compressedFile('const first: number = 1;');
-      const second = compressedFile('const second: number = 2;');
+      const first = createCompressedFile('const first: number = 1;');
+      const second = createCompressedFile('const second: number = 2;');
 
       // A `ContentLoading` hoists each variant's dictionaries off `Code`, and the
       // highlighter hands them back per variant alongside its own variant's map.
@@ -1400,7 +1380,6 @@ describe('useCode integration tests', () => {
             transforms: toJs('const second = 2;'),
           },
         },
-        fallbacks: { 'Button.tsx': first.fallback },
         variantFallbacks: {
           First: { 'Button.tsx': first.fallback },
           Second: { 'Button.tsx': second.fallback },
@@ -1454,6 +1433,77 @@ describe('useCode integration tests', () => {
     });
   });
 
+  describe('compressed files with a transform', () => {
+    it('renders every file of a transformed variant, including a compressed file the transform leaves untouched', async () => {
+      await preloadTransformEngine();
+      // Each file is compressed with its own `fallback` text as the dictionary.
+      // Only the main file declares the `js` transform, so `styles.css` passes
+      // through as its original compressed payload. The block mounts with the
+      // transform already selected (e.g. a stored preference), so no file has
+      // been rendered untransformed first.
+      const button = createCompressedFile('const button: number = 1;');
+      const styles = createCompressedFile('.button { color: red; }');
+      const contentProps: ContentProps<{}> = {
+        code: {
+          Default: {
+            fileName: 'Button.tsx',
+            ...button,
+            totalLines: 1,
+            transforms: {
+              js: {
+                delta: {
+                  children: {
+                    _t: 'a',
+                    0: { children: { _t: 'a', 0: { value: ['const button = 1;'] } } },
+                  },
+                },
+                fileName: 'Button.jsx',
+              },
+            },
+            extraFiles: { 'styles.css': { ...styles, totalLines: 1 } },
+          },
+        },
+      };
+      // `<Pre>` observes frame visibility, which jsdom doesn't implement.
+      const { IntersectionObserver: originalIntersectionObserver } = globalThis;
+      globalThis.IntersectionObserver = class {
+        observe() {}
+
+        unobserve() {}
+
+        disconnect() {}
+      } as unknown as typeof IntersectionObserver;
+
+      try {
+        let code: UseCodeResult | undefined;
+        function Viewer() {
+          code = useCode(contentProps, { initialTransform: 'js' });
+          return React.createElement(
+            'div',
+            null,
+            code.files.map((file) =>
+              React.createElement(
+                'div',
+                { key: file.name, 'data-testid': file.name },
+                file.component,
+              ),
+            ),
+          );
+        }
+        const { getByTestId } = render(React.createElement(Viewer));
+
+        await waitFor(() => {
+          expect(code!.files.map((file) => file.name)).toEqual(['Button.jsx', 'styles.css']);
+        });
+        expect(code!.selectedTransform).toBe('js');
+        expect(getByTestId('Button.jsx').textContent).toBe('const button = 1;');
+        expect(getByTestId('styles.css').textContent).toBe('.button { color: red; }');
+      } finally {
+        globalThis.IntersectionObserver = originalIntersectionObserver;
+      }
+    });
+  });
+
   describe('copy feedback', () => {
     it('reports a recent copy of the file and of the Markdown separately', async () => {
       const writes: string[] = [];
@@ -1497,6 +1547,40 @@ describe('useCode integration tests', () => {
         expect(result.current.copyRecentlySuccessful).toBe(false);
       } finally {
         vi.useRealTimers();
+        delete (window.navigator as { clipboard?: Clipboard }).clipboard;
+      }
+    });
+
+    it('does not report a Markdown copy when the variant has no file name to copy', async () => {
+      const writes: string[] = [];
+      Object.defineProperty(window.navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            writes.push(text);
+          },
+        },
+      });
+      try {
+        const contentProps: ContentProps<{}> = {
+          name: 'Button',
+          code: { Default: { source: 'const button = 1;' } },
+        };
+        const { result } = renderHook(() => useCode(contentProps));
+
+        await act(async () => {
+          await result.current.copyMarkdown({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toEqual([]);
+        expect(result.current.copyMarkdownRecentlySuccessful).toBe(false);
+
+        // The file itself still copies.
+        await act(async () => {
+          await result.current.copy({} as React.MouseEvent<Element>);
+        });
+        expect(writes).toEqual(['const button = 1;']);
+        expect(result.current.copyRecentlySuccessful).toBe(true);
+      } finally {
         delete (window.navigator as { clipboard?: Clipboard }).clipboard;
       }
     });

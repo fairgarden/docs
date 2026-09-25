@@ -34,8 +34,7 @@ import { parseControlledCode } from './parseControlledCode';
 import { createParseSource } from '../pipeline/parseSource';
 import { preloadSourceEditingEngine } from '../useCode/useSourceEditing';
 import { preloadTransformEngine } from '../useCode/transformEngineCache';
-import { compressHast } from '../pipeline/hastUtils/hastCompression';
-import { fallbackToText } from './fallbackFormat';
+import { createCompressedFile } from '../pipeline/hastUtils/hastCompression.testUtils';
 import type { Code, ContentProps, ControlledCode, HastRoot, ParseSource } from './types';
 
 let parseSource: ParseSource;
@@ -259,21 +258,55 @@ describe('CodeHighlighter rendering', () => {
     await waitFor(() => expect(screen.getByTestId('file').textContent).toBe('app.js'));
   });
 
+  it('offers only the transforms the selected variant declares', async () => {
+    // Only the first variant declares a `js` transform, so the toggle must go
+    // away when the user switches to the second one.
+    window.localStorage.clear();
+    const code = {
+      Typed: {
+        fileName: 'Button.tsx',
+        source: highlighted('const button: number = 1;'),
+        transforms: { js: { fileName: 'Button.jsx', hasDelta: true } },
+      },
+      Plain: { fileName: 'Button.js', source: highlighted('const button = 1;') },
+    } as unknown as Code;
+
+    render(
+      <CodeHighlighterClient variants={['Typed', 'Plain']} precompute={code} url="file:///Button">
+        <Demo />
+      </CodeHighlighterClient>,
+    );
+
+    expect(screen.getByTestId('transform:js')).toBeTruthy();
+
+    act(() => {
+      screen.getByTestId('variant:Plain').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const button = 1;'),
+    );
+    expect(screen.queryByTestId('transform:js')).toBeNull();
+
+    act(() => {
+      screen.getByTestId('variant:Typed').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const button: number = 1;'),
+    );
+    expect(screen.getByTestId('transform:js')).toBeTruthy();
+  });
+
   it('keeps a transform applied when the user switches to a variant whose file has the same name', async () => {
     // Production payloads compress each file with its own `fallback` text as the
     // DEFLATE dictionary. Both variants name their file `app.ts`, so the second
     // must decode with ITS dictionary, not the first variant's same-named one.
+    // Start from no stored transform preference so the toggle is exercised.
+    window.localStorage.clear();
     await preloadTransformEngine();
-    const compressed = (text: string) => {
-      const fallback = [text];
-      return {
-        source: {
-          hastCompressed: compressHast(JSON.stringify(highlighted(text)), fallbackToText(fallback)),
-        },
-        fallback,
-        totalLines: 1,
-      };
-    };
+    const compressed = (text: string) => ({
+      ...createCompressedFile(text, highlighted(text)),
+      totalLines: 1,
+    });
     const toJs = (text: string) => ({
       js: {
         fileName: 'app.js',
@@ -304,6 +337,7 @@ describe('CodeHighlighter rendering', () => {
       </CodeHighlighterClient>,
     );
 
+    expect(screen.getByTestId('transform').textContent).toBe('none');
     act(() => {
       screen.getByTestId('transform:js').click();
     });

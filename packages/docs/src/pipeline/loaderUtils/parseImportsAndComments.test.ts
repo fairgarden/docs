@@ -418,10 +418,10 @@ export function Counter() {
         const { relative, externals } = parseImportsAndComments(code, '/src/Counter.tsx');
         return {
           relative: Object.fromEntries(
-            Object.entries(relative).map(([key, { names: n }]) => [key, n]),
+            Object.entries(relative).map(([key, { names: importNames }]) => [key, importNames]),
           ),
           externals: Object.fromEntries(
-            Object.entries(externals).map(([key, { names: n }]) => [key, n]),
+            Object.entries(externals).map(([key, { names: importNames }]) => [key, importNames]),
           ),
         };
       };
@@ -452,19 +452,6 @@ import { Chart } from './Chart'
 
       expect(Object.keys(result.relative)).toEqual(['./data.json', './Chart']);
       expect(result.relative['./Chart'].names).toEqual([{ name: 'Chart', type: 'named' }]);
-    });
-
-    it('leaves a statement unchanged when a block comment comes before its semicolon', () => {
-      const code = `import { Button } from './Button' /* the trigger */;
-import { Dialog } from './Dialog';
-`;
-      const result = parseImportsAndComments(code, '/src/Demo.tsx', {
-        removeCommentsWithPrefix: ['the trigger'],
-      });
-
-      expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog']);
-      // The comment sits inside the semicolon-terminated statement, so it stays.
-      expect(result.code).toBeUndefined();
     });
   });
 
@@ -1089,6 +1076,58 @@ export default function CheckboxBasic() {
           },
         },
       });
+    });
+
+    it('reads the imports after a comment with an apostrophe inside import braces', () => {
+      const code = `import {
+  Button, // don't wrap
+  Checkbox,
+} from './Button';
+import { Dialog } from './Dialog';
+`;
+      const result = parseImportsAndComments(code, '/src/demo.ts');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog']);
+      expect(result.relative['./Button'].names).toEqual([
+        { name: 'Button', type: 'named' },
+        { name: 'Checkbox', type: 'named' },
+      ]);
+    });
+
+    it('does not read import.meta as an import', () => {
+      const code = `import { createDemo } from './createDemo';
+import { Button } from './Button';
+
+export const DemoButton = createDemo(import.meta.url, Button, {
+  description: "Reads rows from './rows.json'", // @highlight
+});
+`;
+      const result = parseImportsAndComments(code, '/src/index.ts', {
+        removeCommentsWithPrefix: ['@highlight'],
+      });
+
+      expect(Object.keys(result.relative)).toEqual(['./createDemo', './Button']);
+      expect(result.comments).toEqual({ 5: ['@highlight'] });
+    });
+
+    it('reads an import after a string with an escaped quote', () => {
+      const code = `const label = 'it\\'s';
+import { Button } from './Button';
+`;
+      const result = parseImportsAndComments(code, '/src/demo.ts');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
+    });
+
+    it('reads an MDX import after inline code that ends in a backslash', () => {
+      // Markdown code spans have no escapes, so the backslash doesn't escape the backtick.
+      const code = `Type \`\\\` to escape a character.
+
+import { Button } from './Button';
+`;
+      const result = parseImportsAndComments(code, '/src/demo.mdx');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
     });
   });
 
@@ -2490,6 +2529,24 @@ export default function CheckboxBasic() {
         },
       });
     });
+
+    it('ignores the word import in prose, so code blocks after it stay code blocks', () => {
+      const code = `import { Button } from './Button';
+
+Each import's \`url\` is resolved. Then import 'setup' before anything else.
+
+\`\`\`ts
+import { Checkbox } from './Checkbox';
+import styles from './styles.module.css';
+\`\`\`
+
+Pass the 'flat' mode.
+`;
+      const result = parseImportsAndComments(code, '/src/demo.mdx');
+
+      expect(Object.keys(result.relative)).toEqual(['./Button']);
+      expect(result.externals).toEqual({});
+    });
   });
 });
 
@@ -2796,6 +2853,110 @@ import { Button } from '@scope/design';`;
         positions: [{ start: 81, end: 96 }],
       },
     });
+  });
+
+  it('keeps a line that has a stripped block comment followed by a stripped line comment', () => {
+    const code = `import { Button } from './Button' /* @highlight */ // eslint-disable-line
+import { Checkbox } from './Checkbox'
+const count = 1; /* @highlight */ // eslint-disable-line
+const total = 2;
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight', 'eslint-disable'],
+      notableCommentsPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`import { Button } from './Button'
+import { Checkbox } from './Checkbox'
+const count = 1;
+const total = 2;
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'], 3: ['@highlight'] });
+    // Import positions point into the stripped code.
+    const checkboxStart = result.code!.indexOf("'./Checkbox'");
+    expect(result.relative['./Checkbox'].positions).toEqual([
+      { start: checkboxStart, end: checkboxStart + "'./Checkbox'".length },
+    ]);
+  });
+
+  it('keeps the last line when it ends in a comment and the file has no trailing newline', () => {
+    const stripped = parseImportsAndComments(
+      `import * as React from 'react'
+import { Button } from './Button' // @highlight`,
+      '/src/test.tsx',
+      { removeCommentsWithPrefix: ['@highlight'] },
+    );
+    const kept = parseImportsAndComments(
+      `const count = 1; // @highlight
+const total = 2; // the sum`,
+      '/src/test.tsx',
+      { removeCommentsWithPrefix: ['@highlight'] },
+    );
+
+    expect(stripped.code).toBe(`import * as React from 'react'
+import { Button } from './Button'`);
+    expect(stripped.comments).toEqual({ 2: ['@highlight'] });
+    expect(kept.code).toBe(`const count = 1;
+const total = 2; // the sum`);
+  });
+
+  it('strips a comment written directly after the module path', () => {
+    const code = `import { Button } from './Button'// @highlight
+const count = 1
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`import { Button } from './Button'
+const count = 1
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'] });
+  });
+
+  it('strips a matching block comment between the module path and the semicolon', () => {
+    const code = `import { Button } from './Button' /* @highlight */;
+import { Dialog } from './Dialog';
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`import { Button } from './Button';
+import { Dialog } from './Dialog';
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'] });
+    expect(Object.keys(result.relative)).toEqual(['./Button', './Dialog']);
+  });
+
+  it('keeps CRLF line endings on lines whose trailing comment is stripped', () => {
+    const code = `import { Button } from './Button' // @highlight\r\nconst count = 1; // @highlight\r\nconst total = 2;\r\n`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(
+      `import { Button } from './Button'\r\nconst count = 1;\r\nconst total = 2;\r\n`,
+    );
+  });
+
+  it('strips a comment that follows a string with an escaped quote', () => {
+    const code = `const label = 'it\\'s'; // @highlight
+const count = 1; // @highlight
+`;
+
+    const result = parseImportsAndComments(code, '/src/test.tsx', {
+      removeCommentsWithPrefix: ['@highlight'],
+    });
+
+    expect(result.code).toBe(`const label = 'it\\'s';
+const count = 1;
+`);
+    expect(result.comments).toEqual({ 1: ['@highlight'], 2: ['@highlight'] });
   });
 });
 
@@ -3585,6 +3746,56 @@ describe('Export-from statement parsing', () => {
     expect(result).toEqual({
       relative: {},
       externals: {},
+    });
+  });
+
+  it('ignores a `from` in the body of an exported declaration', () => {
+    const withoutSemicolons = `import * as React from 'react'
+
+export function Button() {
+  // Adapted from "a design guide"
+  const label = 'from the theme'
+  return <p>Loaded from './data.json'</p>
+}
+
+export { Checkbox } from './Checkbox'
+`;
+    const withSemicolons = `import * as React from 'react';
+
+export function Button() {
+  // Adapted from "a design guide"
+  const label = 'from the theme';
+  return <p>Loaded from './data.json'</p>;
+}
+
+export { Checkbox } from './Checkbox';
+`;
+
+    for (const code of [withoutSemicolons, withSemicolons]) {
+      const result = parseImportsAndComments(code, '/src/Button.tsx');
+      expect(Object.keys(result.relative)).toEqual(['./Checkbox']);
+      expect(Object.keys(result.externals)).toEqual(['react']);
+    }
+  });
+
+  it('should parse namespace and type-only star re-exports', () => {
+    const code = `export * as Icons from './icons'
+export type * from './types'
+`;
+    const result = parseImportsAndComments(code, '/src/index.ts');
+
+    expect(result.relative).toEqual({
+      './icons': {
+        url: 'file:///src/icons',
+        names: [{ name: 'Icons', type: 'namespace' }],
+        positions: [{ start: 23, end: 32 }],
+      },
+      './types': {
+        url: 'file:///src/types',
+        names: [],
+        includeTypeDefs: true,
+        positions: [{ start: 52, end: 61 }],
+      },
     });
   });
 

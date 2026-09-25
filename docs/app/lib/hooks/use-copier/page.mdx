@@ -116,6 +116,7 @@ The hook manages internal state for copy feedback:
 - **On success**: State becomes `true` and starts timeout countdown
 - **After timeout**: State resets to `false`
 - **On error**: State remains `false` but error callback is fired
+- **On empty content**: Nothing is written and state remains `false`; neither `onCopied` nor `onError` is fired, but `onClick` still is
 
 ## Error Handling
 
@@ -123,9 +124,10 @@ Copy operations can fail for various reasons:
 
 - **Security restrictions**: Some browsers require user interaction
 - **Permission denied**: Clipboard access may be blocked
-- **Empty content**: No content to copy (function returns undefined)
 
 The hook provides the `onError` callback to handle these cases gracefully.
+
+Empty content (an empty string, or a function that returns `undefined`) is not an error: there is nothing to copy, so the clipboard is left untouched and `recentlySuccessful` stays `false`.
 
 ---
 

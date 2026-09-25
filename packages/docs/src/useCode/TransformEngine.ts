@@ -173,8 +173,7 @@ export function createTransformedFiles(
       selectedTransform,
       deps,
       selectedVariant.comments,
-      selectedVariant.fallback ??
-        (selectedVariant.fileName ? fallbacks?.[selectedVariant.fileName] : undefined),
+      selectedVariant.fallback ?? fallbacks?.[selectedVariant.fileName],
     );
 
     const fileName = selectedVariant.fileName;

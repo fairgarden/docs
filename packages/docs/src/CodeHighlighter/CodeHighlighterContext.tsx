@@ -31,18 +31,12 @@ export interface CodeHighlighterContextType {
   url?: string;
   deferHighlight?: boolean;
   /**
-  /**
-   * Compact fallback data for the active variant, keyed by fileName.
-   * Used by `Pre` to both render the fallback and derive text dictionaries
-   * for decompressing `hastCompressed` payloads.
-   */
-  fallbacks?: Fallbacks;
-  /**
-   * The same compact fallback data for every variant, keyed by variant and
-   * then fileName. A `hastCompressed` payload only decodes with its own file's
-   * dictionary, and variants often share file names, so a consumer that
-   * selects variants on its own (like `useCode`) reads the entry for the
-   * variant it renders rather than `fallbacks`.
+   * Compact fallback data for every variant, keyed by variant and then
+   * fileName. Used to render the fallback and as the text dictionary for
+   * decompressing a `hastCompressed` payload. That payload only decodes with
+   * its own file's dictionary, and variants often share file names, so a
+   * consumer that selects variants on its own (like `useCode`) reads the entry
+   * for the variant it renders.
    */
   variantFallbacks?: Record<string, Fallbacks>;
   /**

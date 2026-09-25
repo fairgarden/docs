@@ -177,16 +177,25 @@ export function useTransformManagement({
   selectedFileName,
   expanded,
 }: UseTransformManagementProps): UseTransformManagementResult {
-  // Transform state - get available transforms from context or from the effective code data
+  // Transform state - get available transforms from context or from the effective code data.
+  // The highlighter lists transforms for ITS selected variant, but `useCode`
+  // selects variants on its own, so the context list only applies while the two
+  // agree (a context without a `selection` is taken to agree).
+  const contextVariant = context?.selection?.variant;
   const availableTransforms = React.useMemo(() => {
-    // First try to get from context
-    if (context?.availableTransforms && context.availableTransforms.length > 0) {
+    const contextMatchesVariant =
+      contextVariant === undefined || contextVariant === selectedVariantKey;
+    if (
+      contextMatchesVariant &&
+      context?.availableTransforms &&
+      context.availableTransforms.length > 0
+    ) {
       return context.availableTransforms;
     }
 
     // Otherwise, get from the effective code data using the utility function
     return getAvailableTransforms(effectiveCode, selectedVariantKey);
-  }, [context?.availableTransforms, effectiveCode, selectedVariantKey]);
+  }, [context?.availableTransforms, contextVariant, effectiveCode, selectedVariantKey]);
 
   // Lazily-resolved transform engine (the `jsondiffpatch`-pulling applier).
   // Initialized synchronously from the module cache so a warmed block (a later
