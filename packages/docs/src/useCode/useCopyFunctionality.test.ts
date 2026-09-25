@@ -46,7 +46,7 @@ describe('collectVariantFiles', () => {
     };
 
     // The standalone `useCode`/`useDemo` path renders without a
-    // `CodeHighlighterClient`, so `context?.fallbacks` is undefined. The
+    // `CodeHighlighterClient`, so `context?.variantFallbacks` is undefined. The
     // render path still decodes via the variant's own `fallback`; copy must
     // too, instead of throwing on the dictionary-compressed payload.
     const files = collectVariantFiles(selectedVariant, undefined, undefined);

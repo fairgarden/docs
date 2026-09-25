@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getAvailableTransforms,
   getApplicableTransforms,
+  isPassThroughFile,
   shouldHighlightForRender,
   transformHasCollapsePlaceholder,
 } from './useCodeUtils';
@@ -141,6 +142,86 @@ describe('useCodeUtils', () => {
       };
 
       expect(getApplicableTransforms(effectiveCode, 'Default')).toEqual([]);
+    });
+  });
+
+  describe('isPassThroughFile', () => {
+    const buttonSource = { hastCompressed: 'button' };
+    const stylesSource = { hastCompressed: 'styles' };
+    const variant: VariantCode = {
+      fileName: 'Button.tsx',
+      source: buttonSource,
+      extraFiles: {
+        'styles.css': { source: stylesSource },
+        'utils.js': 'export const utils = 1;',
+      },
+    };
+
+    it('is true for a main file passed through as its original source', () => {
+      expect(
+        isPassThroughFile(variant, {
+          name: 'Button.tsx',
+          originalName: 'Button.tsx',
+          source: buttonSource,
+        }),
+      ).toBe(true);
+    });
+
+    it('is true for a renamed main file whose source was left untouched', () => {
+      expect(
+        isPassThroughFile(variant, {
+          name: 'Button.jsx',
+          originalName: 'Button.tsx',
+          source: buttonSource,
+        }),
+      ).toBe(true);
+    });
+
+    it('is false for a main file the transform rewrote', () => {
+      expect(
+        isPassThroughFile(variant, {
+          name: 'Button.jsx',
+          originalName: 'Button.tsx',
+          source: { type: 'root', children: [] },
+        }),
+      ).toBe(false);
+    });
+
+    it('is true for an extra file passed through as its original source', () => {
+      expect(
+        isPassThroughFile(variant, {
+          name: 'styles.css',
+          originalName: 'styles.css',
+          source: stylesSource,
+        }),
+      ).toBe(true);
+      expect(
+        isPassThroughFile(variant, {
+          name: 'utils.js',
+          originalName: 'utils.js',
+          source: 'export const utils = 1;',
+        }),
+      ).toBe(true);
+    });
+
+    it('is false for an extra file the transform rewrote', () => {
+      expect(
+        isPassThroughFile(variant, {
+          name: 'styles.css',
+          originalName: 'styles.css',
+          source: { hastCompressed: 'styles' },
+        }),
+      ).toBe(false);
+    });
+
+    it('is false for a file the variant does not have', () => {
+      expect(
+        isPassThroughFile(variant, {
+          name: 'Checkbox.tsx',
+          originalName: 'Checkbox.tsx',
+          source: buttonSource,
+        }),
+      ).toBe(false);
     });
   });
 

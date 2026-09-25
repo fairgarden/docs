@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Code, VariantCode } from '../../CodeHighlighter/types';
-import { getAvailableTransforms } from './getAvailableTransforms';
+import { getAvailableTransforms, hasAnyVariantTransforms } from './getAvailableTransforms';
 
 const createVariantCode = (overrides: Partial<VariantCode> = {}): VariantCode => ({
   fileName: 'test.js',
@@ -149,5 +149,38 @@ describe('getAvailableTransforms', () => {
     const transforms = getAvailableTransforms(parsedCode, 'Default');
 
     expect(transforms).toEqual(['js']);
+  });
+});
+
+describe('hasAnyVariantTransforms', () => {
+  it('is true when a variant other than the first has a transform', () => {
+    const code: Code = {
+      Plain: createVariantCode({ source: 'code' }),
+      Typed: createVariantCode({
+        fileName: 'test.ts',
+        source: 'code',
+        transforms: { js: { hasDelta: true, fileName: 'test.js' } },
+      }),
+    };
+
+    expect(hasAnyVariantTransforms(code)).toBe(true);
+  });
+
+  it('is false when no variant has a transform with a delta', () => {
+    const code: Code = {
+      Plain: createVariantCode({ source: 'code' }),
+      Renamed: createVariantCode({
+        fileName: 'test.ts',
+        source: 'code',
+        transforms: { js: { hasDelta: false, fileName: 'test.js' } },
+      }),
+      Loading: 'https://example.com/Loading.js',
+    };
+
+    expect(hasAnyVariantTransforms(code)).toBe(false);
+  });
+
+  it('is false without code', () => {
+    expect(hasAnyVariantTransforms(undefined)).toBe(false);
   });
 });

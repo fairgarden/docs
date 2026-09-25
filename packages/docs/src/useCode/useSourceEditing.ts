@@ -9,6 +9,7 @@ import type {
   Code,
   ControlledCode,
   ControlledVariantCode,
+  Fallbacks,
   VariantCode,
 } from '../CodeHighlighter/types';
 import type { CodeHighlighterContextType } from '../CodeHighlighter/CodeHighlighterContext';
@@ -59,6 +60,11 @@ interface UseSourceEditingProps {
   selectedVariantKey: string;
   effectiveCode: Code;
   selectedVariant: VariantCode | null;
+  /**
+   * Per-file DEFLATE dictionaries for `selectedVariant` (keyed by file name),
+   * used to decode its `hastCompressed` sources into editable text.
+   */
+  fallbacks?: Fallbacks;
   disabled?: boolean;
 }
 
@@ -87,6 +93,7 @@ export function useSourceEditing({
   selectedVariantKey,
   effectiveCode,
   selectedVariant,
+  fallbacks,
   disabled,
 }: UseSourceEditingProps): UseSourceEditingResult {
   const contextSetCode = context?.setCode;
@@ -137,7 +144,7 @@ export function useSourceEditing({
             : engine.toControlledCode(
                 effectiveCode,
                 selectedVariantKey,
-                context?.fallbacks,
+                fallbacks,
                 stringOrHastToString,
               );
 
@@ -282,7 +289,7 @@ export function useSourceEditing({
       effectiveCode,
       selectedVariant,
       context?.preParsedCache,
-      context?.fallbacks,
+      fallbacks,
       editingEngineLoader,
     ],
   );

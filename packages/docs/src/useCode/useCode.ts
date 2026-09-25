@@ -462,7 +462,9 @@ export function useCode<T extends {} = {}>(
   // `highlightAfter === 'init'` bypass that prevents a visible flash
   // of unhighlighted code on first-paint variant swaps.
   const shouldHighlight = shouldHighlightForRender({
-    deferHighlight: context?.deferHighlight,
+    // The render-side gate, not the swap commit gate: the code published while
+    // transform deltas are computed is already highlighted where it can be.
+    deferHighlight: context?.deferHighlightRender ?? context?.deferHighlight,
     highlightReady: context?.highlightReady,
     pendingBootstrap: variantSelection.pendingBootstrap,
     highlightAfter: context?.highlightAfter,
@@ -479,12 +481,19 @@ export function useCode<T extends {} = {}>(
   const renderedVariantKey =
     variantSelection.committedVariantKey || variantSelection.selectedVariantKey;
 
+  // Per-file DEFLATE dictionaries for the rendered variant. The variant is
+  // selected here rather than by the highlighter, and variants often share file
+  // names — so read the rendered variant's entry, or a same-named file would
+  // decode with another variant's dictionary.
+  const fallbacks = context?.variantFallbacks?.[renderedVariantKey];
+
   // Sub-hook: Transform Management
   const transformManagement = useTransformManagement({
     context,
     effectiveCode,
     selectedVariantKey: renderedVariantKey,
     selectedVariant: renderedVariant,
+    fallbacks,
     initialTransform,
     transformDelay,
     transformLayoutShift,
@@ -498,6 +507,7 @@ export function useCode<T extends {} = {}>(
     selectedVariantKey: renderedVariantKey,
     effectiveCode,
     selectedVariant: renderedVariant,
+    fallbacks,
     disabled,
   });
 
@@ -621,7 +631,7 @@ export function useCode<T extends {} = {}>(
     saveVariantToLocalStorage: variantSelection.saveVariantToLocalStorage,
     hashVariant: variantSelection.hashVariant,
     sourceEnhancers: mergedEnhancers,
-    fallbacks: context?.fallbacks,
+    fallbacks,
     expanded: uiState.expanded,
     collapseToEmpty,
     expand,
@@ -638,9 +648,9 @@ export function useCode<T extends {} = {}>(
     selectedFile: fileNavigation.selectedFile,
     selectedVariant: renderedVariant,
     transformedFiles: transformManagement.transformedFiles,
-    // Per-file dictionaries for the active variant (decodes `hastCompressed`
+    // Per-file dictionaries for the rendered variant (decodes `hastCompressed`
     // sources back to text); `selectedFileFallback` covers the single-file copy.
-    fallbacks: context?.fallbacks,
+    fallbacks,
     selectedFileFallback: fileNavigation.selectedFileFallback,
     title: userProps.name,
     copyOpts,

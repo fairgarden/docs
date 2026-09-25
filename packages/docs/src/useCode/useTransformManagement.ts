@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Code, VariantCode } from '../CodeHighlighter/types';
+import type { Code, Fallbacks, VariantCode } from '../CodeHighlighter/types';
 // `decodeHastSource` and `frameFallbackFromSpans` are already part of the
 // always-loaded `useCode` shell (via `Pre`, `sourceLineCounts`,
 // `useFileNavigation`, `useSourceEnhancing`). Passing them into the lazy
@@ -64,6 +64,11 @@ interface UseTransformManagementProps {
   effectiveCode: Code;
   selectedVariantKey: string;
   selectedVariant: VariantCode | null;
+  /**
+   * Per-file DEFLATE dictionaries for `selectedVariant` (keyed by file name),
+   * used to decode its `hastCompressed` sources before applying a transform.
+   */
+  fallbacks?: Fallbacks;
   initialTransform?: string;
   /**
    * When set to a positive number, the *swap* of `transformedFiles` to the
@@ -165,22 +170,30 @@ export function useTransformManagement({
   effectiveCode,
   selectedVariantKey,
   selectedVariant,
+  fallbacks,
   initialTransform,
   transformDelay,
   transformLayoutShift,
   selectedFileName,
   expanded,
 }: UseTransformManagementProps): UseTransformManagementResult {
-  // Transform state - get available transforms from context or from the effective code data
+  // Transform state - get available transforms from context or from the effective code data.
+  // The highlighter lists transforms for the variant IT considers current, but
+  // `useCode` selects the rendered variant on its own, so the context list only
+  // applies when it was computed for this variant.
+  const contextListVariant = context?.availableTransformsVariant;
   const availableTransforms = React.useMemo(() => {
-    // First try to get from context
-    if (context?.availableTransforms && context.availableTransforms.length > 0) {
+    if (
+      contextListVariant === selectedVariantKey &&
+      context?.availableTransforms &&
+      context.availableTransforms.length > 0
+    ) {
       return context.availableTransforms;
     }
 
     // Otherwise, get from the effective code data using the utility function
     return getAvailableTransforms(effectiveCode, selectedVariantKey);
-  }, [context?.availableTransforms, effectiveCode, selectedVariantKey]);
+  }, [context?.availableTransforms, contextListVariant, effectiveCode, selectedVariantKey]);
 
   // Lazily-resolved transform engine (the `jsondiffpatch`-pulling applier).
   // Initialized synchronously from the module cache so a warmed block (a later
@@ -322,7 +335,18 @@ export function useTransformManagement({
   // `deferHighlight` flips false, the receiver flow opens its barrier
   // and the collapse animation plays once, against a fully-parsed
   // target tree.
-  const effectiveStoredValue = context?.deferHighlight ? null : storedValue;
+  //
+  // The gate is a one-way latch, like `useVariantSelection`'s
+  // `allowStoredBootstrap`: it only holds the value until the highlighter
+  // first settles. A later deferral (the deltas window of a re-parse) must
+  // not mask the transform already applied, or the block would swap back to
+  // the untransformed code once it ends; `awaitHighlight` below already holds
+  // any swap until the pending work lands.
+  const [highlightSettled, setHighlightSettled] = React.useState(!context?.deferHighlight);
+  if (!highlightSettled && !context?.deferHighlight) {
+    setHighlightSettled(true);
+  }
+  const effectiveStoredValue = context?.deferHighlight && !highlightSettled ? null : storedValue;
 
   // Resolved view of the raw preference. This is the value
   // `useCoordinated` sees as its "external source of truth"; when it
@@ -386,7 +410,7 @@ export function useTransformManagement({
     transformLayoutShift,
     selectedFileName,
     expanded,
-    fallbacks: context?.fallbacks,
+    fallbacks,
   });
   // eslint-disable-next-line react-hooks/refs
   layoutShiftPropsRef.current = {
@@ -394,7 +418,7 @@ export function useTransformManagement({
     transformLayoutShift,
     selectedFileName,
     expanded,
-    fallbacks: context?.fallbacks,
+    fallbacks,
   };
 
   // Plumb classifier props through `transformHasCollapsePlaceholder`
@@ -694,9 +718,9 @@ export function useTransformManagement({
       selectedVariant,
       delayedAppliedTransform,
       transformRuntimeDeps,
-      context?.fallbacks,
+      fallbacks,
     );
-  }, [precomputed, selectedVariant, delayedAppliedTransform, context?.fallbacks, transformEngine]);
+  }, [precomputed, selectedVariant, delayedAppliedTransform, fallbacks, transformEngine]);
 
   const result = {
     availableTransforms,

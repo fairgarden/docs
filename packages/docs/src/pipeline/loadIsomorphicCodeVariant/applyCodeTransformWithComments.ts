@@ -199,6 +199,65 @@ function regenerateMissingFrameFallbacksInPlace(
 }
 
 /**
+ * Whether `delta` is a line-array delta, as `transformSource` computes from the
+ * source's lines, rather than a node-based delta for a HAST root (an object).
+ */
+function isLineDelta(delta: object): boolean {
+  // jsondiffpatch marks an array delta with `_t: 'a'`.
+  const arrayMarker = '_t';
+  return (delta as Record<string, unknown>)[arrayMarker] === 'a';
+}
+
+/**
+ * The text of a HAST tree, as its text nodes hold it.
+ */
+function hastText(node: Nodes): string {
+  if (node.type === 'text') {
+    return node.value;
+  }
+  return 'children' in node ? node.children.map(hastText).join('') : '';
+}
+
+/**
+ * Applies a transform's line-array delta to `sourceText`, returning the
+ * transformed text and `comments` shifted onto it.
+ */
+function applyLineDelta(
+  sourceText: string,
+  transform: Transforms[string],
+  transformKey: string,
+  comments: SourceComments | undefined,
+): { source: string; comments?: SourceComments } {
+  const sourceLines = sourceText.split('\n');
+  const patched = patch(sourceLines, transform.delta!);
+
+  if (!Array.isArray(patched)) {
+    throw new Error(`Patch for transform "${transformKey}" did not return an array`);
+  }
+
+  // String transforms only wipe lines (never insert/reorder), so the
+  // 1-indexed mapping is identity for surviving non-empty lines and
+  // dropped for wiped ones. Build the map by walking both arrays.
+  // If the transformer supplied an explicit `comments` map for this
+  // entry, use it verbatim instead of auto-shifting.
+  let remappedComments: SourceComments | undefined;
+  if (transform.comments) {
+    remappedComments = transform.comments;
+  } else if (comments) {
+    const lineMap = new Map<number, number>();
+    const limit = Math.min(sourceLines.length, patched.length);
+    for (let i = 0; i < limit; i += 1) {
+      if (patched[i] !== '' || sourceLines[i] === '') {
+        lineMap.set(i + 1, i + 1);
+      }
+    }
+    remappedComments = remapComments(comments, lineMap);
+  }
+
+  return { source: patched.join('\n'), comments: remappedComments };
+}
+
+/**
  * Applies a specific transform to a variant source and returns the transformed source
  * along with a remapped copy of the supplied `comments` map (when any) shifted to
  * line up with the renumbered `dataLn` values in the transformed tree.
@@ -254,33 +313,7 @@ export function applyCodeTransformWithComments(
       return { source, comments: transform.comments ?? comments };
     }
     // For string sources, deltas are typically line-array based (from transformSource)
-    const sourceLines = source.split('\n');
-    const patched = patch(sourceLines, transform.delta);
-
-    if (!Array.isArray(patched)) {
-      throw new Error(`Patch for transform "${transformKey}" did not return an array`);
-    }
-
-    // String transforms only wipe lines (never insert/reorder), so the
-    // 1-indexed mapping is identity for surviving non-empty lines and
-    // dropped for wiped ones. Build the map by walking both arrays.
-    // If the transformer supplied an explicit `comments` map for this
-    // entry, use it verbatim instead of auto-shifting.
-    let remappedComments: SourceComments | undefined;
-    if (transform.comments) {
-      remappedComments = transform.comments;
-    } else if (comments) {
-      const lineMap = new Map<number, number>();
-      const limit = Math.min(sourceLines.length, patched.length);
-      for (let i = 0; i < limit; i += 1) {
-        if (patched[i] !== '' || sourceLines[i] === '') {
-          lineMap.set(i + 1, i + 1);
-        }
-      }
-      remappedComments = remapComments(comments, lineMap);
-    }
-
-    return { source: patched.join('\n'), comments: remappedComments };
+    return applyLineDelta(source, transform, transformKey, comments);
   }
 
   // For Hast node sources, deltas are typically node-based (from diffHast).
@@ -310,6 +343,14 @@ export function applyCodeTransformWithComments(
   // be a manifest with no `delta` field — fall back to the embedded copy.
   const embeddedTransforms = sourceRoot.data?.transforms;
   const delta = transform.delta ?? embeddedTransforms?.[transformKey]?.delta;
+
+  // A line-array delta (from `transformSource`) whose node-based counterpart
+  // hasn't been computed yet (the highlighted source was just parsed, and
+  // `computeHastDeltas` is still running) applies to the source's text, giving
+  // the transformed code as plain text until the highlighted delta lands.
+  if (transform.delta && isLineDelta(transform.delta)) {
+    return applyLineDelta(hastText(sourceRoot), transform, transformKey, comments);
+  }
 
   if (!delta) {
     // Rename-only transform (manifest entry with `hasDelta: false`): no

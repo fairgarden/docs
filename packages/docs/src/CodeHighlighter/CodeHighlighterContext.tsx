@@ -27,16 +27,44 @@ export interface CodeHighlighterContextType {
    * `useDemo().error`.
    */
   errors?: Record<string, string | null>;
+  /**
+   * Transforms with a real delta for the variant named by
+   * `availableTransformsVariant`, i.e. the variant the highlighter considers
+   * current. Empty when a `CodeControllerContext` owns the code.
+   */
   availableTransforms?: string[];
+  /**
+   * The variant `availableTransforms` was computed for. That is not always
+   * `selection.variant` (a `variant` prop wins over it) nor the variant a
+   * consumer that selects variants on its own (like `useCode`) renders, so
+   * such a consumer reuses the list only when this names its rendered variant.
+   */
+  availableTransformsVariant?: string;
   url?: string;
+  /**
+   * Commit gate for swaps: `true` while the highlighter is still parsing, or
+   * computing the transform deltas of a block where any variant has transforms.
+   * Variant and transform swaps (and a deferred `expand()`) wait for it, so they
+   * never paint a tree that re-flows once the pending work lands.
+   */
   deferHighlight?: boolean;
   /**
-  /**
-   * Compact fallback data for the active variant, keyed by fileName.
-   * Used by `Pre` to both render the fallback and derive text dictionaries
-   * for decompressing `hastCompressed` payloads.
+   * Render-side counterpart of `deferHighlight`: `true` only while the parse is
+   * in flight. The code published during the transform-deltas window is already
+   * highlighted wherever it can be (see `getPendingTransformedCode`), so
+   * rendering doesn't wait for the deltas. Consumers fall back to
+   * `deferHighlight` when it's absent.
    */
-  fallbacks?: Fallbacks;
+  deferHighlightRender?: boolean;
+  /**
+   * Compact fallback data for every variant, keyed by variant and then
+   * fileName. Used to render the fallback and as the text dictionary for
+   * decompressing a `hastCompressed` payload. That payload only decodes with
+   * its own file's dictionary, and variants often share file names, so a
+   * consumer that selects variants on its own (like `useCode`) reads the entry
+   * for the variant it renders.
+   */
+  variantFallbacks?: Record<string, Fallbacks>;
   /**
    * Render-side readiness gate. `true` once the highlight trigger
    * (`init` / `hydration` / `idle` / `visible`) has fired *and* the

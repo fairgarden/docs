@@ -14,12 +14,15 @@
  */
 import * as React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { render, renderHook, act, waitFor } from '@testing-library/react';
 import { useCode } from './useCode';
-import type { ContentProps, HastRoot } from '../CodeHighlighter/types';
+import type { UseCodeResult } from './useCode';
+import type { ContentProps, HastRoot, Transforms } from '../CodeHighlighter/types';
 import { CodeHighlighterContext } from '../CodeHighlighter/CodeHighlighterContext';
 import type { CodeHighlighterContextType } from '../CodeHighlighter/CodeHighlighterContext';
 import { CodeControllerContext } from '../CodeControllerContext/CodeControllerContext';
+import { createCompressedFile } from '../pipeline/hastUtils/hastCompression.testUtils';
+import { preloadTransformEngine } from './transformEngineCache';
 
 describe('useCode integration tests', () => {
   let originalLocation: Location;
@@ -1334,6 +1337,170 @@ describe('useCode integration tests', () => {
         },
         { timeout: 1000 },
       );
+    });
+  });
+
+  describe('compressed sources across variants', () => {
+    // Each file is compressed with its own `fallback` text as the dictionary
+    // (`createCompressedFile`), so it decodes only with that same text.
+
+    function toJs(text: string): Transforms {
+      return {
+        js: {
+          delta: {
+            children: {
+              _t: 'a',
+              0: { children: { _t: 'a', 0: { value: [text] } } },
+            },
+          },
+          fileName: 'Button.jsx',
+        },
+      };
+    }
+
+    it('keeps the selected transform when switching to a variant whose file shares a name', async () => {
+      await preloadTransformEngine();
+      const first = createCompressedFile('const first: number = 1;');
+      const second = createCompressedFile('const second: number = 2;');
+
+      // A `ContentLoading` hoists each variant's dictionaries off `Code`, and the
+      // highlighter hands them back per variant alongside its own variant's map.
+      const context: CodeHighlighterContextType = {
+        code: {
+          First: {
+            fileName: 'Button.tsx',
+            source: first.source,
+            totalLines: 1,
+            transforms: toJs('const first = 1;'),
+          },
+          Second: {
+            fileName: 'Button.tsx',
+            source: second.source,
+            totalLines: 1,
+            transforms: toJs('const second = 2;'),
+          },
+        },
+        variantFallbacks: {
+          First: { 'Button.tsx': first.fallback },
+          Second: { 'Button.tsx': second.fallback },
+        },
+      };
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(CodeHighlighterContext.Provider, { value: context }, children);
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      // `<Pre>` observes frame visibility, which jsdom doesn't implement.
+      const { IntersectionObserver: originalIntersectionObserver } = globalThis;
+      globalThis.IntersectionObserver = class {
+        observe() {}
+
+        unobserve() {}
+
+        disconnect() {}
+      } as unknown as typeof IntersectionObserver;
+
+      try {
+        let code: UseCodeResult | undefined;
+        function Viewer() {
+          code = useCode({ slug: 'button' });
+          return React.createElement('div', { 'data-testid': 'viewer' }, code.selectedFile);
+        }
+        const { getByTestId } = render(React.createElement(Viewer), { wrapper });
+
+        act(() => {
+          code!.selectTransform('js');
+        });
+        await waitFor(() => {
+          expect(getByTestId('viewer').textContent).toBe('const first = 1;');
+        });
+
+        act(() => {
+          code!.selectVariant('Second');
+        });
+        await waitFor(() => {
+          expect(getByTestId('viewer').textContent).toContain('second');
+        });
+
+        expect(getByTestId('viewer').textContent).toBe('const second = 2;');
+        expect(code!.selectedFileName).toBe('Button.jsx');
+        const transformErrors = errorSpy.mock.calls.filter(([message]) =>
+          String(message).includes('Transform failed'),
+        );
+        expect(transformErrors).toEqual([]);
+      } finally {
+        errorSpy.mockRestore();
+        globalThis.IntersectionObserver = originalIntersectionObserver;
+      }
+    });
+  });
+
+  describe('compressed files with a transform', () => {
+    it('renders every file of a transformed variant, including a compressed file the transform leaves untouched', async () => {
+      await preloadTransformEngine();
+      // Each file is compressed with its own `fallback` text as the dictionary.
+      // Only the main file declares the `js` transform, so `styles.css` passes
+      // through as its original compressed payload. The block mounts with the
+      // transform already selected (e.g. a stored preference), so no file has
+      // been rendered untransformed first.
+      const button = createCompressedFile('const button: number = 1;');
+      const styles = createCompressedFile('.button { color: red; }');
+      const contentProps: ContentProps<{}> = {
+        code: {
+          Default: {
+            fileName: 'Button.tsx',
+            ...button,
+            totalLines: 1,
+            transforms: {
+              js: {
+                delta: {
+                  children: {
+                    _t: 'a',
+                    0: { children: { _t: 'a', 0: { value: ['const button = 1;'] } } },
+                  },
+                },
+                fileName: 'Button.jsx',
+              },
+            },
+            extraFiles: { 'styles.css': { ...styles, totalLines: 1 } },
+          },
+        },
+      };
+      // `<Pre>` observes frame visibility, which jsdom doesn't implement.
+      const { IntersectionObserver: originalIntersectionObserver } = globalThis;
+      globalThis.IntersectionObserver = class {
+        observe() {}
+
+        unobserve() {}
+
+        disconnect() {}
+      } as unknown as typeof IntersectionObserver;
+
+      try {
+        let code: UseCodeResult | undefined;
+        function Viewer() {
+          code = useCode(contentProps, { initialTransform: 'js' });
+          return React.createElement(
+            'div',
+            null,
+            code.files.map((file) =>
+              React.createElement(
+                'div',
+                { key: file.name, 'data-testid': file.name },
+                file.component,
+              ),
+            ),
+          );
+        }
+        const { getByTestId } = render(React.createElement(Viewer));
+
+        await waitFor(() => {
+          expect(code!.files.map((file) => file.name)).toEqual(['Button.jsx', 'styles.css']);
+        });
+        expect(code!.selectedTransform).toBe('js');
+        expect(getByTestId('Button.jsx').textContent).toBe('const button = 1;');
+        expect(getByTestId('styles.css').textContent).toBe('.button { color: red; }');
+      } finally {
+        globalThis.IntersectionObserver = originalIntersectionObserver;
+      }
     });
   });
 

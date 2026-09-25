@@ -19,7 +19,7 @@ import { useControlledCode } from '../CodeControllerContext';
 import type { Selection } from '../CodeControllerContext';
 import {
   codeToFallbackProps,
-  deriveFallbacksFromCode,
+  resolveVariantFallbacks,
   stripFallbackHastsFromCode,
 } from './codeToFallbackProps';
 import { resolveFallbackCritical } from './resolveFallbackCritical';
@@ -29,7 +29,11 @@ import {
   scatterResidualFallbacks,
 } from './fallbackCompression';
 import { mergeCodeMetadata } from '../pipeline/loadIsomorphicCodeVariant/mergeCodeMetadata';
-import { getAvailableTransforms } from '../pipeline/loadIsomorphicCodeVariant/getAvailableTransforms';
+import {
+  getAvailableTransforms,
+  hasAnyVariantTransforms,
+} from '../pipeline/loadIsomorphicCodeVariant/getAvailableTransforms';
+import { getPendingTransformedCode } from './getPendingTransformedCode';
 import { useSpeculativeCodePreload } from './useSpeculativeCodePreload';
 import { useSpeculativeEditingPreload } from './useSpeculativeEditingPreload';
 import { useSpeculativeUseCodePreload } from './useSpeculativeUseCodePreload';
@@ -681,6 +685,7 @@ function useCodeTransforms({
   // callers detect staleness with reference equality.
   const [transformedState, setTransformedState] = React.useState<{
     input?: Code;
+    loaded?: Code;
     output?: Code;
   }>({});
 
@@ -688,6 +693,13 @@ function useCodeTransforms({
   const availableTransforms = React.useMemo(
     () => getAvailableTransforms(parsedCode ?? loadedCode, variantName),
     [parsedCode, loadedCode, variantName],
+  );
+
+  // Whether any variant has transforms, so has deltas worth waiting for. Not
+  // just `variantName`'s: `useCode` picks the rendered variant on its own.
+  const hasAnyTransforms = React.useMemo(
+    () => hasAnyVariantTransforms(parsedCode ?? loadedCode),
+    [parsedCode, loadedCode],
   );
 
   // Effect to compute transformations for all variants. Only runs when the
@@ -707,7 +719,7 @@ function useCodeTransforms({
     const commit = (output: Code) => {
       if (!settled) {
         settled = true;
-        setTransformedState({ input: parsedCode, output });
+        setTransformedState({ input: parsedCode, loaded: loadedCode, output });
       }
     };
 
@@ -743,18 +755,27 @@ function useCodeTransforms({
       settled = true; // a newer run (or unmount) supersedes this one; ignore late writes
       clearTimeout(timer);
     };
-  }, [parsedCode, sourceParser, computeHastDeltasLoader]);
+  }, [parsedCode, loadedCode, sourceParser, computeHastDeltasLoader]);
 
-  // When the full async pipeline is wired, expose the cached output regardless
-  // of whether `parsedCode` changed since the last computation — falling back
-  // to `undefined` here would yank the currently-displayed HAST for a frame
-  // while the async pipeline catches up. Staleness is signalled via
+  // When the full async pipeline is wired, expose the finished output. While the
+  // deltas for a new `parsedCode` are still being computed, expose the finished
+  // output for variants whose content is unchanged and the new parse for the rest
+  // (see `getPendingTransformedCode`), so the code shown stays highlighted without
+  // ever being older than the loaded code. Staleness is still signalled via
   // `waitingForTransformedCode` so downstream gates (e.g.
   // `useTransformManagement` / `useVariantSelection`) hold off committing a
   // swap until fresh deltas land. Without the pipeline, `transformedCode` is a
   // synchronous pass-through of `parsedCode` derived during render.
   const hasAsyncPipeline = !!parsedCode && !!sourceParser && !!computeHastDeltasLoader;
-  const transformedCode = hasAsyncPipeline ? transformedState.output : parsedCode;
+  const transformedCode = React.useMemo(() => {
+    if (!hasAsyncPipeline || !parsedCode) {
+      return parsedCode;
+    }
+    if (transformedState.input === parsedCode) {
+      return transformedState.output;
+    }
+    return getPendingTransformedCode(parsedCode, loadedCode, transformedState);
+  }, [hasAsyncPipeline, parsedCode, loadedCode, transformedState]);
 
   // Async hast-deltas pipeline status. While true, consumers (notably
   // `useTransformManagement`'s `deferHighlight` gate) should treat
@@ -774,7 +795,7 @@ function useCodeTransforms({
   // until its deltas land.
   const waitingForTransformedCode = hasAsyncPipeline && transformedState.input !== parsedCode;
 
-  return { transformedCode, availableTransforms, waitingForTransformedCode };
+  return { transformedCode, availableTransforms, hasAnyTransforms, waitingForTransformedCode };
 }
 
 function useControlledCodeParsing({
@@ -1475,11 +1496,12 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
     url: props.url,
   });
 
-  const { transformedCode, availableTransforms, waitingForTransformedCode } = useCodeTransforms({
-    parsedCode,
-    loadedCode: codeWithGlobals,
-    variantName,
-  });
+  const { transformedCode, availableTransforms, hasAnyTransforms, waitingForTransformedCode } =
+    useCodeTransforms({
+      parsedCode,
+      loadedCode: codeWithGlobals,
+      variantName,
+    });
 
   // Combined highlight-readiness gate consumed via context (notably by
   // `useTransformManagement`). Stay deferred while either the sync
@@ -1488,11 +1510,14 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
   // pending causes the incoming pre to first render without the
   // transform deltas and then re-flow a frame or two later when the
   // deltas land, producing a visible jump on top of the collapse
-  // animation. The wait only matters for highlighters with at least one
-  // applicable transform; plain (variant-only) highlighters skip it so
-  // their stored-preference resolution doesn't pay the deltas latency.
+  // animation. The wait only matters for blocks with at least one
+  // applicable transform in ANY variant: `useCode` selects the rendered
+  // variant itself, so this highlighter's `variantName` may be a variant
+  // without transforms while the one being switched to has them. Blocks
+  // with no transforms anywhere skip it so their stored-preference
+  // resolution doesn't pay the deltas latency.
   const deferHighlight =
-    deferHighlightForParsing || (availableTransforms.length > 0 && waitingForTransformedCode);
+    deferHighlightForParsing || (hasAnyTransforms && waitingForTransformedCode);
 
   // The fallback↔content swap, generalized into `useCoordinatedSwap`: it owns
   // the force-mount-once behavior, nested-fallback suppression (via the shared
@@ -1572,22 +1597,10 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
   const codeForFallback =
     overlaidCode || (controlled?.code ? undefined : resolvedPropsCode || resolvedStateCode);
 
-  // Resolve the active variant's fallbacks from the two places one can cross
-  // the server→client boundary: the hoisted copy (from a `ContentLoading`
-  // component, which had it stripped off `Code`) and the variant's own
-  // `fallback` field on `Code` (present without a `ContentLoading`, or scattered
-  // back from the residual blob). For most files only one is populated. When
-  // both are — a `fallbackCollapsed` block hoists the *visible* window but
-  // scatters the *full* fallback onto `Code` — the `Code` copy must win, since
-  // the full text is the DEFLATE dictionary `hastCompressed` needs. So merge
-  // with the derived (`Code`) copy taking precedence.
-  const activeFallbacks = React.useMemo(() => {
-    const merged = {
-      ...hoistedFallbackHasts[variantName],
-      ...deriveFallbacksFromCode(codeForFallback, variantName),
-    };
-    return Object.keys(merged).length > 0 ? merged : undefined;
-  }, [hoistedFallbackHasts, variantName, codeForFallback]);
+  const variantFallbacks = React.useMemo(
+    () => resolveVariantFallbacks(hoistedFallbackHasts, codeForFallback),
+    [hoistedFallbackHasts, codeForFallback],
+  );
 
   const fallbackContext = React.useMemo(
     () => ({
@@ -1653,9 +1666,11 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       // Only suppress when an external CodeController owns the code; static
       // `props.code` still needs the locally-computed list.
       availableTransforms: controlled?.code ? [] : availableTransforms,
+      availableTransformsVariant: variantName,
       url: props.url,
       deferHighlight,
-      fallbacks: activeFallbacks,
+      deferHighlightRender: deferHighlightForParsing,
+      variantFallbacks,
       highlightReady,
       highlightAfter,
       editActivation,
@@ -1673,9 +1688,11 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
       controlled?.errors,
       controlled?.code,
       availableTransforms,
+      variantName,
       props.url,
       deferHighlight,
-      activeFallbacks,
+      deferHighlightForParsing,
+      variantFallbacks,
       highlightReady,
       highlightAfter,
       editActivation,

@@ -17,6 +17,7 @@ import {
   extractResidualFallbacks,
   mergeResidualFallbacks,
   residualDictionaryText,
+  scatterResidualFallbacks,
 } from './fallbackCompression';
 import { replaceUrlPrefix } from '../pipeline/loaderUtils/applyUrlPrefix';
 import { getVariantFileLineCounts } from '../useCode/sourceLineCounts';
@@ -324,6 +325,15 @@ export function prepareInitialSource<T extends {}>(
       residualDictionaryText(contentLoadingHasts),
     );
     codeForClient = residualFallbacks ? wireCode : strippedCode;
+  }
+  // With no blob (a client render, or a residual too small to compress), a
+  // `fallbackCollapsed` block would leave the rendered files' full fallbacks
+  // nowhere: the hoist is only each file's collapsed window, which can't decode
+  // its `hastCompressed` source. Keep them inline on `codeForClient` instead —
+  // the same shape the client produces after decompressing the blob, and the
+  // variant's own fallback wins over the hoist on the client.
+  if (!residualFallbacks && effectiveFallbackCollapsed) {
+    codeForClient = scatterResidualFallbacks(codeForClient, allFallbackHasts);
   }
 
   // Get the component for the selected variant
