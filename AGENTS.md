@@ -20,7 +20,7 @@ Always reference these instructions first and fallback to search or bash command
 - **Prerequisites**: Node.js 22.18.0+ required. Install pnpm: `npm install -g pnpm@11.9.0`
 - **Install dependencies**: `pnpm install --no-frozen-lockfile` -- takes 15-20 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
 - **Build the library**: `pnpm docs:lib` (alias for `pnpm release:build`, which builds everything in `/packages/*`) -- takes 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
-- **Type checking**: `pnpm typescript` -- takes 10-15 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
+- **Type checking**: `pnpm typescript` -- takes 10-15 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes. It only covers `packages/docs`; the docs site is type checked by `pnpm docs:build`.
 - **Linting**: `pnpm eslint` -- takes 5-10 seconds. **NEVER CANCEL**. Set timeout to 30+ minutes.
 - **Formatting**: `pnpm prettier` -- always run before pushing code. Use `pnpm prettier:check` to check the whole tree without writing.
 - **Run tests**: `pnpm test --run` takes 25-40 seconds for ~4850 tests. **NEVER CANCEL**. Set timeout to 30+ minutes.
@@ -67,7 +67,9 @@ packages/
 └── docs/                         # @fairgarden/docs — the published library
 
 docs/                             # Next.js site documenting the library
-└── app/lib/               # the documentation pages themselves
+├── app/(shared)/                 # the marketing landing page (`/`), its demos and design tokens
+├── app/lib/                      # the documentation pages themselves
+└── components/Landing/           # layout wrappers the landing page puts around its markdown
 
 renovate/                         # Renovate presets this repo extends locally
 ```
@@ -85,7 +87,7 @@ commands. They call `getRepositoryInfo()`, which hardcodes a check that the git
 remote lives under the `mui` GitHub organization and throws `Failed to find
 correct remote(s)` here. Publishing is handled by this repo's own workflow instead.
 
-The library ships its own CLI too, run through `pnpm docs:infra` (see `packages/docs/src/cli`).
+The library ships its own CLI too, run through `pnpm docs:run` (see `packages/docs/src/cli`).
 
 ### Build and Release Process
 
@@ -115,6 +117,53 @@ the `@img/sharp-<platform>` packages, pnpm will keep reusing that resolution —
 and `--fix-lockfile` both report "already up to date". Delete both the `packages:` and
 `snapshots:` entries for that `sharp` version from `pnpm-lock.yaml` and reinstall to force a
 fresh resolution.
+
+#### `next dev` generates `docs/AGENTS.md` and `docs/CLAUDE.md`
+
+Next.js 16 writes these two files whenever the dev server starts. They are not part of this
+repo, and `docs/CLAUDE.md` fails `pnpm eslint` (`mui-first-block-heading`), so delete them
+before linting rather than committing them.
+
+#### Landing page (`docs/app/(shared)/page.mdx`)
+
+The landing page is markdown first like every other page. Each band is **one** wrapper from
+`docs/components/Landing` around plain markdown, and the band styles the markdown it holds (a
+list becomes stat tiles, steps or link cards, a line of links becomes buttons, each `###`
+becomes a question). Keep it to one wrapper per band: `eslint-mdx` cannot parse an `import`
+between JSX tags, so a nested wrapper could never have its import directly above it (4.9).
+Nesting the markdown exposes a few pipeline limits:
+
+- `transformMarkdownMetaLinks` only strips a `[See Demo]` or `[See Types]` link that follows a
+  **top-level** element whose name contains `Demo` or `Types`. That is why the wrappers that
+  hold a demo are named `DemoHero` and `DemoFeature`, and why the fallback link goes after
+  their closing tag instead of inside them.
+- `transformMarkdownRelativePaths` only rewrites markdown links (`[text](../lib/page.mdx)`),
+  never an `href` prop. Links in headings nest anchors, because headings render inside one.
+- A `types.ts` outside an indexed docs section must pass `{ excludeFromIndex: true }`, or the
+  types loader creates a parent index page (`docs/app/page.mdx` shadowed the landing route).
+  It must also import the component by relative path; the loader resolves `@/` as a package.
+- In fenced code, a trailing `// @highlight` on the **last** line drops that line, and
+  `createDemo(import.meta.url, X, {` followed by emphasis comments disables them for the
+  block. Wrap the statement in `@highlight-start` / `@highlight-end`, or put each argument
+  on its own line.
+- The landing demos use their own `createDemo` (`docs/app/(shared)/demos/createDemo.ts`) with
+  `fallbackUsesExtraFiles`, so the page backs its claim that every file of a demo is in the
+  initial HTML as plain text. A `ContentLoading` must take `extraSource` from
+  `useCodeFallback(props)`: `props.extraSource` is the compact encoded form and renders empty.
+- `<LandingColumns collapsible>` renders its fences through the collapsible window from the
+  `useCodeWindow` demos (`Pre` accepts a `Content` and `ContentLoading` override), so focus
+  collapsing is demoed from plain fences. Authored MDX fences keep 25 lines of padding around a
+  focused region, so write `@focus-start @padding 1` to get a window that actually folds.
+- A demo's preview remounts, and loses its state, when the code content replaces the loading
+  fallback. E2E tests that interact with a preview must wait for the content first: the tabs
+  stop being disabled, and an inline copy button is relabeled from `Copy code` to
+  `Copy <file> source`.
+- Keep the fixed waits in live-editing e2e tests (`demo-live/test.ts`, `live-garden/test.ts`).
+  While the editing engine warms up, the browser accepts keystrokes the engine never hears,
+  and no DOM state tells the two apart. Retrying the edit does not help either: retyping the
+  same text is not a change, so the preview never updates.
+- Band styles only target their direct markdown children (`.inner > p`), and list rules are
+  written as `section.root ul` so they outrank the site-wide `.body ul` spacing.
 
 ## Frequently Referenced Files and Locations
 
@@ -194,6 +243,7 @@ Follow additional instructions when working in the `@fairgarden/docs` (`packages
 - **4.6** Avoid "breaking the 3rd wall" in code comments and documentation by referring to the instructions provided when working in this repository. Instead, focus on clear, concise explanations of the code itself.
 - **4.7** When writing code comments, use JSDoc style comments for all functions, but type definitions should be in TypeScript types. Avoid using JSDoc `@typedef` and `@param` tags for types. Use them only for descriptions.
 - **4.8** Use progressive disclosure in documentation. Start with simple, common use cases and gradually introduce complexity. Structure docs so readers can stop at their desired depth of understanding. Place advanced sections (like architecture details or performance tuning) at the end of the document after practical content. Follow this pattern: basic usage → configuration → common patterns → reference material → advanced features → implementation details.
+- **4.9** In MDX, place every `import` directly above the element that uses it, with nothing but a blank line between them. When a demo is introduced by a sentence, the sentence goes above the import, not between the import and the demo. Imports stay at the root of the document, because `eslint-mdx` fails to parse one placed between JSX tags.
 
 ### File Organization & Structure
 

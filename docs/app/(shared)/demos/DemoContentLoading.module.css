@@ -1,0 +1,5 @@
+/* The files behind the unselected tabs stay in the initial HTML for crawlers.
+   Readers reach them through the tabs once the demo hydrates. */
+.files {
+  display: none;
+}

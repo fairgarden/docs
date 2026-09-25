@@ -1,0 +1,86 @@
+.root {
+  padding: var(--size-fluid-5) var(--landing-gutter);
+  border-bottom: var(--border-size-1) solid var(--purple-5);
+  background-color: var(--purple-2);
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--size-8);
+  align-items: center;
+  max-width: var(--landing-width);
+  margin-inline: auto;
+}
+
+.copy {
+  min-width: 0;
+}
+
+/* Only the copy's own markdown is styled here. Headings arrive wrapped in an anchor. */
+.root .copy > a > h1 {
+  margin: 0 0 var(--size-4);
+  font-size: var(--font-size-fluid-3);
+  line-height: var(--font-lineheight-0);
+  color: var(--purple-12);
+  text-wrap: balance;
+}
+
+.copy > p {
+  margin: 0 0 var(--size-3);
+  color: var(--mauve-11);
+}
+
+/* The first paragraph doubles as the page's meta description, so it reads as the lede. */
+.copy > p:first-of-type {
+  max-width: 34em;
+  margin-bottom: var(--size-5);
+  font-size: var(--font-size-2);
+  line-height: var(--font-lineheight-3);
+  text-wrap: pretty;
+}
+
+.media {
+  position: relative;
+  z-index: 0;
+  min-width: 0;
+  /* Room for the offset block behind the frame. The demo's actions menu hangs
+     off its right edge, so the block goes the other way and narrow screens
+     keep a gutter for the menu. */
+  padding: 0 var(--size-4) var(--size-3) var(--size-3);
+}
+
+/* A solid block offset behind the demo lifts it off the page without a shadow.
+   The demo's own vertical margin collapses through, so the background hugs it. */
+.frame {
+  position: relative;
+  border-radius: 8px;
+  background-color: var(--purple-1);
+}
+
+.frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-color: var(--purple-6);
+  transform: translate(calc(var(--size-3) * -1), var(--size-3));
+}
+
+@media (min-width: 720px) {
+  .copy > p:first-of-type {
+    font-size: var(--font-size-3);
+  }
+}
+
+@media (min-width: 1000px) {
+  .inner {
+    grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
+    gap: var(--size-9);
+  }
+
+  .media {
+    padding-right: 0;
+  }
+}
