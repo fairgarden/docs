@@ -290,6 +290,40 @@ export function deriveFallbacksFromCode(
 }
 
 /**
+ * Resolve each variant's fallbacks from the two places one can cross the
+ * server→client boundary: the hoisted copy (from a `ContentLoading` component,
+ * which had it stripped off `Code`) and the variant's own `fallback` field on
+ * `Code` (present without a `ContentLoading`, or scattered back from the
+ * residual blob). For most files only one is populated. When both are — a
+ * `fallbackCollapsed` block hoists the *visible* window but scatters the *full*
+ * fallback onto `Code` — the `Code` copy must win, since the full text is the
+ * DEFLATE dictionary `hastCompressed` needs. So merge with the derived (`Code`)
+ * copy taking precedence.
+ *
+ * Kept per variant: `useCode` selects variants on its own, and variants often
+ * share file names, so a single file-name map would hand another variant's
+ * same-named file this variant's dictionary. Variants with no fallback in
+ * either place are omitted.
+ */
+export function resolveVariantFallbacks(
+  hoistedFallbackHasts: Record<string, Fallbacks>,
+  code: Code | undefined,
+): Record<string, Fallbacks> {
+  const byVariant: Record<string, Fallbacks> = {};
+  const names = new Set([...Object.keys(hoistedFallbackHasts), ...Object.keys(code ?? {})]);
+  for (const name of names) {
+    const merged = {
+      ...hoistedFallbackHasts[name],
+      ...deriveFallbacksFromCode(code, name),
+    };
+    if (Object.keys(merged).length > 0) {
+      byVariant[name] = merged;
+    }
+  }
+  return byVariant;
+}
+
+/**
  * Strip `fallback` entries from a `Code` object and return the
  * stripped Code alongside the extracted fallbacks grouped by variant → fileName.
  *

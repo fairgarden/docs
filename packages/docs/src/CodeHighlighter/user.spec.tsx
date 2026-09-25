@@ -33,6 +33,8 @@ import { CodeContext } from '../CodeProvider/CodeContext';
 import { parseControlledCode } from './parseControlledCode';
 import { createParseSource } from '../pipeline/parseSource';
 import { preloadSourceEditingEngine } from '../useCode/useSourceEditing';
+import { preloadTransformEngine } from '../useCode/transformEngineCache';
+import { createCompressedFile } from '../pipeline/hastUtils/hastCompression.testUtils';
 import type { Code, ContentProps, ControlledCode, HastRoot, ParseSource } from './types';
 
 let parseSource: ParseSource;
@@ -254,6 +256,173 @@ describe('CodeHighlighter rendering', () => {
     // The toggle commits: the transform is selected and the file renamed.
     await waitFor(() => expect(screen.getByTestId('transform').textContent).toBe('js'));
     await waitFor(() => expect(screen.getByTestId('file').textContent).toBe('app.js'));
+  });
+
+  it('offers only the transforms the selected variant declares', async () => {
+    // Only the first variant declares a `js` transform, so the toggle must go
+    // away when the user switches to the second one.
+    window.localStorage.clear();
+    const code = {
+      Typed: {
+        fileName: 'Button.tsx',
+        source: highlighted('const button: number = 1;'),
+        transforms: { js: { fileName: 'Button.jsx', hasDelta: true } },
+      },
+      Plain: { fileName: 'Button.js', source: highlighted('const button = 1;') },
+    } as unknown as Code;
+
+    render(
+      <CodeHighlighterClient variants={['Typed', 'Plain']} precompute={code} url="file:///Button">
+        <Demo />
+      </CodeHighlighterClient>,
+    );
+
+    expect(screen.getByTestId('transform:js')).toBeTruthy();
+
+    act(() => {
+      screen.getByTestId('variant:Plain').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const button = 1;'),
+    );
+    expect(screen.queryByTestId('transform:js')).toBeNull();
+
+    act(() => {
+      screen.getByTestId('variant:Typed').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const button: number = 1;'),
+    );
+    expect(screen.getByTestId('transform:js')).toBeTruthy();
+  });
+
+  it('offers only the transforms of the variant it renders when the highlighter is given a variant', async () => {
+    // The highlighter is told `Typed` is the current variant, but the content
+    // selects and renders its own (`Plain`, the first). Only `Typed` declares a
+    // `js` transform, so no toggle may show until the user switches to it.
+    window.localStorage.clear();
+    const code = {
+      Plain: { fileName: 'Button.js', source: highlighted('const button = 1;') },
+      Typed: {
+        fileName: 'Button.tsx',
+        source: highlighted('const button: number = 1;'),
+        transforms: { js: { fileName: 'Button.jsx', hasDelta: true } },
+      },
+    } as unknown as Code;
+
+    render(
+      <CodeHighlighterClient
+        variants={['Plain', 'Typed']}
+        variant="Typed"
+        precompute={code}
+        url="file:///Button"
+      >
+        <Demo />
+      </CodeHighlighterClient>,
+    );
+
+    expect(screen.getByTestId('variant').textContent).toBe('Plain');
+    expect(screen.queryByTestId('transform:js')).toBeNull();
+
+    act(() => {
+      screen.getByTestId('variant:Typed').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const button: number = 1;'),
+    );
+    expect(screen.getByTestId('transform:js')).toBeTruthy();
+  });
+
+  it('offers only the transforms of the variant it renders when a controller selects another variant', async () => {
+    // A controller that only selects (owns no code) points the highlighter at
+    // `Typed`, while the content renders its own first variant, `Plain`.
+    window.localStorage.clear();
+    const code = {
+      Plain: { fileName: 'Button.js', source: highlighted('const button = 1;') },
+      Typed: {
+        fileName: 'Button.tsx',
+        source: highlighted('const button: number = 1;'),
+        transforms: { js: { fileName: 'Button.jsx', hasDelta: true } },
+      },
+    } as unknown as Code;
+
+    render(
+      <CodeControllerContext.Provider value={{ selection: { variant: 'Typed' } }}>
+        <CodeHighlighterClient variants={['Plain', 'Typed']} precompute={code} url="file:///Button">
+          <Demo />
+        </CodeHighlighterClient>
+      </CodeControllerContext.Provider>,
+    );
+
+    expect(screen.getByTestId('variant').textContent).toBe('Plain');
+    expect(screen.queryByTestId('transform:js')).toBeNull();
+
+    act(() => {
+      screen.getByTestId('variant:Typed').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const button: number = 1;'),
+    );
+    expect(screen.getByTestId('transform:js')).toBeTruthy();
+  });
+
+  it('keeps a transform applied when the user switches to a variant whose file has the same name', async () => {
+    // Production payloads compress each file with its own `fallback` text as the
+    // DEFLATE dictionary. Both variants name their file `app.ts`, so the second
+    // must decode with ITS dictionary, not the first variant's same-named one.
+    // Start from no stored transform preference so the toggle is exercised.
+    window.localStorage.clear();
+    await preloadTransformEngine();
+    const compressed = (text: string) => ({
+      ...createCompressedFile(text, highlighted(text)),
+      totalLines: 1,
+    });
+    const toJs = (text: string) => ({
+      js: {
+        fileName: 'app.js',
+        delta: {
+          children: {
+            _t: 'a',
+            0: { children: { _t: 'a', 0: { children: { _t: 'a', 0: { value: [text] } } } } },
+          },
+        },
+      },
+    });
+    const code = {
+      Plain: {
+        fileName: 'app.ts',
+        ...compressed('const answer: number = 42;'),
+        transforms: toJs('const answer = 42;'),
+      },
+      Doubled: {
+        fileName: 'app.ts',
+        ...compressed('const answer: number = 21 * 2;'),
+        transforms: toJs('const answer = 21 * 2;'),
+      },
+    } as unknown as Code;
+
+    render(
+      <CodeHighlighterClient variants={['Plain', 'Doubled']} precompute={code} url="file:///app.ts">
+        <Demo />
+      </CodeHighlighterClient>,
+    );
+
+    expect(screen.getByTestId('transform').textContent).toBe('none');
+    act(() => {
+      screen.getByTestId('transform:js').click();
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('code').textContent).toContain('const answer = 42;'),
+    );
+
+    act(() => {
+      screen.getByTestId('variant:Doubled').click();
+    });
+
+    // The incoming variant renders with the transform still applied.
+    await waitFor(() => expect(screen.getByTestId('code').textContent).toContain('21 * 2'));
+    expect(screen.getByTestId('code').textContent).toContain('const answer = 21 * 2;');
+    expect(screen.getByTestId('file').textContent).toBe('app.js');
   });
 
   it('re-highlights a controlled file after the user edits it', async () => {

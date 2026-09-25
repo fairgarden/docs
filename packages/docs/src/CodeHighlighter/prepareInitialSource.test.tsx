@@ -28,64 +28,73 @@ import { variantHasLayoutShift } from '../useCode/sourceLineCounts';
 import { createEnhanceCodeEmphasis } from '../pipeline/enhanceCodeEmphasis';
 import { prepareInitialSource } from './prepareInitialSource';
 
+/** A root with one frame per entry of `lineTexts`, each holding a single line. */
 function framedRoot(
-  lineText: string,
+  lineTexts: string | string[],
   counts: { totalLines: number; focusedLines: number; collapsible?: boolean } = {
     totalLines: 1,
     focusedLines: 1,
     collapsible: false,
   },
 ): HastRoot {
+  const lines = typeof lineTexts === 'string' ? [lineTexts] : lineTexts;
   return {
     type: 'root',
     data: counts,
-    children: [
-      {
-        type: 'element',
-        tagName: 'span',
-        properties: { className: 'frame' },
-        data: { fallback: [{ type: 'text', value: lineText }] } as HastElement['data'],
-        children: [
-          {
-            type: 'element',
-            tagName: 'span',
-            properties: { className: 'line', dataLn: 1 },
-            children: [{ type: 'text', value: lineText }],
-          },
-        ],
-      },
-    ],
+    children: lines.map((lineText, index) => ({
+      type: 'element',
+      tagName: 'span',
+      properties: { className: 'frame' },
+      data: { fallback: [{ type: 'text', value: lineText }] } as HastElement['data'],
+      children: [
+        {
+          type: 'element',
+          tagName: 'span',
+          properties: { className: 'line', dataLn: index + 1 },
+          children: [{ type: 'text', value: lineText }],
+        },
+      ],
+    })),
   };
 }
 
 /**
- * Build a `{ hastCompressed }` source the way the loader does: derive the root
- * fallback, strip the per-frame `data.fallback`, and compress with the fallback
- * text as the DEFLATE dictionary. Decoding REQUIRES the matching fallback — a
- * missing/mismatched one throws "invalid distance". Made long enough that the
- * residual blob clears `FALLBACK_COMPRESSION_MIN_BYTES` (so the bug's wire-code
- * path is exercised, not the small-residual inline path).
+ * Compress a framed root the way the loader does: derive the root fallback,
+ * strip the per-frame `data.fallback`, and compress with the fallback text as
+ * the DEFLATE dictionary. Decoding REQUIRES the matching fallback — a
+ * missing/mismatched one throws "invalid distance".
  */
-function buildCompressedVariant(
-  seed: string,
-  counts?: { totalLines: number; focusedLines: number; collapsible?: boolean },
-): {
+function compressFramedRoot(root: HastRoot): {
   source: { hastCompressed: string };
   fallback: FallbackNode[];
   fallbackCritical: { [frameIndex: number]: FallbackNode };
 } {
-  const root = framedRoot(`const ${seed} = "${'x'.repeat(200)}";`, counts);
   const fallback = buildRootFallback(root);
   // The sparse highlighted-visible companion the loader bakes alongside `fallback`.
   const fallbackCritical = buildCriticalFallback(root, getInitialVisibleFrames(root, false));
   const stripped = JSON.parse(JSON.stringify(root)) as HastRoot;
-  delete (stripped.children[0] as HastElement).data!.fallback;
+  for (const frame of stripped.children) {
+    delete (frame as HastElement).data!.fallback;
+  }
   return {
     // Fresh object per call so the decode WeakMap never bridges cases.
     source: { hastCompressed: compressHast(JSON.stringify(stripped), fallbackToText(fallback)) },
     fallback,
     fallbackCritical,
   };
+}
+
+/**
+ * Build a `{ hastCompressed }` source with its fallback (see
+ * `compressFramedRoot`). Made long enough that the residual blob clears
+ * `FALLBACK_COMPRESSION_MIN_BYTES` (so the bug's wire-code path is exercised,
+ * not the small-residual inline path).
+ */
+function buildCompressedVariant(
+  seed: string,
+  counts?: { totalLines: number; focusedLines: number; collapsible?: boolean },
+) {
+  return compressFramedRoot(framedRoot(`const ${seed} = "${'x'.repeat(200)}";`, counts));
 }
 
 function ContentLoading(): null {
@@ -243,6 +252,122 @@ describe('prepareInitialSource residual round-trip', () => {
     // being stripped into a compressed residual blob — so nothing decompresses.
     expect(fallbackOf(codeForClient, 'First')).toBeUndefined();
     expect(fallbackOf(codeForClient, 'Second')).toBeDefined();
+  });
+});
+
+describe('prepareInitialSource fallbackCollapsed without a residual blob', () => {
+  const collapsedCounts = { totalLines: 2, focusedLines: 1, collapsible: true };
+  const loadingSourceOf = (fallback: React.ReactNode): FallbackNode[] | undefined =>
+    (fallback as React.ReactElement<{ source?: FallbackNode[] }>).props.source;
+
+  it('keeps the rendered file decodable on a client render (compressResidual: false)', () => {
+    // Two frames with no emphasis: the collapsed window is only the first frame,
+    // so its text is not the dictionary the whole source was compressed with.
+    const variant = compressFramedRoot(
+      framedRoot(
+        [`const button = "${'x'.repeat(200)}";`, `const checkbox = "${'y'.repeat(200)}";`],
+        collapsedCounts,
+      ),
+    );
+    const code = {
+      Default: {
+        fileName: 'Button.tsx',
+        source: variant.source,
+        fallback: variant.fallback,
+        // The stored counts the loader ships, so nothing decodes on the server
+        // (which would warm the decode cache with the full dictionary).
+        ...collapsedCounts,
+      },
+    } as unknown as Code;
+
+    const { fallback, codeForClient, residualFallbacks } = prepareInitialSource({
+      code,
+      initialVariant: 'Default',
+      initialFilename: 'Button.tsx',
+      initialSource: variant.source,
+      ContentLoading,
+      Content,
+      slug: 'slug',
+      name: 'name',
+      fallbackCollapsed: true,
+      compressResidual: false,
+    });
+
+    expect(residualFallbacks).toBeUndefined();
+    // The loading UI still paints only the collapsed window.
+    expect(fallbackToText(loadingSourceOf(fallback)!)).toBe(
+      fallbackToText(variant.fallback.slice(0, 1)),
+    );
+
+    // The client decodes with the variant's own fallback on the code, else the hoist.
+    const dictionary = fallbackOf(codeForClient, 'Default') ?? loadingSourceOf(fallback);
+    expect(() => decodeHastSource(variant.source, dictionary)).not.toThrow();
+  });
+
+  it('keeps the rendered file decodable when the residual is too small to compress', () => {
+    const variant = compressFramedRoot(
+      framedRoot(['const a = 1;', 'const b = 2;'], collapsedCounts),
+    );
+    const code = {
+      Default: {
+        fileName: 'Button.tsx',
+        source: variant.source,
+        fallback: variant.fallback,
+        // The stored counts the loader ships, so nothing decodes on the server
+        // (which would warm the decode cache with the full dictionary).
+        ...collapsedCounts,
+      },
+    } as unknown as Code;
+
+    const { fallback, codeForClient, residualFallbacks } = prepareInitialSource({
+      code,
+      initialVariant: 'Default',
+      initialFilename: 'Button.tsx',
+      initialSource: variant.source,
+      ContentLoading,
+      Content,
+      slug: 'slug',
+      name: 'name',
+      fallbackCollapsed: true,
+    });
+
+    expect(residualFallbacks).toBeUndefined();
+    const dictionary = fallbackOf(codeForClient, 'Default') ?? loadingSourceOf(fallback);
+    expect(() => decodeHastSource(variant.source, dictionary)).not.toThrow();
+  });
+
+  it('still defers the full fallback into the blob when it is worth compressing', () => {
+    const variant = compressFramedRoot(
+      framedRoot(
+        [`const button = "${'x'.repeat(200)}";`, `const checkbox = "${'y'.repeat(200)}";`],
+        collapsedCounts,
+      ),
+    );
+    const code = {
+      Default: {
+        fileName: 'Button.tsx',
+        source: variant.source,
+        fallback: variant.fallback,
+        // The stored counts the loader ships, so nothing decodes on the server
+        // (which would warm the decode cache with the full dictionary).
+        ...collapsedCounts,
+      },
+    } as unknown as Code;
+
+    const { codeForClient, residualFallbacks } = prepareInitialSource({
+      code,
+      initialVariant: 'Default',
+      initialFilename: 'Button.tsx',
+      initialSource: variant.source,
+      ContentLoading,
+      Content,
+      slug: 'slug',
+      name: 'name',
+      fallbackCollapsed: true,
+    });
+
+    expect(residualFallbacks).toBeDefined();
+    expect(fallbackOf(codeForClient, 'Default')).toBeUndefined();
   });
 });
 

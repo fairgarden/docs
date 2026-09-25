@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   codeToFallbackProps,
   deriveFallbacksFromCode,
+  resolveVariantFallbacks,
   stripFallbackHastsFromCode,
 } from './codeToFallbackProps';
 import type { Code, HastRoot } from './types';
@@ -512,5 +513,81 @@ describe('deriveFallbacksFromCode', () => {
     };
 
     expect(deriveFallbacksFromCode(code, 'javascript')).toEqual({ 'App.js': fbMain });
+  });
+});
+
+describe('resolveVariantFallbacks', () => {
+  it('keeps the hoisted fallbacks when the code carries none', () => {
+    const fbButton = fb('button');
+    const code: Code = {
+      Default: { fileName: 'Button.tsx', source: { hastCompressed: 'abc' } },
+    };
+
+    expect(resolveVariantFallbacks({ Default: { 'Button.tsx': fbButton } }, code)).toEqual({
+      Default: { 'Button.tsx': fbButton },
+    });
+  });
+
+  it('reads the fallbacks off the code when nothing was hoisted', () => {
+    const fbButton = fb('button');
+    const fbCheckbox = fb('checkbox');
+    const code: Code = {
+      Button: { fileName: 'Button.tsx', source: { hastCompressed: 'abc' }, fallback: fbButton },
+      Checkbox: {
+        fileName: 'Checkbox.tsx',
+        source: { hastCompressed: 'def' },
+        fallback: fbCheckbox,
+      },
+    };
+
+    expect(resolveVariantFallbacks({}, code)).toEqual({
+      Button: { 'Button.tsx': fbButton },
+      Checkbox: { 'Checkbox.tsx': fbCheckbox },
+    });
+  });
+
+  it('prefers the code copy of a file over the hoisted one and keeps hoisted-only files', () => {
+    // A `fallbackCollapsed` block hoists only the visible window but carries the
+    // full fallback on `Code`; the full text is the dictionary the source needs.
+    const fbWindow = fb('window');
+    const fbFull = fb('full');
+    const fbStyles = fb('styles');
+    const code: Code = {
+      Default: {
+        fileName: 'Button.tsx',
+        source: { hastCompressed: 'abc' },
+        fallback: fbFull,
+        extraFiles: { 'styles.css': { source: { hastCompressed: 'def' } } },
+      },
+    };
+
+    expect(
+      resolveVariantFallbacks(
+        { Default: { 'Button.tsx': fbWindow, 'styles.css': fbStyles } },
+        code,
+      ),
+    ).toEqual({ Default: { 'Button.tsx': fbFull, 'styles.css': fbStyles } });
+  });
+
+  it('omits variants that have no fallbacks anywhere', () => {
+    const fbButton = fb('button');
+    const code: Code = {
+      Button: { fileName: 'Button.tsx', source: { hastCompressed: 'abc' }, fallback: fbButton },
+      Checkbox: { fileName: 'Checkbox.tsx', source: 'const checkbox = 1;' },
+      Radio: 'const radio = 1;',
+    };
+
+    expect(resolveVariantFallbacks({ Switch: {} }, code)).toEqual({
+      Button: { 'Button.tsx': fbButton },
+    });
+  });
+
+  it('resolves from the hoisted fallbacks alone when there is no code', () => {
+    const fbButton = fb('button');
+
+    expect(resolveVariantFallbacks({ Default: { 'Button.tsx': fbButton } }, undefined)).toEqual({
+      Default: { 'Button.tsx': fbButton },
+    });
+    expect(resolveVariantFallbacks({}, undefined)).toEqual({});
   });
 });

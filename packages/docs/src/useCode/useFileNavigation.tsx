@@ -12,6 +12,7 @@ import type { FallbackNode } from '../CodeHighlighter/fallbackFormat';
 import { useUrlHashState } from '../useUrlHashState';
 import { countLines } from '../pipeline/parseSource/addLineGutters';
 import { getLanguageFromExtension } from '../pipeline/loaderUtils/getLanguageFromExtension';
+import { isPassThroughFile } from './useCodeUtils';
 import type { TransformedFiles } from './useCodeUtils';
 import { getVariantFileLineCounts } from './sourceLineCounts';
 import type { SetSource } from './useSourceEditing';
@@ -35,6 +36,20 @@ function getLanguageFromFileName(fileName: string | undefined): string | undefin
   }
   const extension = fileName.substring(lastDotIndex);
   return getLanguageFromExtension(extension);
+}
+
+/**
+ * The language a variant file renders with when untransformed: the variant's
+ * `language` for its main file, otherwise the extra file's own `language` or
+ * the one its extension implies.
+ */
+function getVariantFileLanguage(variant: VariantCode, fileName: string): string | undefined {
+  if (fileName === variant.fileName) {
+    return variant.language;
+  }
+  const extraFile = variant.extraFiles?.[fileName];
+  const declared = typeof extraFile === 'object' ? extraFile.language : undefined;
+  return declared ?? getLanguageFromFileName(fileName);
 }
 
 /**
@@ -841,29 +856,49 @@ export function useFileNavigation({
 
     // If we have transformed files, use them
     if (transformedFiles) {
-      return transformedFiles.files.map((f) => ({
-        name: f.name,
-        slug: generateFileSlug(mainSlug, f.originalName, selectedVariantKey),
-        component: (
-          <Pre
-            key={getPreRenderKey(generateFileSlug(mainSlug, f.originalName, selectedVariantKey))}
-            className={preClassName}
-            fileName={f.originalName}
-            bridgeLineMode={variantBridgeLineMode}
-            setSource={setSource}
-            editActivation={editActivation}
-            onActivate={onActivate}
-            shouldHighlight={shouldHighlight}
-            expanded={expanded}
-            expand={expand}
-            transforming={transforming}
-            onTransitionReady={onPreTransitionReady}
-            swapTarget={resolveSwapTarget(f.originalName)}
-          >
-            {f.source}
-          </Pre>
-        ),
-      }));
+      return transformedFiles.files.map((file) => {
+        // A file the transform left untouched is still its original source —
+        // possibly `hastCompressed` — so it renders like the untransformed
+        // branch below, with its dictionary. A rewritten file is live HAST whose
+        // text differs, so the original `fallback` would paint stale text first.
+        const passedThrough = isPassThroughFile(selectedVariant, file);
+        return {
+          name: file.name,
+          slug: generateFileSlug(mainSlug, file.originalName, selectedVariantKey),
+          component: (
+            <Pre
+              key={getPreRenderKey(
+                generateFileSlug(mainSlug, file.originalName, selectedVariantKey),
+              )}
+              className={preClassName}
+              fileName={file.originalName}
+              language={
+                passedThrough
+                  ? getVariantFileLanguage(selectedVariant, file.originalName)
+                  : undefined
+              }
+              bridgeLineMode={variantBridgeLineMode}
+              setSource={setSource}
+              editActivation={editActivation}
+              onActivate={onActivate}
+              shouldHighlight={shouldHighlight}
+              fallback={passedThrough ? resolvedFallbacks[file.originalName] : undefined}
+              fallbackLineCounts={
+                passedThrough
+                  ? getVariantFileLineCounts(selectedVariant, file.originalName)
+                  : undefined
+              }
+              expanded={expanded}
+              expand={expand}
+              transforming={transforming}
+              onTransitionReady={onPreTransitionReady}
+              swapTarget={resolveSwapTarget(file.originalName)}
+            >
+              {file.source}
+            </Pre>
+          ),
+        };
+      });
     }
 
     // Otherwise, create files from original untransformed data

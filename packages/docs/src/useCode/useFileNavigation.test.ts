@@ -4060,6 +4060,92 @@ describe('useFileNavigation', () => {
     });
   });
 
+  describe('files decode dictionaries', () => {
+    it('gives a file the transform passed through its own dictionary, but not a rewritten file', () => {
+      // `styles.css` has no transform, so it passes through as its original
+      // (possibly `hastCompressed`) source and needs its dictionary. The
+      // rewritten main file is a live tree whose text differs from the original,
+      // so the original fallback must not paint over it.
+      const buttonFallback = ['const button: number = 1;'];
+      const stylesFallback = ['.button {}'];
+      const stylesSource = { hastJson: '{"type":"root","children":[]}' };
+      const selectedVariant: VariantCode = {
+        fileName: 'Button.tsx',
+        source: { hastJson: '{"type":"root","children":[]}' },
+        fallback: buttonFallback,
+        language: 'tsx',
+        extraFiles: {
+          'styles.css': { source: stylesSource, fallback: stylesFallback, totalLines: 1 },
+        },
+      };
+      const transformedFiles: TransformedFiles = {
+        files: [
+          {
+            name: 'Button.jsx',
+            originalName: 'Button.tsx',
+            source: { type: 'root', children: [] },
+          },
+          { name: 'styles.css', originalName: 'styles.css', source: stylesSource },
+        ],
+        filenameMap: { 'Button.tsx': 'Button.jsx', 'styles.css': 'styles.css' },
+      };
+
+      const { result } = renderHook(() =>
+        useFileNavigationTest({
+          selectedVariant,
+          transformedFiles,
+          mainSlug: 'Demo',
+          selectedVariantKey: 'Default',
+          variantKeys: ['Default'],
+          shouldHighlight: true,
+        }),
+      );
+
+      const [buttonFile, stylesFile] = result.current.files;
+      const buttonProps = (buttonFile.component as React.ReactElement<any>).props;
+      const stylesProps = (stylesFile.component as React.ReactElement<any>).props;
+      expect(buttonFile.name).toBe('Button.jsx');
+      expect(buttonProps.fallback).toBeUndefined();
+      expect(buttonProps.language).toBeUndefined();
+      expect(stylesFile.name).toBe('styles.css');
+      expect(stylesProps.fallback).toBe(stylesFallback);
+      expect(stylesProps.language).toBe('css');
+      expect(stylesProps.fallbackLineCounts).toEqual(expect.objectContaining({ totalLines: 1 }));
+    });
+
+    it('gives a passed-through main file its dictionary from the fallbacks map', () => {
+      // A rename-only (or failed) transform hands the main file back as its
+      // original source, whose fallback was hoisted off `Code`.
+      const buttonFallback = ['const button = 1;'];
+      const buttonSource = { hastJson: '{"type":"root","children":[]}' };
+      const selectedVariant: VariantCode = {
+        fileName: 'Button.tsx',
+        source: buttonSource,
+        language: 'tsx',
+      };
+      const transformedFiles: TransformedFiles = {
+        files: [{ name: 'Button.jsx', originalName: 'Button.tsx', source: buttonSource }],
+        filenameMap: { 'Button.tsx': 'Button.jsx' },
+      };
+
+      const { result } = renderHook(() =>
+        useFileNavigationTest({
+          selectedVariant,
+          transformedFiles,
+          mainSlug: 'Demo',
+          selectedVariantKey: 'Default',
+          variantKeys: ['Default'],
+          shouldHighlight: true,
+          fallbacks: { 'Button.tsx': buttonFallback },
+        }),
+      );
+
+      const buttonProps = (result.current.files[0].component as React.ReactElement<any>).props;
+      expect(buttonProps.fallback).toBe(buttonFallback);
+      expect(buttonProps.language).toBe('tsx');
+    });
+  });
+
   describe('selectedFileLines line counting', () => {
     it('uses the STORED variant count for a compressed pass-through file even when a transform is active', () => {
       // A transform is active on the variant, but the selected file is a pass-through:

@@ -436,11 +436,14 @@ export function toControlledCode(
     // The per-file `fallback` is the DEFLATE dictionary for a `hastCompressed`
     // source. It rides on the `VariantCode` in the no-`ContentLoading` path; on
     // the `ContentLoading` path the active variant's fallback is stripped off
-    // `Code` and lives in `context.fallbacks` (`activeFallbacks`) instead — so
-    // prefer that for the active variant, falling back to the variant's field.
+    // `Code` and is hoisted into the highlighter context instead, which `useCode`
+    // resolves for this variant (`activeFallbacks`). The file's own `fallback`
+    // wins: it is the dictionary its source was compressed with, while the map
+    // is keyed by file name alone and so can hold a same-named file of another
+    // variant (and a `fallbackCollapsed` hoist is only the visible window).
     const variantFallbacks = key === activeVariantKey ? activeFallbacks : undefined;
     const mainFallback =
-      (variant.fileName ? variantFallbacks?.[variant.fileName] : undefined) ?? variant.fallback;
+      variant.fallback ?? (variant.fileName ? variantFallbacks?.[variant.fileName] : undefined);
     const source = variant.source != null ? toString(variant.source, mainFallback) : variant.source;
 
     let extraFiles: ControlledVariantExtraFiles | undefined;
@@ -450,7 +453,7 @@ export function toControlledCode(
         if (typeof entry === 'string') {
           extraFiles[fileName] = { source: entry, ...analyzeSource(entry) };
         } else {
-          const entryFallback = variantFallbacks?.[fileName] ?? entry.fallback;
+          const entryFallback = entry.fallback ?? variantFallbacks?.[fileName];
           const extraSource = entry.source != null ? toString(entry.source, entryFallback) : null;
           extraFiles[fileName] = {
             source: extraSource,

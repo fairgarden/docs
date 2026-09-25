@@ -24,6 +24,23 @@ export interface TransformedFiles {
 }
 
 /**
+ * Whether `file` is one a transform left untouched. `createTransformedFiles`
+ * passes such a file through as the variant's original source object (no
+ * transform for the file, a rename-only transform, or a failed one), so it may
+ * still be `hastCompressed` and decodes with the original file's fallback. A
+ * file the transform rewrote is a new live tree whose text differs from the
+ * original's.
+ */
+export function isPassThroughFile(variant: VariantCode, file: TransformedFile): boolean {
+  if (file.originalName === variant.fileName) {
+    return file.source === variant.source;
+  }
+  const extraFile = variant.extraFiles?.[file.originalName];
+  const originalSource = typeof extraFile === 'object' ? extraFile.source : extraFile;
+  return originalSource !== undefined && file.source === originalSource;
+}
+
+/**
  * Pure function to get available transforms from effective code data.
  *
  * Variant-level `transforms` is a manifest produced by `splitTransformsForEmbed`
