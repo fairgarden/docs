@@ -9,34 +9,34 @@
  * highlight, mirroring the `./useCode/transformEngineCache` split.
  */
 
-// Must match STARRY_NIGHT_KEY in ./parseSource. Duplicated intentionally to keep
+// Must match READY_SCOPES_KEY in ./parseSource. Duplicated intentionally to keep
 // this module free of a static `./parseSource` import (which would pull the
 // engine into every consumer's bundle).
-const STARRY_NIGHT_KEY = '__docs_infra_starry_night_instance__';
+const READY_SCOPES_KEY = '__docs_infra_starry_night_ready_scopes__';
 
-// The narrow slice of the Starry Night instance this module reads synchronously.
-type ScopeReader = { scopes: () => ReadonlyArray<string> };
-
-function getInstance(): ScopeReader | undefined {
-  return (globalThis as Record<string, unknown>)[STARRY_NIGHT_KEY] as ScopeReader | undefined;
+function getReadyScopes(): ReadonlySet<string> | undefined {
+  return (globalThis as Record<string, unknown>)[READY_SCOPES_KEY] as
+    | ReadonlySet<string>
+    | undefined;
 }
 
 /**
- * Synchronously reports whether every given scope's grammar is already
- * registered. Reads the shared singleton without importing the engine, so it is
- * safe on the render path (e.g. a `useState` initializer) to decide whether a
- * block can highlight immediately or must wait — avoiding a cold flash.
+ * Synchronously reports whether every given scope's grammar is registered and
+ * ready for `parseSource` to highlight with. A grammar that is still being
+ * registered doesn't count yet. Reads the shared singleton's state without
+ * importing the engine, so it is safe on the render path (e.g. a `useState`
+ * initializer) to decide whether a block can highlight immediately or must wait
+ * — avoiding a cold flash.
  */
 export function areGrammarsRegistered(scopes: string[]): boolean {
   if (scopes.length === 0) {
     return true;
   }
-  const instance = getInstance();
-  if (!instance) {
+  const readyScopes = getReadyScopes();
+  if (!readyScopes) {
     return false;
   }
-  const registered = new Set(instance.scopes());
-  return scopes.every((scope) => registered.has(scope));
+  return scopes.every((scope) => readyScopes.has(scope));
 }
 
 /**

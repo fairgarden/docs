@@ -3,6 +3,9 @@ import type { Element, Root } from 'hast';
 import { parseSource, createParseSource, resetStarryNight } from './parseSource';
 import { ensureGrammars, areGrammarsRegistered } from './grammarCache';
 
+// Where `parseSource` keeps the shared Starry Night instance.
+const STARRY_NIGHT_KEY = '__docs_infra_starry_night_instance__';
+
 // The Starry Night instance is a global singleton; reset it so each test starts
 // from a known-empty registry and exercises lazy registration from scratch.
 beforeEach(() => {
@@ -88,6 +91,31 @@ describe('areGrammarsRegistered', () => {
 
   it('is true for an empty scope list (nothing to wait for)', () => {
     expect(areGrammarsRegistered([])).toBe(true);
+  });
+
+  it('stays false while a grammar is still being registered, when parseSource cannot use it yet', async () => {
+    await createParseSource([]);
+    // Look inside the engine's `register` call: it lists the new scope right away,
+    // but only highlights with it once the call resolves.
+    const engine = (globalThis as Record<string, unknown>)[STARRY_NIGHT_KEY] as {
+      register: (grammars: unknown[]) => Promise<void>;
+    };
+    const register = engine.register;
+    let registeredMidLoad: boolean | undefined;
+    let highlightsMidLoad: boolean | undefined;
+    engine.register = async (grammars) => {
+      const registering = register(grammars);
+      registeredMidLoad = areGrammarsRegistered(['source.css']);
+      highlightsMidLoad = highlightsAsCode('styles.css', 'a { color: red }');
+      await registering;
+    };
+
+    await ensureGrammars(['source.css']);
+
+    expect(highlightsMidLoad).toBe(false);
+    expect(registeredMidLoad).toBe(false);
+    expect(areGrammarsRegistered(['source.css'])).toBe(true);
+    expect(highlightsAsCode('styles.css', 'a { color: red }')).toBe(true);
   });
 });
 

@@ -10,6 +10,13 @@ type StarryNight = Awaited<ReturnType<typeof createStarryNight>>;
 
 const STARRY_NIGHT_KEY = '__docs_infra_starry_night_instance__';
 
+// The scopes the instance can highlight with right now, read by
+// `areGrammarsRegistered` in `./grammarCache`. Starry Night's `register()` lists a
+// new scope in `scopes()` as soon as it starts, but keeps highlighting with its
+// previous registry until the call resolves, so `scopes()` alone would report a
+// grammar `parseSource` can't use yet.
+const READY_SCOPES_KEY = '__docs_infra_starry_night_ready_scopes__';
+
 // Set DEBUG=true to log grammar load/register failures (e.g. a chunk-load error
 // after a rotated deploy, or offline). Off by default — a failed load fails open
 // (the affected scope renders as plain text) per convention 9.3.
@@ -113,6 +120,14 @@ async function loadGrammars(scopes: string[]): Promise<Grammar[]> {
   return loaded.filter((grammar): grammar is Grammar => grammar !== undefined);
 }
 
+// Records every scope the instance lists as ready to highlight with. Called once
+// `createStarryNight` or a `register()` call settles; registrations run one at a
+// time (see `enqueue`), so none is still loading then. A failed registration is
+// recorded too, so waiting blocks fail open to plain text instead of waiting forever.
+function markScopesReady(instance: StarryNight): void {
+  (globalThis as Record<string, unknown>)[READY_SCOPES_KEY] = new Set(instance.scopes());
+}
+
 // Creation dedup: concurrent first-callers share one `createStarryNight` call.
 let instancePromise: Promise<StarryNight> | undefined;
 
@@ -124,10 +139,19 @@ async function createIfNeeded(initial: Grammar[]): Promise<StarryNight> {
   if (!instancePromise) {
     instancePromise = createStarryNight(initial).then((instance) => {
       (globalThis as Record<string, unknown>)[STARRY_NIGHT_KEY] = instance;
+      markScopesReady(instance);
       return instance;
     });
   }
   return instancePromise;
+}
+
+async function registerOnInstance(instance: StarryNight, grammars: Grammar[]): Promise<void> {
+  try {
+    await instance.register(grammars);
+  } finally {
+    markScopesReady(instance);
+  }
 }
 
 // Registration mutex: `register()` calls mutate the shared singleton, so they
@@ -160,7 +184,7 @@ async function registerScopes(requested: string[]): Promise<void> {
   while (pending.length > 0) {
     const grammars = await loadGrammars(pending);
     if (grammars.length > 0) {
-      await instance.register(grammars);
+      await registerOnInstance(instance, grammars);
     }
     // `missingScopes()` surfaces hard grammar dependencies (e.g. source.mdx ->
     // source.tsx). Resolve the ones we have a loader for, to a fixpoint. The
@@ -172,6 +196,9 @@ async function registerScopes(requested: string[]): Promise<void> {
       .filter((scope) => grammarLoaders[scope] && !registered.has(scope));
   }
   /* eslint-enable no-await-in-loop */
+  // Nothing else registers while this task holds the mutex, so every listed scope
+  // is usable, including ones listed before this module first recorded them.
+  markScopesReady(instance);
 }
 
 /**
@@ -203,7 +230,7 @@ export async function registerAllGrammars(): Promise<void> {
   const registered = new Set(instance.scopes());
   const missing = grammars.filter((grammar) => !registered.has(grammar.scopeName));
   if (missing.length > 0) {
-    await instance.register(missing);
+    await registerOnInstance(instance, missing);
   }
 }
 
@@ -238,6 +265,7 @@ export const createParseSource = async (initialScopes?: string[]): Promise<Parse
  */
 export function resetStarryNight(): void {
   (globalThis as Record<string, unknown>)[STARRY_NIGHT_KEY] = undefined;
+  (globalThis as Record<string, unknown>)[READY_SCOPES_KEY] = undefined;
   instancePromise = undefined;
   registrationChain = Promise.resolve();
 }
