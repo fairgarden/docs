@@ -7,6 +7,7 @@ import {
   promoteCriticalFallback,
 } from '../../CodeHighlighter/fallbackFormat';
 import { isFrameSpan } from '../parseSource/isFrameSpan';
+import { createParseSource } from '../parseSource';
 import { decodeHastSource } from './decodeHastSource';
 import type {
   VariantCode,
@@ -241,9 +242,11 @@ describe('loadIsomorphicCodeVariant', () => {
 
       expect(result.code.fileName).toBe('test.ts');
       expect(result.code.source).toBe(mockParsedSource);
+      // The inline file is parsed like the main file; only the relative one is skipped.
       expect(result.code.extraFiles).toEqual({
         'helper.ts': {
-          source: 'export const helper = () => {};',
+          source: mockParsedSource,
+          fallback: [],
           language: 'typescript',
         },
       });
@@ -372,6 +375,140 @@ describe('loadIsomorphicCodeVariant', () => {
       expect(result.dependencies).toEqual([]); // No URL, so no dependencies
       expect(transformerSpy).toHaveBeenCalledWith('const x = 1;', 'test.ts', undefined);
       expect(mockLoadSource).not.toHaveBeenCalled(); // No loading needed
+    });
+
+    describe('inline extra files', () => {
+      // Every file is an inline string, so there is nothing to load: a URL would
+      // only resolve external files, so the result must not depend on one.
+      const inlineVariant = (url?: string): VariantCode => ({
+        fileName: 'Button.tsx',
+        url,
+        source: 'export const Button = () => <button type="button" />;',
+        extraFiles: {
+          'button.css': { source: '.button {\n  color: red;\n}' },
+          'useToggle.ts': {
+            source: 'export const useToggle = (value: boolean) => !value;',
+            comments: { 1: ['@highlight'] },
+          },
+        },
+      });
+
+      // Removes the one type annotation above, as a TS → JS transform would.
+      const removeBooleanTypes: SourceTransformers = [
+        {
+          extensions: ['ts', 'tsx'],
+          transformer: async (source, fileName) => ({
+            js: {
+              source: source.replaceAll(': boolean', ''),
+              fileName: fileName.replace(/\.ts$/, '.js').replace(/\.tsx$/, '.jsx'),
+            },
+          }),
+        },
+      ];
+
+      const isHighlighted = (source: unknown) =>
+        typeof source === 'object' && JSON.stringify(source).includes('pl-');
+
+      it('parses them into highlighted HAST without a URL', async () => {
+        const parseSource = await createParseSource();
+
+        const result = await loadIsomorphicCodeVariant(undefined, 'Default', inlineVariant(), {
+          sourceParser: Promise.resolve(parseSource),
+        });
+
+        expect(isHighlighted(result.code.source)).toBe(true);
+        const extraFiles = result.code.extraFiles!;
+        expect(Object.keys(extraFiles)).toEqual(['button.css', 'useToggle.ts']);
+        for (const file of Object.values(extraFiles)) {
+          expect(typeof file === 'object' && isHighlighted(file.source)).toBe(true);
+        }
+        expect(result.dependencies).toEqual([]);
+      });
+
+      it('loads them exactly as it would with a URL', async () => {
+        const parseSource = await createParseSource();
+        const seenComments: Array<SourceComments | undefined> = [];
+        const options = {
+          sourceParser: Promise.resolve(parseSource),
+          sourceTransformers: removeBooleanTypes,
+          sourceEnhancers: [
+            (root: HastRoot, comments: SourceComments | undefined) => {
+              seenComments.push(comments);
+              return root;
+            },
+          ],
+        };
+
+        const withoutUrl = await loadIsomorphicCodeVariant(
+          undefined,
+          'Default',
+          inlineVariant(),
+          options,
+        );
+        const withUrl = await loadIsomorphicCodeVariant(
+          'file:///demo/Button.tsx',
+          'Default',
+          inlineVariant('file:///demo/Button.tsx'),
+          options,
+        );
+
+        // Parsed, enhanced (with each file's own comments), transformed and given a
+        // loading fallback the same way, whether or not a URL is given. Only the
+        // `relativeUrl` a URL lets the loader record is left out.
+        const withUrlExtraFiles = Object.fromEntries(
+          Object.entries(withUrl.code.extraFiles!).map(([fileName, file]) => {
+            if (typeof file === 'string') {
+              return [fileName, file];
+            }
+            const { relativeUrl, ...rest } = file;
+            return [fileName, rest];
+          }),
+        );
+        expect(withoutUrl.code.extraFiles).toEqual(withUrlExtraFiles);
+        expect(seenComments).toContainEqual({ 1: ['@highlight'] });
+        const useToggle = withoutUrl.code.extraFiles!['useToggle.ts'];
+        expect(typeof useToggle === 'object' && useToggle.fallback).toBeTruthy();
+        expect(typeof useToggle === 'object' && useToggle.transforms?.js?.fileName).toBe(
+          'useToggle.js',
+        );
+      });
+
+      it('keeps them as plain strings when parsing is disabled', async () => {
+        const result = await loadIsomorphicCodeVariant(undefined, 'Default', inlineVariant(), {
+          disableParsing: true,
+          disableTransforms: true,
+        });
+
+        expect(result.code.source).toBe('export const Button = () => <button type="button" />;');
+        expect(result.code.extraFiles).toEqual({
+          'button.css': { source: '.button {\n  color: red;\n}', language: 'css' },
+          'useToggle.ts': {
+            source: 'export const useToggle = (value: boolean) => !value;',
+            language: 'typescript',
+            comments: { 1: ['@highlight'] },
+          },
+        });
+      });
+
+      it('keeps an inline extra file that is already parsed as it is', async () => {
+        const parseSource = await createParseSource();
+        const parsedCss = parseSource('.button {\n  color: red;\n}', 'button.css');
+
+        const result = await loadIsomorphicCodeVariant(
+          undefined,
+          'Default',
+          {
+            fileName: 'Button.tsx',
+            source: 'export const Button = () => <button type="button" />;',
+            extraFiles: { 'button.css': { source: parsedCss } },
+          },
+          { sourceParser: Promise.resolve(parseSource) },
+        );
+
+        expect(result.code.extraFiles).toEqual({
+          'button.css': { source: parsedCss, language: 'css' },
+        });
+      });
     });
   });
 

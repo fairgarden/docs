@@ -1297,18 +1297,32 @@ export async function loadIsomorphicCodeVariant(
 
   let allExtraFiles: VariantExtraFiles = {};
 
-  // Load all extra files if any exist and we have a URL
+  // Load all extra files if any exist
   if (Object.keys(extraFilesToLoad).length > 0) {
     if (!url) {
-      // If there's no URL, we can only load extra files that have inline source or absolute URLs
-      const loadableFiles: VariantExtraFiles = {};
+      // Without a URL, only files that need no base URL can be loaded: inline
+      // sources and absolute URLs. A URL only resolves and loads external files,
+      // so an inline source string is parsed, transformed and enhanced exactly as
+      // it would be with one. An inline source that is already parsed (or empty)
+      // has nothing to parse, so it is kept as it is.
+      const filesToLoad: VariantExtraFiles = {};
+      const keptExtraFiles: VariantExtraFiles = {};
       for (const [key, value] of Object.entries(extraFilesToLoad)) {
-        if (typeof value !== 'string' && value.source !== undefined) {
-          // Inline source - can always load
-          loadableFiles[key] = value;
-        } else if (typeof value === 'string' && isAbsolutePath(value)) {
-          // Absolute URL - can load without base URL
-          loadableFiles[key] = value;
+        if (typeof value === 'string' && isAbsolutePath(value)) {
+          filesToLoad[key] = value;
+        } else if (typeof value !== 'string' && typeof value.source === 'string' && value.source) {
+          filesToLoad[key] = value;
+        } else if (typeof value !== 'string' && value.source !== undefined) {
+          // Preserve metadata if it was marked as globals
+          const metadata = value.metadata || globalsFileKeys.has(key) ? true : undefined;
+          const extension = key.slice(key.lastIndexOf('.'));
+          const extraFileLanguage = getLanguageFromExtension(extension);
+          keptExtraFiles[normalizePathKey(key)] = {
+            source: value.source,
+            ...(extraFileLanguage && { language: extraFileLanguage }),
+            ...(value.transforms && { transforms: value.transforms }),
+            ...(metadata !== undefined && { metadata }),
+          };
         } else {
           console.warn(
             `Skipping extra file "${key}" - no URL provided and file requires loading from external source`,
@@ -1316,54 +1330,37 @@ export async function loadIsomorphicCodeVariant(
         }
       }
 
-      if (Object.keys(loadableFiles).length > 0) {
-        // Process loadable files: inline sources without URL-based loading, absolute URLs with loading
-        for (const [key, value] of Object.entries(loadableFiles)) {
-          if (typeof value !== 'string') {
-            // Inline source - preserve metadata if it was marked as globals
-            const metadata = value.metadata || globalsFileKeys.has(key) ? true : undefined;
-            // Derive language from filename extension
-            const extension = key.slice(key.lastIndexOf('.'));
-            const extraFileLanguage = getLanguageFromExtension(extension);
-            allExtraFiles[normalizePathKey(key)] = {
-              source: value.source!,
-              ...(extraFileLanguage && { language: extraFileLanguage }),
-              ...(value.transforms && { transforms: value.transforms }),
-              ...(metadata !== undefined && { metadata }),
-            };
-          }
-        }
+      let loadedExtraFiles: VariantExtraFiles = {};
+      if (Object.keys(filesToLoad).length > 0) {
+        const extraFilesResult = await loadExtraFiles(
+          variantName,
+          filesToLoad,
+          '', // No base URL: inline sources need none, absolute URLs resolve on their own
+          '', // No entry URL
+          loadSource,
+          sourceParser,
+          sourceTransformers,
+          sourceEnhancers,
+          loadSourceCache,
+          { ...options, loadedFiles },
+          variant.allFilesListed || false,
+          knownExtraFiles,
+          globalsFileKeys, // Pass globals file tracking
+        );
+        loadedExtraFiles = extraFilesResult.extraFiles;
+        allFilesUsed.push(...extraFilesResult.allFilesUsed);
+        allExternals = mergeExternals([allExternals, extraFilesResult.allExternals]);
+      }
 
-        // For absolute URLs, we need to load them
-        const urlFilesToLoad: VariantExtraFiles = {};
-        for (const [key, value] of Object.entries(loadableFiles)) {
-          if (typeof value === 'string') {
-            urlFilesToLoad[key] = value;
-          }
-        }
-
-        if (Object.keys(urlFilesToLoad).length > 0) {
-          // Load absolute URL files even without base URL
-          const extraFilesResult = await loadExtraFiles(
-            variantName,
-            urlFilesToLoad,
-            '', // No base URL needed for absolute URLs
-            '', // No entry URL
-            loadSource,
-            sourceParser,
-            sourceTransformers,
-            sourceEnhancers,
-            loadSourceCache,
-            { ...options, loadedFiles },
-            variant.allFilesListed || false,
-            knownExtraFiles,
-            globalsFileKeys, // Pass globals file tracking
-          );
-          allExtraFiles = { ...allExtraFiles, ...extraFilesResult.extraFiles };
-          allFilesUsed.push(...extraFilesResult.allFilesUsed);
-          allExternals = mergeExternals([allExternals, extraFilesResult.allExternals]);
+      // Keep the declared file order; files discovered while loading come last.
+      for (const key of Object.keys(extraFilesToLoad)) {
+        const normalizedKey = normalizePathKey(key);
+        const file = keptExtraFiles[normalizedKey] ?? loadedExtraFiles[normalizedKey];
+        if (file !== undefined) {
+          allExtraFiles[normalizedKey] = file;
         }
       }
+      allExtraFiles = { ...allExtraFiles, ...loadedExtraFiles };
     } else {
       const extraFilesResult = await loadExtraFiles(
         variantName,
