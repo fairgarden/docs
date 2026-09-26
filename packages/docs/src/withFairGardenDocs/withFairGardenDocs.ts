@@ -121,7 +121,9 @@ export interface WithFairGardenDocsOptions {
   notableCommentsPrefix?: string[];
   /**
    * Options for the code emphasis enhancer used by demo loaders.
-   * Passed to `createEnhanceCodeEmphasis` in the precomputed code highlighter loader.
+   * Passed to `createEnhanceCodeEmphasis` in the precomputed code highlighter loader,
+   * and by `CodeHighlighter` when it parses code on the server (inline code), so both
+   * frame code the same way.
    */
   demoEmphasisOptions?: EnhanceCodeEmphasisOptions;
   /**
@@ -503,6 +505,14 @@ export function withFairGardenDocs(options: WithFairGardenDocsOptions = {}) {
       ...nextConfig,
       pageExtensions,
       ...(enableExportOutput && { output: 'export' }),
+      // `CodeHighlighter` reads these when it parses code on the server, so inline
+      // code gets the same emphasis frames as a precomputed demo.
+      ...(demoEmphasisOptions && {
+        env: {
+          ...nextConfig.env,
+          FAIRGARDEN_DOCS_DEMO_EMPHASIS_OPTIONS: JSON.stringify(demoEmphasisOptions),
+        },
+      }),
       turbopack: {
         ...nextConfig.turbopack,
         rules: {

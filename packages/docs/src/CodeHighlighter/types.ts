@@ -454,6 +454,16 @@ export interface SourceEnhancer {
    * re-applying. Anonymous enhancers always run.
    */
   enhancerName?: string;
+  /**
+   * Marks an enhancer that loads its implementation on demand, so a call returns
+   * a promise until it has loaded and the enhanced root after (like
+   * `enhanceCodeEmphasisLazy`). The server and the browser load it independently,
+   * so `useCode` never runs it while server rendering or hydrating, where it could
+   * make the hydrated markup differ from the server HTML. It runs right after
+   * hydration instead. Enhancers that always return synchronously, or always
+   * return a promise, don't need it.
+   */
+  enhancerLazy?: boolean;
 }
 
 /**
@@ -676,6 +686,14 @@ export interface CodeHighlighterBaseProps<T extends {}>
     CodeLoadingProps,
     CodeFunctionProps,
     CodeRenderingProps<T> {
+  /**
+   * Source enhancers the server runs after parsing, to enhance the HAST tree.
+   * Defaults to the emphasis enhancer the demo loaders run, with the
+   * `demoEmphasisOptions` given to `withFairGardenDocs`, so code parsed on the server
+   * arrives with its emphasis frames and the client has nothing left to enhance.
+   * Pass `[]` to run none.
+   */
+  sourceEnhancers?: SourceEnhancers;
   /**
    * Render-time "collapse to empty": collapse the code block to an empty window so
    * the whole block is hidden until expanded. Threaded into `contentProps` and

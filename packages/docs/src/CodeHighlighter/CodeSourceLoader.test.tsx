@@ -7,13 +7,22 @@
  */
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import CodeSourceLoader from './CodeSourceLoader';
 import type { CodeHighlighterChunkContentProps } from './CodeHighlighterChunk';
 import { useCode } from '../useCode';
 import { createParseSource } from '../pipeline/parseSource';
 import { hasAllVariants } from '../pipeline/loadIsomorphicCodeVariant/hasAllCodeVariants';
-import type { Code, ContentProps, ParseSource } from './types';
+import { decodeHastSource } from '../pipeline/loadIsomorphicCodeVariant/decodeHastSource';
+import type {
+  Code,
+  ContentProps,
+  HastRoot,
+  LoadSource,
+  ParseSource,
+  SourceEnhancer,
+  VariantCode,
+} from './types';
 
 let parseSource: ParseSource;
 
@@ -47,7 +56,10 @@ const inlineCode: Code = {
   },
 };
 
-async function loadInlineCode(highlightAfter: 'init' | 'idle') {
+async function loadInlineCode(
+  highlightAfter: 'init' | 'idle',
+  options: Partial<CodeHighlighterChunkContentProps> = {},
+) {
   const props: CodeHighlighterChunkContentProps = {
     loading: true,
     data: inlineCode,
@@ -56,10 +68,36 @@ async function loadInlineCode(highlightAfter: 'init' | 'idle') {
     Content: FilesContent,
     sourceParser: Promise.resolve(parseSource),
     highlightAfter,
+    ...options,
   };
   const element = await CodeSourceLoader(props);
   const clientProps = element.props as { code: Code };
   return { element, code: clientProps.code };
+}
+
+function getLoadedVariant(code: Code): VariantCode {
+  const variant = code.Default;
+  if (!variant || typeof variant === 'string') {
+    throw new Error('expected a loaded variant');
+  }
+  return variant;
+}
+
+/** Every file of the loaded variant as the HAST the client receives, keyed by file name. */
+function getLoadedRoots(code: Code): Record<string, HastRoot | null> {
+  const variant = getLoadedVariant(code);
+  const roots: Record<string, HastRoot | null> = {
+    [variant.fileName!]: decodeHastSource(variant.source, variant.fallback),
+  };
+  for (const [fileName, file] of Object.entries(variant.extraFiles ?? {})) {
+    roots[fileName] =
+      typeof file === 'object' ? decodeHastSource(file.source, file.fallback) : null;
+  }
+  return roots;
+}
+
+function getAppliedEnhancers(root: HastRoot | null): string[] | undefined {
+  return root?.data?.appliedEnhancers;
 }
 
 /** The server-rendered markup of each file, keyed by file name. */
@@ -111,6 +149,90 @@ describe('CodeSourceLoader', () => {
       for (const markup of Object.values(files)) {
         expect(markup).not.toContain('class="pl-');
       }
+    });
+  });
+
+  describe('source enhancers', () => {
+    it('runs the default source enhancers on every file and records them', async () => {
+      const { code } = await loadInlineCode('idle');
+
+      const roots = getLoadedRoots(code);
+
+      expect(Object.keys(roots)).toEqual(['Button.tsx', 'button.css', 'useToggle.ts']);
+      for (const root of Object.values(roots)) {
+        // So the client, which runs the same enhancer, skips it.
+        expect(getAppliedEnhancers(root)).toEqual(['enhanceCodeEmphasis']);
+      }
+    });
+
+    it('server-renders the emphasis frames of every file', async () => {
+      const { element } = await loadInlineCode('idle');
+
+      const files = serverMarkupByFile(element);
+
+      expect(Object.keys(files)).toEqual(['Button.tsx', 'button.css', 'useToggle.ts']);
+      for (const markup of Object.values(files)) {
+        expect(markup).toContain('<span class="frame" data-frame-type="focus">');
+      }
+    });
+
+    it('runs the emphasis enhancer with the demo emphasis options', async () => {
+      vi.stubEnv(
+        'FAIRGARDEN_DOCS_DEMO_EMPHASIS_OPTIONS',
+        JSON.stringify({ focusFramesMaxSize: 1 }),
+      );
+      const twoLines: Code = {
+        Default: { fileName: 'Button.tsx', source: 'const a = 1;\nconst b = 2;' },
+      };
+
+      try {
+        const { code } = await loadInlineCode('idle', { data: twoLines, code: twoLines });
+
+        const variant = getLoadedVariant(code);
+        expect(getAppliedEnhancers(getLoadedRoots(code)['Button.tsx'])).toEqual([
+          'enhanceCodeEmphasis',
+        ]);
+        expect(variant.focusedLines).toBe(1);
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it('runs the given sourceEnhancers instead of the default ones', async () => {
+      const markFrames: SourceEnhancer = (root) => root;
+      markFrames.enhancerName = 'markFrames';
+
+      const { code } = await loadInlineCode('idle', { sourceEnhancers: [markFrames] });
+
+      for (const root of Object.values(getLoadedRoots(code))) {
+        expect(getAppliedEnhancers(root)).toEqual(['markFrames']);
+      }
+    });
+
+    it('runs no source enhancers when given an empty list', async () => {
+      const { code } = await loadInlineCode('idle', { sourceEnhancers: [] });
+
+      for (const root of Object.values(getLoadedRoots(code))) {
+        expect(getAppliedEnhancers(root)).toBeUndefined();
+      }
+    });
+
+    it('runs the default source enhancers on sources loaded from a url', async () => {
+      const loadSource: LoadSource = async () => ({
+        source: 'export const Button = () => <button type="button" />;',
+      });
+      const urlCode: Code = { Default: { fileName: 'Button.tsx', url: 'file:///Button.tsx' } };
+
+      const { code } = await loadInlineCode('idle', {
+        data: urlCode,
+        code: urlCode,
+        url: 'file:///Button.tsx',
+        loadSource,
+      });
+
+      expect(getAppliedEnhancers(getLoadedRoots(code)['Button.tsx'])).toEqual([
+        'enhanceCodeEmphasis',
+      ]);
     });
   });
 });

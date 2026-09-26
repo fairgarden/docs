@@ -701,8 +701,10 @@ Source enhancers allow you to modify the parsed HAST (Hypertext Abstract Syntax 
 
 Enhancers can be passed to either:
 
-- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on server or during hydration)
+- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on the server when it loads the code)
 - **`useCode`** hook via the `sourceEnhancers` option (runs on client after hydration)
+
+An enhancer with an `enhancerName` records itself on the tree it enhances (`appliedEnhancers`), and later passes skip it, so code the server enhanced is never enhanced again on the client.
 
 ### Enhancer Basic Usage
 
@@ -773,6 +775,29 @@ const asyncEnhancer: SourceEnhancer = async (root, comments, fileName) => {
 };
 ```
 
+### Lazy Enhancers
+
+An enhancer that loads its implementation on demand returns a promise until it has loaded, and the enhanced tree after. Mark it with `enhancerLazy`. The server and the browser load it independently, so `useCode` never runs it while server rendering or hydrating, where it could make the hydrated markup differ from the server HTML. It runs right after hydration instead. The emphasis enhancer `CodeProviderLazy` applies by default is one.
+
+```tsx
+let annotate: SourceEnhancer | undefined;
+
+async function annotateOnceLoaded(
+  root: HastRoot,
+  comments: SourceComments | undefined,
+  fileName: string,
+) {
+  annotate ??= (await import('./annotate')).annotate;
+  return annotate(root, comments, fileName);
+}
+
+// Synchronous once loaded, a promise before.
+const annotateLazy: SourceEnhancer = (root, comments, fileName) =>
+  annotate ? annotate(root, comments, fileName) : annotateOnceLoaded(root, comments, fileName);
+annotateLazy.enhancerName = 'annotate';
+annotateLazy.enhancerLazy = true;
+```
+
 ### Chaining Enhancers
 
 Multiple enhancers run in sequence, each receiving the output of the previous:
@@ -837,6 +862,8 @@ function MyCodeContent(props) {
   return <div>{code.selectedFile}</div>;
 }
 ```
+
+When `CodeHighlighter` parses code on the server and gets no `sourceEnhancers`, it runs the emphasis enhancer the demo loaders run, with the `demoEmphasisOptions` given to [`withFairGardenDocs`](../../pipeline/with-fairgarden-docs/page.mdx). The server HTML then already has the `@highlight` and `@focus` frames, and the client has nothing left to enhance. Passing `sourceEnhancers` replaces that default. Pass `[]` to run none.
 
 **When to use build-time enhancers:**
 

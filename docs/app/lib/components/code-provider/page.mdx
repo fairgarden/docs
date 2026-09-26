@@ -250,8 +250,11 @@ block only fetches the grammars for its languages and a precomputed read-only
 block fetches none (see [Per-language grammar loading](#per-language-grammar-loading)).
 The emphasis enhancer stays eager **only** under the eager `CodeProvider` (so its
 synchronous client-side editing re-enhancement never waits); under
-`CodeProviderLazy` it is a lazy wrapper that a precomputed block skips without
-loading, and that an editing/highlighting block warms before it is needed.
+`CodeProviderLazy` it is a lazy wrapper that a precomputed or server-loaded block
+skips without loading (the build or the server already ran it), and that an
+editing/highlighting block warms before it is needed. It never runs while the
+page hydrates, so whether it has loaded yet can't make the hydrated markup differ
+from the server HTML; a block that still needs it gets it right after hydration.
 
 ### Deduping across a page
 

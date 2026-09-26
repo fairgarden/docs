@@ -46,6 +46,12 @@ export function resetCodeEmphasisCache(): void {
  * live-edit re-enhancement does not flash; returns a promise on the first cold
  * call (the existing async-enhancer path handles it). Carries the same
  * `enhancerName` so precomputed HAST skips it without loading anything.
+ *
+ * Marked `enhancerLazy`: whether a call returns synchronously depends on whether
+ * this process has loaded the chunk yet, which the server and the browser decide
+ * independently. `useCode` therefore never runs it while server rendering or
+ * hydrating, only after, so it can't make the hydrated markup differ from the
+ * server HTML.
  */
 export const enhanceCodeEmphasisLazy: SourceEnhancer = (
   root: HastRoot,
@@ -58,3 +64,4 @@ export const enhanceCodeEmphasisLazy: SourceEnhancer = (
   return load().then((enhance) => enhance(root, comments, fileName));
 };
 enhanceCodeEmphasisLazy.enhancerName = ENHANCE_CODE_EMPHASIS_NAME;
+enhanceCodeEmphasisLazy.enhancerLazy = true;

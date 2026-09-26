@@ -226,7 +226,9 @@ export default withFairGardenDocs()(withMDX(nextConfig));
 
 ### Code Emphasis Configuration
 
-Use `demoEmphasisOptions` on `withFairGardenDocs()` for demo loader output. Use
+Use `demoEmphasisOptions` on `withFairGardenDocs()` for demo loader output. `CodeHighlighter`
+uses the same options for code it parses on the server, such as inline code, so both frame code
+alike. Give a `CodeProvider` that sets its own emphasis enhancer the same options. Use
 `codeBlockEmphasisOptions` on `getFairGardenDocsMdxOptions()` for authored MDX code blocks,
 and on `withFairGardenDocs()` for code blocks rendered from generated type metadata.
 

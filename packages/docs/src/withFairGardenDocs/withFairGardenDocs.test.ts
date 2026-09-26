@@ -950,6 +950,28 @@ describe('withFairGardenDocs', () => {
       });
     });
 
+    it('should pass demoEmphasisOptions to CodeHighlighter through env', () => {
+      const demoEmphasisOptions = {
+        paddingFrameMaxSize: 2,
+        focusFramesMaxSize: 18,
+      };
+
+      const plugin = withFairGardenDocs({ demoEmphasisOptions });
+      const result = plugin({ env: { EXISTING: 'value' } });
+
+      expect(result.env).toEqual({
+        EXISTING: 'value',
+        FAIRGARDEN_DOCS_DEMO_EMPHASIS_OPTIONS: JSON.stringify(demoEmphasisOptions),
+      });
+    });
+
+    it('should leave env untouched without demoEmphasisOptions', () => {
+      const plugin = withFairGardenDocs({});
+
+      expect(plugin({}).env).toBeUndefined();
+      expect(plugin({ env: { EXISTING: 'value' } }).env).toEqual({ EXISTING: 'value' });
+    });
+
     it('should pass codeBlockEmphasisOptions to turbopack types loader options', () => {
       const codeBlockEmphasisOptions = {
         paddingFrameMaxSize: 8,
