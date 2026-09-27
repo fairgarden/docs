@@ -52,8 +52,8 @@ async function applyEnhancersFrom(
 /**
  * Whether `enhancers` would hold anything back from the server render and the
  * hydration of `root`: an enhancer the root hasn't recorded that isn't marked
- * `enhancerSync`. It depends only on its arguments, so the server and the browser
- * agree on it.
+ * `enhancerSync`. It reads only the recorded names and the enhancers' flags, so the
+ * server and the browser agree on it.
  */
 function holdsBackDuringHydration(root: RecordedHastRoot, enhancers: SourceEnhancers): boolean {
   const recorded = new Set(root.data?.appliedEnhancers);

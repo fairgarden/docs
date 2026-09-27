@@ -1635,8 +1635,9 @@ export function createEnhanceCodeEmphasis(
     return root;
   };
   enhancer.enhancerName = 'enhanceCodeEmphasis';
-  // Always synchronous, with output that depends only on its arguments, so `useCode`
-  // can run it while server rendering and hydrating.
+  // Never returns a promise, and gives the same output on the server and in the
+  // browser (its options are the same on both), so `useCode` can run it while server
+  // rendering and hydrating.
   enhancer.enhancerSync = true;
   return enhancer;
 }

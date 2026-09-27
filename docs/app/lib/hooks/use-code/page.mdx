@@ -701,12 +701,17 @@ Source enhancers allow you to modify the parsed HAST (Hypertext Abstract Syntax 
 
 Enhancers can be passed to either:
 
-- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on server or during hydration)
-- **`useCode`** hook via the `sourceEnhancers` option (runs on client after hydration)
+- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on the server, when it loads the code)
+- **`useCode`** hook via the `sourceEnhancers` option (runs on the client, right after hydration unless marked `enhancerSync`)
 
 An enhancer with an `enhancerName` records itself on the tree it enhances (`appliedEnhancers`), and later passes skip it, so an enhancer the server already ran never runs again on the client.
 
-While server rendering and hydrating, `useCode` runs only the enhancers marked `enhancerSync`, which declares that an enhancer always returns synchronously with output that depends only on its arguments. The emphasis enhancers `createEnhanceCodeEmphasis` returns are, so their frames are in the server HTML. Every other enhancer the tree hasn't recorded runs right after hydration, so an enhancer that can return a promise, like one that loads on demand, never makes the hydrated markup differ from the server HTML. Set `enhancerSync: true` on your own enhancer only if it can never return a promise.
+While server rendering and hydrating, `useCode` runs only the enhancers marked `enhancerSync: true`. Every other enhancer the tree hasn't recorded runs right after hydration, so an enhancer that can return a promise, like one that loads on demand, never makes the hydrated markup differ from the server HTML.
+
+An enhancer may set `enhancerSync: true` when it never returns a promise, and produces the same output on the server and in the browser for the same input: it doesn't depend on browser-only state, timing or lazily loaded code. Options or state that are the same on both sides are fine. The emphasis enhancers `createEnhanceCodeEmphasis` returns set it, with their options, so their frames are in the server HTML. The state-driven enhancer in [Passing State to Enhancers](#passing-state-to-enhancers) could set it too.
+
+> [!NOTE]
+> A custom synchronous enhancer given to `useCode` or a provider without `enhancerSync: true` runs right after hydration, not in the server render. Its output is no longer in the server HTML or in the string fallback, and appears on the render after hydration. Set `enhancerSync: true` on it if it meets the criteria above, to keep its output in the server HTML.
 
 ### Enhancer Basic Usage
 
@@ -719,12 +724,12 @@ const addLineAnnotations: SourceEnhancer = (root, comments, fileName) => {
   return root;
 };
 
-// Pass to CodeHighlighter (server-side or during hydration)
+// Pass to CodeHighlighter (runs on the server)
 <CodeHighlighter sourceEnhancers={[addLineAnnotations]} Content={MyCodeContent}>
   {code}
 </CodeHighlighter>;
 
-// Or pass to useCode (client-side, after hydration)
+// Or pass to useCode (runs on the client, right after hydration)
 function MyCodeContent(props) {
   const enhancers = React.useMemo(() => [addLineAnnotations], []);
   const code = useCode(props, { sourceEnhancers: enhancers });
@@ -852,7 +857,7 @@ const serverEnhancer: SourceEnhancer = (root, comments, fileName) => {
 </CodeHighlighter>;
 
 // Client-time enhancer (applied via useCode options)
-// Runs on hydration, useful for dynamic behavior
+// Runs right after hydration (it isn't marked enhancerSync), useful for dynamic behavior
 const clientEnhancer: SourceEnhancer = (root, comments, fileName) => {
   return addPersonalizedAnnotations(root, userPreferences);
 };

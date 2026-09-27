@@ -455,13 +455,15 @@ export interface SourceEnhancer {
    */
   enhancerName?: string;
   /**
-   * Declares that the enhancer always returns synchronously, with output that
-   * depends only on its arguments. `useCode` then runs it while server rendering and
-   * hydrating, so its output is in the server HTML, as `createEnhanceCodeEmphasis`
-   * enhancers are. Other enhancers the tree hasn't recorded run right after
-   * hydration instead, so an enhancer that can return a promise, like one that
-   * loads on demand, can never make the hydrated markup differ from the server
-   * HTML. Never set it on an enhancer that can return a promise.
+   * Declares that the enhancer never returns a promise, and produces the same output
+   * on the server and in the browser for the same input: it doesn't depend on
+   * browser-only state, timing or lazily loaded code. Options or state that are the
+   * same on both sides are fine, as with `createEnhanceCodeEmphasis` options, or
+   * component state captured in a closure. `useCode` then runs it while server
+   * rendering and hydrating, so its output is in the server HTML and in the string
+   * fallback. Other enhancers the tree hasn't recorded run right after hydration
+   * instead, so an enhancer that can return a promise, like one that loads on
+   * demand, can never make the hydrated markup differ from the server HTML.
    */
   enhancerSync?: boolean;
 }
