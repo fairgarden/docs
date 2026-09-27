@@ -24,8 +24,9 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
 }
 
 /**
- * Derive a *windowed* fallback for a plain-string source by running the same
- * `sourceEnhancers` the live render uses over a cheap line-guttered HAST
+ * Derive a *windowed* fallback for a plain-string source by running the
+ * `sourceEnhancers` given to `CodeHighlighter` (the ones the server loader runs on
+ * the loaded code) over a cheap line-guttered HAST
  * (`parsePlainText` — gutters, no syntax highlighting). The inline-string
  * fallback path otherwise wraps the whole source in one un-windowed focus frame,
  * so an oversized / `@focus` / `@highlight` block paints its full text before

@@ -701,8 +701,8 @@ Source enhancers allow you to modify the parsed HAST (Hypertext Abstract Syntax 
 
 Enhancers can be passed to either:
 
-- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on the server, when it loads the code)
-- **`useCode`** hook via the `sourceEnhancers` option (runs on the client, right after hydration unless marked `enhancerSync`)
+- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on the server, when it loads the code; only the `enhancerSync` ones shape the loading fallback)
+- **`useCode`** hook via the `sourceEnhancers` option (runs on the client: during the server render and hydration when marked `enhancerSync`, otherwise right after hydration)
 
 An enhancer with an `enhancerName` records itself on the tree it enhances (`appliedEnhancers`), and later passes skip it, so an enhancer the server already ran never runs again on the client.
 
@@ -711,7 +711,12 @@ While server rendering and hydrating, `useCode` runs only the enhancers marked `
 An enhancer may set `enhancerSync: true` when it never returns a promise, and produces the same output on the server and in the browser for the same input: it doesn't depend on browser-only state, timing or lazily loaded code. Options or state that are the same on both sides are fine. The emphasis enhancers `createEnhanceCodeEmphasis` returns set it, with their options, so their frames are in the server HTML. The state-driven enhancer in [Passing State to Enhancers](#passing-state-to-enhancers) could set it too.
 
 > [!NOTE]
-> A custom synchronous enhancer given to `useCode` or a provider without `enhancerSync: true` runs right after hydration, not in the server render. Its output is no longer in the server HTML or in the string fallback, and appears on the render after hydration. Set `enhancerSync: true` on it if it meets the criteria above, to keep its output in the server HTML.
+> When a custom synchronous enhancer runs depends on where it's passed:
+>
+> - **Given to `useCode` or a provider:** without `enhancerSync: true`, it runs right after hydration, so its output isn't in the server HTML and appears on the first render after hydration. With `enhancerSync: true`, it runs during the server render and the hydration, and its output is in the server HTML.
+> - **Given to `CodeHighlighter`'s `sourceEnhancers`:** the server loader runs it on the loaded code, marked or not. The loading fallback applies only `enhancerSync` enhancers, so an unmarked one doesn't window the fallback.
+>
+> Set `enhancerSync: true` on an enhancer that meets the criteria above.
 
 ### Enhancer Basic Usage
 
