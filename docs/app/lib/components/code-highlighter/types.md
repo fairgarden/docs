@@ -50,7 +50,7 @@ never reaches the path that renders precomputed content.
 | loadVariantMeta         | `LoadVariantMeta`                              | -         | Function to load specific variant metadata                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | precompute              | `Code`                                         | -         | Pre-computed code data from build-time optimization                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | slug                    | `string`                                       | -         | URL-friendly identifier for deep linking and navigation                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| sourceEnhancers         | `SourceEnhancers`                              | -         | Source enhancers the server runs after parsing, to enhance the HAST tree.&#xA;Defaults to the emphasis enhancer the demo loaders run, with the&#xA;`demoEmphasisOptions` given to `withFairGardenDocs`, so code parsed on the server&#xA;arrives with its emphasis frames and the client has nothing left to enhance.&#xA;Pass `[]` to run none.                                                                                                                                                                            |
+| sourceEnhancers         | `SourceEnhancers`                              | -         | Array of source enhancers that run after parsing to enhance the HAST tree                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | sourceParser            | `Promise<ParseSource>`                         | -         | Promise resolving to a source parser for syntax highlighting                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | sourceTransformers      | `SourceTransformers`                           | -         | Array of source transformers for code processing (e.g., TypeScript to JavaScript)                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | url                     | `string`                                       | -         | Source URL where the code content originates from                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -404,14 +404,6 @@ This serves as the foundation for other CodeHighlighter-related interfaces.
 ```typescript
 type CodeHighlighterBaseProps<T extends {}> = {
   /**
-   * Source enhancers the server runs after parsing, to enhance the HAST tree.
-   * Defaults to the emphasis enhancer the demo loaders run, with the
-   * `demoEmphasisOptions` given to `withFairGardenDocs`, so code parsed on the server
-   * arrives with its emphasis frames and the client has nothing left to enhance.
-   * Pass `[]` to run none.
-   */
-  sourceEnhancers?: SourceEnhancers;
-  /**
    * Render-time "collapse to empty": collapse the code block to an empty window so
    * the whole block is hidden until expanded. Threaded into `contentProps` and
    * consumed by `useCode`/`<Pre>`. Runtime-only — the precomputed HAST is
@@ -515,6 +507,8 @@ type CodeHighlighterBaseProps<T extends {}> = {
   sourceTransformers?: SourceTransformers;
   /** Promise resolving to a source parser for syntax highlighting */
   sourceParser?: Promise<ParseSource>;
+  /** Array of source enhancers that run after parsing to enhance the HAST tree */
+  sourceEnhancers?: SourceEnhancers;
   /**
    * Optional URL-prefix rewrite forwarded to .
    * Lets the demo factory translate local `file://` URLs returned by
@@ -636,14 +630,6 @@ type CodeHighlighterProps<T extends {}> = {
   /** Component to show while code is being loaded or processed */
   ContentLoading?: React.ComponentType<ContentLoadingProps<T>>;
   /**
-   * Source enhancers the server runs after parsing, to enhance the HAST tree.
-   * Defaults to the emphasis enhancer the demo loaders run, with the
-   * `demoEmphasisOptions` given to `withFairGardenDocs`, so code parsed on the server
-   * arrives with its emphasis frames and the client has nothing left to enhance.
-   * Pass `[]` to run none.
-   */
-  sourceEnhancers?: SourceEnhancers;
-  /**
    * Render-time "collapse to empty": collapse the code block to an empty window so
    * the whole block is hidden until expanded. Threaded into `contentProps` and
    * consumed by `useCode`/`<Pre>`. Runtime-only — the precomputed HAST is
@@ -747,6 +733,8 @@ type CodeHighlighterProps<T extends {}> = {
   sourceTransformers?: SourceTransformers;
   /** Promise resolving to a source parser for syntax highlighting */
   sourceParser?: Promise<ParseSource>;
+  /** Array of source enhancers that run after parsing to enhance the HAST tree */
+  sourceEnhancers?: SourceEnhancers;
   /**
    * Optional URL-prefix rewrite forwarded to .
    * Lets the demo factory translate local `file://` URLs returned by

@@ -10,8 +10,6 @@ import { CodeHighlighterClient } from './CodeHighlighterClient';
 // render decision routes to the server loader - so it already lives in this lazy
 // chunk and never reaches the path that renders precomputed content.
 import { loadIsomorphicCodeVariant } from '../pipeline/loadIsomorphicCodeVariant/loadIsomorphicCodeVariant';
-// Statically imported for the same reason: it only reaches this lazy chunk.
-import { createDefaultSourceEnhancers } from './createDefaultSourceEnhancers';
 import * as Errors from './errors';
 
 /**
@@ -72,10 +70,6 @@ export default async function CodeSourceLoader(
     processedGlobalsCode = await Promise.all(globalsPromises);
   }
 
-  // Run the emphasis enhancer the demo loaders run, unless the caller passed its own
-  // enhancers. It records itself on each tree, so the client skips it.
-  const sourceEnhancers = userProps.sourceEnhancers ?? createDefaultSourceEnhancers();
-
   const variantNames = Object.keys(userProps.components || loadedCode || {});
   const variantCodes = await Promise.all(
     variantNames.map((variantName) => {
@@ -107,7 +101,7 @@ export default async function CodeSourceLoader(
         loadSource: userProps.loadSource,
         loadVariantMeta: userProps.loadVariantMeta,
         sourceTransformers: userProps.sourceTransformers,
-        sourceEnhancers,
+        sourceEnhancers: userProps.sourceEnhancers,
         globalsCode: resolvedGlobalsCode,
         output,
         urlPrefix: userProps.urlPrefix,

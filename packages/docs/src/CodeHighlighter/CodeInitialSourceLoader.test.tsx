@@ -10,7 +10,15 @@ import CodeInitialSourceLoader from './CodeInitialSourceLoader';
 import type { CodeHighlighterChunkContentProps } from './CodeHighlighterChunk';
 import { createParseSource } from '../pipeline/parseSource';
 import { decodeHastSource } from '../pipeline/loadIsomorphicCodeVariant/decodeHastSource';
-import type { Code, ContentLoadingProps, ContentProps, LoadSource, ParseSource } from './types';
+import { enhanceCodeEmphasis } from '../pipeline/enhanceCodeEmphasis';
+import type {
+  Code,
+  ContentLoadingProps,
+  ContentProps,
+  LoadSource,
+  ParseSource,
+  SourceEnhancers,
+} from './types';
 
 let parseSource: ParseSource;
 
@@ -34,7 +42,7 @@ const urlCode: Code = { Default: { fileName: 'Button.tsx', url: 'file:///Button.
 
 describe('CodeInitialSourceLoader', () => {
   describe('source enhancers', () => {
-    it('runs the default source enhancers on the initial source and records them', async () => {
+    async function loadInitial(sourceEnhancers?: SourceEnhancers) {
       const props: CodeHighlighterChunkContentProps = {
         loading: true,
         code: urlCode,
@@ -45,17 +53,27 @@ describe('CodeInitialSourceLoader', () => {
         loadSource,
         sourceParser: Promise.resolve(parseSource),
         highlightAfter: 'init',
+        sourceEnhancers,
       };
-
       const element = (await CodeInitialSourceLoader(props)) as React.ReactElement<{
         preloaded: Code;
       }>;
-
       const variant = element.props.preloaded.Default;
       if (!variant || typeof variant === 'string') {
         throw new Error('expected a loaded variant');
       }
-      const root = decodeHastSource(variant.source, variant.fallback);
+      return decodeHastSource(variant.source, variant.fallback);
+    }
+
+    it('runs no source enhancers on the initial source unless given some', async () => {
+      const root = await loadInitial();
+
+      expect(root?.data?.appliedEnhancers).toBeUndefined();
+    });
+
+    it('runs the given sourceEnhancers on the initial source and records them', async () => {
+      const root = await loadInitial([enhanceCodeEmphasis]);
+
       expect(root?.data?.appliedEnhancers).toEqual(['enhanceCodeEmphasis']);
     });
   });

@@ -33,11 +33,15 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
  * the loading frames match the live render, and the resulting `root.data` carries
  * the `totalLines` / `focusedLines` the compact fallback can't preserve.
  *
- * Synchronous by design — it runs at server fallback-prep time inside the
- * (sync) `prepareInitialSource`. An enhancer that returns a promise is skipped
- * (returns `undefined`) so the caller falls back to the naive single-frame wrap
- * rather than blocking; the built-in `enhanceCodeEmphasis` is synchronous, so
- * the common case windows.
+ * Synchronous by design — it runs at fallback-prep time inside the (sync)
+ * `prepareInitialSource`, which can be part of a server render that the browser
+ * then hydrates (a `CodeHighlighter` rendered by a client component). So, like
+ * `useCode` while hydrating, it runs only the enhancers marked `enhancerSync`, such
+ * as the built-in emphasis enhancers, and skips the rest: one that loads on demand
+ * could return synchronously on one side and a promise on the other, and prepare a
+ * different fallback on each. With none to run, or when one returns a promise
+ * anyway, it returns `undefined` so the caller falls back to the naive single-frame
+ * wrap rather than blocking.
  */
 export function buildStringFallback(
   source: string,
@@ -45,9 +49,14 @@ export function buildStringFallback(
   fileName: string,
   sourceEnhancers: SourceEnhancers,
 ): StringFallbackResult | undefined {
+  const synchronousEnhancers = sourceEnhancers.filter((enhancer) => enhancer.enhancerSync);
+  if (synchronousEnhancers.length === 0) {
+    return undefined;
+  }
+
   let root: HastRoot = parsePlainText(source);
 
-  for (const enhancer of sourceEnhancers) {
+  for (const enhancer of synchronousEnhancers) {
     const result = enhancer(root, comments, fileName);
     if (isPromiseLike(result)) {
       return undefined;

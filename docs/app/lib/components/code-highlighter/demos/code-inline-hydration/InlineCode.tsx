@@ -5,10 +5,13 @@ import { CodeHighlighter } from '@fairgarden/docs/CodeHighlighter';
 import { CodeProviderLazy } from '@fairgarden/docs/CodeProvider';
 import type { Code } from '@fairgarden/docs/CodeHighlighter/types';
 import { createParseSource } from '@fairgarden/docs/pipeline/parseSource';
+import { enhanceCodeEmphasis } from '@fairgarden/docs/pipeline/enhanceCodeEmphasis';
 
 import { InlineCodeContent } from './InlineCodeContent';
 
 const sourceParser = createParseSource();
+// Runs the emphasis enhancer on the server, which the client then skips.
+const serverSourceEnhancers = [enhanceCodeEmphasis];
 
 const button = `export function Button() {
   return <button type="button">Save</button>;
@@ -38,11 +41,12 @@ export function useChecked() {
 
 /**
  * Inline code with no `url` and the default `highlightAfter`, under a
- * `CodeProviderLazy` that keeps its default, lazily loaded emphasis enhancer: one
- * block from a string child, and one from multi-file `code`. The server parses every
- * file and runs the emphasis enhancer on it, so the HTML already has the frames the
- * client would otherwise add once it loaded the enhancer, whichever side loaded it
- * first.
+ * `CodeProviderLazy` that keeps its default, lazily loaded emphasis enhancer.
+ *
+ * - The block from a string child leaves emphasis to the provider, which applies it
+ *   right after hydration, whether or not the server or the browser has loaded it.
+ * - The block from multi-file `code` passes the emphasis enhancer to the server, so
+ *   the HTML already has its frames and the client has nothing left to enhance.
  */
 export function InlineCode() {
   return (
@@ -66,6 +70,7 @@ export function InlineCode() {
           slug="checkbox"
           Content={InlineCodeContent}
           sourceParser={sourceParser}
+          sourceEnhancers={serverSourceEnhancers}
         />
       </div>
       {/* @focus-end */}

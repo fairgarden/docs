@@ -15,14 +15,22 @@ const CodeNote = React.lazy(async () => {
   return { default: Note };
 });
 
-/** The code block, followed by a code-split note with no loading state of its own. */
+/**
+ * The code block, followed by a code-split note with no loading state of its own.
+ * The wrapper gets `data-hydrated` once React has hydrated it.
+ */
 export function InlineCodeContent(props: ContentProps<object>) {
   // @focus-start @padding 1
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    ref.current?.setAttribute('data-hydrated', '');
+  }, []);
+
   return (
-    <React.Fragment>
+    <div ref={ref}>
       <CodeContent {...props} />
       <CodeNote />
-    </React.Fragment>
+    </div>
   );
   // @focus-end
 }

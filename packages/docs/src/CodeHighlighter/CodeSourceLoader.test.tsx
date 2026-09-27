@@ -7,22 +7,15 @@
  */
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import CodeSourceLoader from './CodeSourceLoader';
 import type { CodeHighlighterChunkContentProps } from './CodeHighlighterChunk';
 import { useCode } from '../useCode';
 import { createParseSource } from '../pipeline/parseSource';
 import { hasAllVariants } from '../pipeline/loadIsomorphicCodeVariant/hasAllCodeVariants';
 import { decodeHastSource } from '../pipeline/loadIsomorphicCodeVariant/decodeHastSource';
-import type {
-  Code,
-  ContentProps,
-  HastRoot,
-  LoadSource,
-  ParseSource,
-  SourceEnhancer,
-  VariantCode,
-} from './types';
+import { createEnhanceCodeEmphasis, enhanceCodeEmphasis } from '../pipeline/enhanceCodeEmphasis';
+import type { Code, ContentProps, HastRoot, LoadSource, ParseSource, VariantCode } from './types';
 
 let parseSource: ParseSource;
 
@@ -153,20 +146,32 @@ describe('CodeSourceLoader', () => {
   });
 
   describe('source enhancers', () => {
-    it('runs the default source enhancers on every file and records them', async () => {
-      const { code } = await loadInlineCode('idle');
+    it('runs no source enhancers unless given some', async () => {
+      const { code, element } = await loadInlineCode('idle');
+
+      for (const root of Object.values(getLoadedRoots(code))) {
+        expect(getAppliedEnhancers(root)).toBeUndefined();
+      }
+      // The provider's enhancers still apply on the client, after hydration.
+      for (const markup of Object.values(serverMarkupByFile(element))) {
+        expect(markup).toContain('<span class="frame">');
+      }
+    });
+
+    it('runs the given sourceEnhancers on every file and records them', async () => {
+      const { code } = await loadInlineCode('idle', { sourceEnhancers: [enhanceCodeEmphasis] });
 
       const roots = getLoadedRoots(code);
 
       expect(Object.keys(roots)).toEqual(['Button.tsx', 'button.css', 'useToggle.ts']);
       for (const root of Object.values(roots)) {
-        // So the client, which runs the same enhancer, skips it.
+        // So the client skips the provider's emphasis enhancer, which has the same name.
         expect(getAppliedEnhancers(root)).toEqual(['enhanceCodeEmphasis']);
       }
     });
 
-    it('server-renders the emphasis frames of every file', async () => {
-      const { element } = await loadInlineCode('idle');
+    it('server-renders the frames of the given sourceEnhancers on every file', async () => {
+      const { element } = await loadInlineCode('idle', { sourceEnhancers: [enhanceCodeEmphasis] });
 
       const files = serverMarkupByFile(element);
 
@@ -176,48 +181,21 @@ describe('CodeSourceLoader', () => {
       }
     });
 
-    it('runs the emphasis enhancer with the demo emphasis options', async () => {
-      vi.stubEnv(
-        'FAIRGARDEN_DOCS_DEMO_EMPHASIS_OPTIONS',
-        JSON.stringify({ focusFramesMaxSize: 1 }),
-      );
+    it('runs the given sourceEnhancers with their own options', async () => {
       const twoLines: Code = {
         Default: { fileName: 'Button.tsx', source: 'const a = 1;\nconst b = 2;' },
       };
 
-      try {
-        const { code } = await loadInlineCode('idle', { data: twoLines, code: twoLines });
+      const { code } = await loadInlineCode('idle', {
+        data: twoLines,
+        code: twoLines,
+        sourceEnhancers: [createEnhanceCodeEmphasis({ focusFramesMaxSize: 1 })],
+      });
 
-        const variant = getLoadedVariant(code);
-        expect(getAppliedEnhancers(getLoadedRoots(code)['Button.tsx'])).toEqual([
-          'enhanceCodeEmphasis',
-        ]);
-        expect(variant.focusedLines).toBe(1);
-      } finally {
-        vi.unstubAllEnvs();
-      }
+      expect(getLoadedVariant(code).focusedLines).toBe(1);
     });
 
-    it('runs the given sourceEnhancers instead of the default ones', async () => {
-      const markFrames: SourceEnhancer = (root) => root;
-      markFrames.enhancerName = 'markFrames';
-
-      const { code } = await loadInlineCode('idle', { sourceEnhancers: [markFrames] });
-
-      for (const root of Object.values(getLoadedRoots(code))) {
-        expect(getAppliedEnhancers(root)).toEqual(['markFrames']);
-      }
-    });
-
-    it('runs no source enhancers when given an empty list', async () => {
-      const { code } = await loadInlineCode('idle', { sourceEnhancers: [] });
-
-      for (const root of Object.values(getLoadedRoots(code))) {
-        expect(getAppliedEnhancers(root)).toBeUndefined();
-      }
-    });
-
-    it('runs the default source enhancers on sources loaded from a url', async () => {
+    it('runs the given sourceEnhancers on sources loaded from a url', async () => {
       const loadSource: LoadSource = async () => ({
         source: 'export const Button = () => <button type="button" />;',
       });
@@ -228,6 +206,7 @@ describe('CodeSourceLoader', () => {
         code: urlCode,
         url: 'file:///Button.tsx',
         loadSource,
+        sourceEnhancers: [enhanceCodeEmphasis],
       });
 
       expect(getAppliedEnhancers(getLoadedRoots(code)['Button.tsx'])).toEqual([

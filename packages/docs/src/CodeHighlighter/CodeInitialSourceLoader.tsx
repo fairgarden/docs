@@ -9,7 +9,6 @@ import type { PrepareInitialSourceOptions } from './prepareInitialSource';
 // the render decision routes to the initial loader - so `loadCodeFallback` already
 // lives in this lazy chunk and never reaches the precomputed-content path.
 import { loadCodeFallback } from '../pipeline/loadIsomorphicCodeVariant/loadCodeFallback';
-import { createDefaultSourceEnhancers } from './createDefaultSourceEnhancers';
 import * as Errors from './errors';
 
 /**
@@ -48,9 +47,7 @@ export default async function CodeInitialSourceLoader(
       loadSource: userProps.loadSource,
       loadVariantMeta: userProps.loadVariantMeta,
       loadCodeMeta: userProps.loadCodeMeta,
-      // The emphasis enhancer the demo loaders run, unless the caller passed its own
-      // enhancers (see `CodeSourceLoader`).
-      sourceEnhancers: userProps.sourceEnhancers ?? createDefaultSourceEnhancers(),
+      sourceEnhancers: userProps.sourceEnhancers,
       initialFilename: userProps.fileName,
       variants: userProps.variants,
       globalsCode: userProps.globalsCode,

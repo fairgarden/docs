@@ -129,11 +129,13 @@ before linting rather than committing them.
 A module-level cache of a lazily loaded module that decides what a render outputs is cold on a
 freshly started server but often warm in the browser, so only the first request hydrates against
 different markup. `enhanceCodeEmphasisLazy` was one: it runs synchronously only once its chunk
-has loaded. `useSourceEnhancing` now never runs an `enhancerLazy` enhancer while server
-rendering or hydrating, and `CodeHighlighter`'s server loaders enhance code up front. The docs
-layout gives `CodeProviderLazy` an eager emphasis enhancer, so bugs of this kind don't show up in
-the docs app unless a page renders under a default `CodeProviderLazy`, as the unlinked
-`code-highlighter/demos/code-inline-hydration` fixture does. To reproduce one, start
+has loaded. So, while server rendering and hydrating, `useSourceEnhancing` and the loading
+fallback (`buildStringFallback`) run only enhancers marked `enhancerSync` (the
+`createEnhanceCodeEmphasis` ones), and every other enhancer the tree hasn't recorded runs right
+after hydration. Server enhancement stays explicit: `CodeHighlighter`'s `sourceEnhancers`. The
+docs layout gives `CodeProviderLazy` an eager emphasis enhancer, so bugs of this kind don't
+show up in the docs app unless a page renders under a default `CodeProviderLazy`, as the
+unlinked `code-highlighter/demos/code-inline-hydration` fixture does. To reproduce one, start
 `pnpm docs:dev` fresh and run the e2e test against it: Playwright reuses a server already
 running on port 3000.
 

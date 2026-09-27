@@ -209,9 +209,7 @@ type WithFairGardenDocsOptions = {
   notableCommentsPrefix?: string[];
   /**
    * Options for the code emphasis enhancer used by demo loaders.
-   * Passed to `createEnhanceCodeEmphasis` in the precomputed code highlighter loader,
-   * and by `CodeHighlighter` when it parses code on the server (inline code), so both
-   * frame code the same way.
+   * Passed to `createEnhanceCodeEmphasis` in the precomputed code highlighter loader.
    */
   demoEmphasisOptions?: EnhanceCodeEmphasisOptions;
   /**

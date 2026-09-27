@@ -83,6 +83,13 @@ describe('enhanceCodeEmphasis', () => {
     });
   });
 
+  describe('enhancerSync', () => {
+    it('marks the enhancer synchronous, so it runs in the server render and hydration', () => {
+      expect(enhanceCodeEmphasis.enhancerSync).toBe(true);
+      expect(createEnhanceCodeEmphasis({ focusFramesMaxSize: 6 }).enhancerSync).toBe(true);
+    });
+  });
+
   describe('single line emphasis', () => {
     it('should emphasize a single line with @highlight', async () => {
       const result = await testEmphasis(
