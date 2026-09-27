@@ -99,6 +99,7 @@ describe('buildStringFallback', () => {
       };
       return root;
     };
+    commentAwareEnhancer.enhancerSync = true;
 
     const result = buildStringFallback(
       'const a = 1;\nconst b = 2;\nconst c = 3;',
@@ -116,9 +117,48 @@ describe('buildStringFallback', () => {
 
   it('bails to undefined when an enhancer is async (cannot resolve synchronously at prep time)', () => {
     const asyncEnhancer: SourceEnhancer = async (root) => root;
+    asyncEnhancer.enhancerSync = true;
 
     const result = buildStringFallback('const a = 1;', undefined, 'test.ts', [asyncEnhancer]);
 
     expect(result).toBeUndefined();
+  });
+
+  describe('enhancers not marked enhancerSync', () => {
+    const source = Array.from({ length: 30 }, (_, index) => `const line${index} = ${index};`).join(
+      '\n',
+    );
+
+    /** Returns synchronously once "loaded", and a promise before, like a lazily loaded enhancer. */
+    function createLoadOnDemandEnhancer() {
+      const emphasis = createEnhanceCodeEmphasis({ focusFramesMaxSize: 12 });
+      let loaded = false;
+      const enhancer: SourceEnhancer = (root, comments, fileName) => {
+        if (loaded) {
+          return emphasis(root, comments, fileName);
+        }
+        loaded = true;
+        return Promise.resolve(emphasis(root, comments, fileName));
+      };
+      return enhancer;
+    }
+
+    it('gives the same fallback whether or not the enhancer has loaded', () => {
+      const enhancer = createLoadOnDemandEnhancer();
+
+      const beforeLoading = buildStringFallback(source, undefined, 'test.ts', [enhancer]);
+      const afterLoading = buildStringFallback(source, undefined, 'test.ts', [enhancer]);
+
+      expect(afterLoading).toEqual(beforeLoading);
+    });
+
+    it('still runs the enhancers marked enhancerSync around it', () => {
+      const result = buildStringFallback(source, undefined, 'test.ts', [
+        createLoadOnDemandEnhancer(),
+        createEnhanceCodeEmphasis({ focusFramesMaxSize: 12 }),
+      ]);
+
+      expect(result).toMatchObject({ totalLines: 30, focusedLines: 12, collapsible: true });
+    });
   });
 });

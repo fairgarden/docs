@@ -19,6 +19,10 @@ describe('enhanceCodeEmphasisLazy', () => {
     expect(enhanceCodeEmphasisLazy.enhancerName).toBe(enhanceCodeEmphasis.enhancerName);
   });
 
+  it('is not marked enhancerSync, so it never runs while server rendering or hydrating', () => {
+    expect(enhanceCodeEmphasisLazy.enhancerSync).toBeUndefined();
+  });
+
   it('is skipped when the HAST already recorded the emphasis enhancer (no chunk load)', () => {
     const root = {
       type: 'root',

@@ -1,0 +1,74 @@
+# Create Lazy Source Enhancer
+
+`createLazySourceEnhancer` builds a source enhancer that loads its implementation on demand, so a heavy enhancer stays out of the initial bundle until a block actually enhances. It is how `CodeProviderLazy` defers its default emphasis enhancer.
+
+## Features
+
+- Loads the enhancer on first use, once, and caches it for every block
+- Returns a promise until it has loaded, then runs synchronously, so re-enhancing while editing doesn't flash
+- Carries the loaded enhancer's `enhancerName`, so trees it already ran on skip it without loading it
+- `preload()` loads it ahead of time
+
+## Basic Usage
+
+Build the enhancer at module level, from the loaded enhancer's name and a loader that dynamic-imports it, and pass it wherever source enhancers go:
+
+```tsx
+import { createLazySourceEnhancer } from '@fairgarden/docs/pipeline/createLazySourceEnhancer';
+import { useCode } from '@fairgarden/docs/useCode';
+
+const annotateLazy = createLazySourceEnhancer(
+  'annotate',
+  async () => (await import('./annotate')).annotate,
+);
+const sourceEnhancers = [annotateLazy];
+
+export function CodeContent(props) {
+  const code = useCode(props, { sourceEnhancers });
+  return <div>{code.selectedFile}</div>;
+}
+```
+
+The loader can also resolve to a module whose default export is the enhancer, so `() => import('./annotate')` works when `annotate` is the default export.
+
+## Enhancer Names
+
+The first argument is required: the `enhancerName` of the enhancer the loader resolves to. The lazy enhancer carries it from the start:
+
+- A tree the enhancer already ran on, at build time or on the server, records the name in `appliedEnhancers`, so the lazy enhancer skips it without loading anything, and never enhances it twice.
+- A tree it runs on records the name, like any named enhancer.
+
+In development, it warns when the loaded enhancer has a different name.
+
+## Hydration
+
+Whether a call returns synchronously depends on whether the current process has loaded the enhancer yet, and the server and the browser load it independently. So the enhancer isn't marked `enhancerSync`, and `useCode` never runs it while server rendering or hydrating: it runs right after hydration, synchronously when already loaded and once it loads otherwise. The same holds for any enhancer not marked `enhancerSync`, so a lazy enhancer built by hand is safe too, as long as it isn't marked.
+
+## Preloading
+
+`preload()` loads the enhancer now, so the next call runs synchronously. Call it when you know a block is about to enhance, for instance when it becomes editable:
+
+```tsx
+annotateLazy.preload();
+```
+
+A failed load isn't cached: the next call or `preload()` tries again. `reset()` forgets the loaded enhancer and is intended for tests of the not-yet-loaded path.
+
+## Types
+
+import { TypesCreateLazySourceEnhancer } from './types';
+
+<TypesCreateLazySourceEnhancer />
+
+[See Types](./types.md)
+
+## Related
+
+- [Enhance Code Emphasis](../enhance-code-emphasis/page.mdx) - The emphasis enhancer, which `CodeProviderLazy` defers with this helper
+- [useCode Source Enhancers](../../hooks/use-code/page.mdx#source-enhancers) - How enhancers run
+- [Code Provider](../../components/code-provider/page.mdx) - `CodeProvider` and `CodeProviderLazy`
+
+export const metadata =
+  /** @type {import('@fairgarden/docs/createSitemap/types').NextMetadata} */ ({
+    keywords: ['lazy', 'source enhancer', 'enhancerName', 'hydration', 'code splitting'],
+  });

@@ -540,6 +540,72 @@ describe('useSourceEnhancing', () => {
     });
   });
 
+  describe('already applied enhancers', () => {
+    function makeEnhancedHast(value: string, appliedEnhancers: string[]): HastRoot {
+      return { ...makeHast(value), data: { appliedEnhancers } } as HastRoot;
+    }
+
+    function makeNamedEnhancer(name: string) {
+      const enhancer = vi.fn((root: HastRoot) => makeHast(`${name}-${textOf(root)}`));
+      return Object.assign(enhancer, { enhancerName: name });
+    }
+
+    it('skips an enhancer the source already recorded', () => {
+      const source = makeEnhancedHast('original', ['first']);
+      const first = makeNamedEnhancer('first');
+      const second = makeNamedEnhancer('second');
+
+      const { result } = renderHook(() =>
+        useSourceEnhancing({
+          source,
+          fileName: 'test.tsx',
+          comments: undefined,
+          sourceEnhancers: [first, second],
+        }),
+      );
+
+      expect(first).not.toHaveBeenCalled();
+      expect(textOf(result.current.enhancedSource)).toBe('second-original');
+    });
+
+    it('returns the source itself, without copying it, when every enhancer was already applied', () => {
+      const source = makeEnhancedHast('original', ['first', 'second']);
+      const first = makeNamedEnhancer('first');
+      const second = makeNamedEnhancer('second');
+
+      const { result } = renderHook(() =>
+        useSourceEnhancing({
+          source,
+          fileName: 'test.tsx',
+          comments: undefined,
+          sourceEnhancers: [first, second],
+        }),
+      );
+
+      expect(result.current.enhancedSource).toBe(source);
+      expect(result.current.isEnhancing).toBe(false);
+      expect(first).not.toHaveBeenCalled();
+      expect(second).not.toHaveBeenCalled();
+    });
+
+    it('returns a hastJson source itself when every enhancer was already applied', () => {
+      const source = { hastJson: JSON.stringify(makeEnhancedHast('original', ['first'])) };
+      const first = makeNamedEnhancer('first');
+
+      const { result } = renderHook(() =>
+        useSourceEnhancing({
+          source,
+          fileName: 'test.tsx',
+          comments: undefined,
+          sourceEnhancers: [first],
+        }),
+      );
+
+      expect(result.current.enhancedSource).toBe(source);
+      expect(first).not.toHaveBeenCalled();
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle enhancers that mutate the root in-place', () => {
       const source = makeHast('original');

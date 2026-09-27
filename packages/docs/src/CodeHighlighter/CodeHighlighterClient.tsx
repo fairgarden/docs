@@ -47,6 +47,7 @@ import { useCoordinatedSwap } from '../CoordinatedLazy/useCoordinatedSwap';
 import { CoordinatedFallbackContext } from '../CoordinatedLazy/CoordinatedFallbackContext';
 import { CoordinatedContentContext } from '../CoordinatedLazy/CoordinatedContentContext';
 import { requestIdle } from '../useCoordinated/scheduleTasks';
+import { useIsHydrated } from './useIsHydrated';
 import * as Errors from './errors';
 
 const DEBUG = false; // Set to true for debugging purposes
@@ -1396,13 +1397,9 @@ export function CodeHighlighterClient(props: CodeHighlighterClientProps) {
   );
   const resolvedStateCode = React.useMemo(() => restoreFallbacks(code), [code, restoreFallbacks]);
 
-  // Use useSyncExternalStore to detect hydration
-  const subscribe = React.useCallback(() => () => {}, []);
-  const getSnapshot = React.useCallback(() => true, []);
-  const getServerSnapshot = React.useCallback(() => false, []);
-  const useIsHydrated = () => React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-
-  const isHydrated = useIsHydrated();
+  // Only the `'hydration'` modes read it, so only they track hydration: otherwise the
+  // block would render again right after hydration for nothing.
+  const isHydrated = useIsHydrated(highlightAfter === 'hydration' || enhanceAfter === 'hydration');
   const [isEnhanceAllowed, setIsEnhanceAllowed] = React.useState(
     enhanceAfter === 'init' || (enhanceAfter === 'hydration' && isHydrated),
   );

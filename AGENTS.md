@@ -124,6 +124,22 @@ Next.js 16 writes these two files whenever the dev server starts. They are not p
 repo, and `docs/CLAUDE.md` fails `pnpm eslint` (`mui-first-block-heading`), so delete them
 before linting rather than committing them.
 
+#### A hydration mismatch only on the first request after `next dev` starts
+
+A module-level cache of a lazily loaded module that decides what a render outputs is cold on a
+freshly started server but often warm in the browser, so only the first request hydrates against
+different markup. `enhanceCodeEmphasisLazy` was one: it runs synchronously only once its chunk
+has loaded. So, while server rendering and hydrating, `useSourceEnhancing` runs only enhancers
+marked `enhancerSync` (the `createEnhanceCodeEmphasis` ones), and every other enhancer the tree
+hasn't recorded runs right after hydration. The loading fallback (`buildStringFallback`) is built
+only from `CodeHighlighter`'s own `sourceEnhancers`, and applies only the `enhancerSync` ones.
+Server enhancement is explicit: `CodeHighlighter`'s `sourceEnhancers`. The
+docs layout gives `CodeProviderLazy` an eager emphasis enhancer, so bugs of this kind don't
+show up in the docs app unless a page renders under a default `CodeProviderLazy`, as the
+unlinked `code-highlighter/demos/code-inline-hydration` fixture does. To reproduce one, start
+`pnpm docs:dev` fresh and run the e2e test against it: Playwright reuses a server already
+running on port 3000.
+
 #### Landing page (`docs/app/(shared)/page.mdx`)
 
 The landing page is markdown first like every other page. Each band is **one** wrapper from

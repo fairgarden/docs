@@ -13,7 +13,9 @@ import type { CodeHighlighterChunkContentProps } from './CodeHighlighterChunk';
 import { useCode } from '../useCode';
 import { createParseSource } from '../pipeline/parseSource';
 import { hasAllVariants } from '../pipeline/loadIsomorphicCodeVariant/hasAllCodeVariants';
-import type { Code, ContentProps, ParseSource } from './types';
+import { decodeHastSource } from '../pipeline/loadIsomorphicCodeVariant/decodeHastSource';
+import { createEnhanceCodeEmphasis, enhanceCodeEmphasis } from '../pipeline/enhanceCodeEmphasis';
+import type { Code, ContentProps, HastRoot, LoadSource, ParseSource, VariantCode } from './types';
 
 let parseSource: ParseSource;
 
@@ -47,7 +49,10 @@ const inlineCode: Code = {
   },
 };
 
-async function loadInlineCode(highlightAfter: 'init' | 'idle') {
+async function loadInlineCode(
+  highlightAfter: 'init' | 'idle',
+  options: Partial<CodeHighlighterChunkContentProps> = {},
+) {
   const props: CodeHighlighterChunkContentProps = {
     loading: true,
     data: inlineCode,
@@ -56,10 +61,36 @@ async function loadInlineCode(highlightAfter: 'init' | 'idle') {
     Content: FilesContent,
     sourceParser: Promise.resolve(parseSource),
     highlightAfter,
+    ...options,
   };
   const element = await CodeSourceLoader(props);
   const clientProps = element.props as { code: Code };
   return { element, code: clientProps.code };
+}
+
+function getLoadedVariant(code: Code): VariantCode {
+  const variant = code.Default;
+  if (!variant || typeof variant === 'string') {
+    throw new Error('expected a loaded variant');
+  }
+  return variant;
+}
+
+/** Every file of the loaded variant as the HAST the client receives, keyed by file name. */
+function getLoadedRoots(code: Code): Record<string, HastRoot | null> {
+  const variant = getLoadedVariant(code);
+  const roots: Record<string, HastRoot | null> = {
+    [variant.fileName!]: decodeHastSource(variant.source, variant.fallback),
+  };
+  for (const [fileName, file] of Object.entries(variant.extraFiles ?? {})) {
+    roots[fileName] =
+      typeof file === 'object' ? decodeHastSource(file.source, file.fallback) : null;
+  }
+  return roots;
+}
+
+function getAppliedEnhancers(root: HastRoot | null): string[] | undefined {
+  return root?.data?.appliedEnhancers;
 }
 
 /** The server-rendered markup of each file, keyed by file name. */
@@ -111,6 +142,76 @@ describe('CodeSourceLoader', () => {
       for (const markup of Object.values(files)) {
         expect(markup).not.toContain('class="pl-');
       }
+    });
+  });
+
+  describe('source enhancers', () => {
+    it('runs no source enhancers unless given some', async () => {
+      const { code, element } = await loadInlineCode('idle');
+
+      for (const root of Object.values(getLoadedRoots(code))) {
+        expect(getAppliedEnhancers(root)).toBeUndefined();
+      }
+      // The provider's enhancers still apply on the client, after hydration.
+      for (const markup of Object.values(serverMarkupByFile(element))) {
+        expect(markup).toContain('<span class="frame">');
+      }
+    });
+
+    it('runs the given sourceEnhancers on every file and records them', async () => {
+      const { code } = await loadInlineCode('idle', { sourceEnhancers: [enhanceCodeEmphasis] });
+
+      const roots = getLoadedRoots(code);
+
+      expect(Object.keys(roots)).toEqual(['Button.tsx', 'button.css', 'useToggle.ts']);
+      for (const root of Object.values(roots)) {
+        // So the client skips the provider's emphasis enhancer, which has the same name.
+        expect(getAppliedEnhancers(root)).toEqual(['enhanceCodeEmphasis']);
+      }
+    });
+
+    it('server-renders the frames of the given sourceEnhancers on every file', async () => {
+      const { element } = await loadInlineCode('idle', { sourceEnhancers: [enhanceCodeEmphasis] });
+
+      const files = serverMarkupByFile(element);
+
+      expect(Object.keys(files)).toEqual(['Button.tsx', 'button.css', 'useToggle.ts']);
+      for (const markup of Object.values(files)) {
+        expect(markup).toContain('<span class="frame" data-frame-type="focus">');
+      }
+    });
+
+    it('runs the given sourceEnhancers with their own options', async () => {
+      const twoLines: Code = {
+        Default: { fileName: 'Button.tsx', source: 'const a = 1;\nconst b = 2;' },
+      };
+
+      const { code } = await loadInlineCode('idle', {
+        data: twoLines,
+        code: twoLines,
+        sourceEnhancers: [createEnhanceCodeEmphasis({ focusFramesMaxSize: 1 })],
+      });
+
+      expect(getLoadedVariant(code).focusedLines).toBe(1);
+    });
+
+    it('runs the given sourceEnhancers on sources loaded from a url', async () => {
+      const loadSource: LoadSource = async () => ({
+        source: 'export const Button = () => <button type="button" />;',
+      });
+      const urlCode: Code = { Default: { fileName: 'Button.tsx', url: 'file:///Button.tsx' } };
+
+      const { code } = await loadInlineCode('idle', {
+        data: urlCode,
+        code: urlCode,
+        url: 'file:///Button.tsx',
+        loadSource,
+        sourceEnhancers: [enhanceCodeEmphasis],
+      });
+
+      expect(getAppliedEnhancers(getLoadedRoots(code)['Button.tsx'])).toEqual([
+        'enhanceCodeEmphasis',
+      ]);
     });
   });
 });

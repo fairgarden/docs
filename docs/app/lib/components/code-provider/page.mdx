@@ -121,7 +121,10 @@ function MyApp() {
 Both providers also accept a `sourceEnhancers` prop to post-process the parsed
 HAST for every block in their subtree — see
 [Source Enhancers](../../hooks/use-code/page.mdx#source-enhancers) in the
-`useCode` docs for how enhancers work.
+`useCode` docs for how enhancers work. To load a custom enhancer on demand, build
+it with [`createLazySourceEnhancer`](../../pipeline/create-lazy-source-enhancer/page.mdx).
+Enhancers other than the built-in emphasis ones run right after hydration, unless
+they are marked `enhancerSync`.
 
 ## Types
 
@@ -249,9 +252,15 @@ for all ten) are loaded per-language and on demand under `CodeProviderLazy`, so 
 block only fetches the grammars for its languages and a precomputed read-only
 block fetches none (see [Per-language grammar loading](#per-language-grammar-loading)).
 The emphasis enhancer stays eager **only** under the eager `CodeProvider` (so its
-synchronous client-side editing re-enhancement never waits); under
-`CodeProviderLazy` it is a lazy wrapper that a precomputed block skips without
-loading, and that an editing/highlighting block warms before it is needed.
+synchronous client-side editing re-enhancement never waits, and it frames code in
+the server render). Under `CodeProviderLazy` it is a lazy wrapper that an editing
+or highlighting block warms before it is needed. A precomputed block skips it
+without loading it, and so does a server-loaded block whose `CodeHighlighter` got
+the emphasis enhancer in its `sourceEnhancers`, because the build or the server
+already ran it. Any other block, including one whose `sourceEnhancers` leave the
+emphasis enhancer out, loads it and gets its frames right after hydration. The
+wrapper never runs while the page hydrates, so whether it has loaded yet can't
+make the hydrated markup differ from the server HTML.
 
 ### Deduping across a page
 

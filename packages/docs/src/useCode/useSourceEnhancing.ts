@@ -3,8 +3,14 @@
 import * as React from 'react';
 import type { Root as HastRoot } from 'hast';
 import { decodeHastSource } from '../pipeline/loadIsomorphicCodeVariant/decodeHastSource';
-import type { SourceEnhancers, SourceComments, VariantSource } from '../CodeHighlighter/types';
+import type {
+  HastRoot as RecordedHastRoot,
+  SourceEnhancers,
+  SourceComments,
+  VariantSource,
+} from '../CodeHighlighter/types';
 import type { FallbackNode } from '../CodeHighlighter/fallbackFormat';
+import { useIsHydrated } from '../CodeHighlighter/useIsHydrated';
 import {
   recordEnhancerApplied,
   shouldSkipEnhancer,
@@ -16,32 +22,6 @@ import {
 // un-enhanced 'base' phase until a full page reload. On failure/timeout we settle to the
 // already sync-enhanced result so the phase advances.
 const ENHANCER_TIMEOUT_MS = 10_000;
-
-/**
- * Resolves a `VariantSource` to a HAST root that is safe to mutate.
- *
- * Uses the shared `decodeHastSource` cache to amortize decompression and
- * `JSON.parse` across other consumers (`Pre`, `useFileNavigation`,
- * `sourceLineCounts`), then `structuredClone`s the result because the
- * enhancer pipeline mutates `root.data` via `recordEnhancerApplied`.
- * Returns `null` for string or unrecognized sources.
- *
- * The variant `fallback` is forwarded to `decodeHastSource` so the compressed
- * payload is decompressed with the matching DEFLATE dictionary and each frame's
- * `data.fallback` is restored — enhancers then keep that per-frame fallback in
- * sync as they mutate the tree.
- */
-function resolveHastRoot(
-  source: VariantSource | undefined,
-  fallback?: FallbackNode[],
-): HastRoot | null {
-  if (!source || typeof source === 'string') {
-    return null;
-  }
-
-  const cached = decodeHastSource(source, fallback);
-  return cached ? (structuredClone(cached) as HastRoot) : null;
-}
 
 /**
  * Applies enhancers sequentially to a HAST root, starting from a given index.
@@ -69,54 +49,27 @@ async function applyEnhancersFrom(
   return current;
 }
 
-interface SyncEnhanceResult {
-  /** The result after applying all sync enhancers (and resolving any leading async ones) */
-  syncResult: HastRoot;
-  /** Index of the first enhancer that returned a Promise, or enhancers.length if all were sync */
-  asyncStartIndex: number;
-  /** The promise returned by the first async enhancer, if any */
-  firstAsyncPromise: Promise<HastRoot> | null;
-}
-
 /**
- * Runs enhancers in order until one returns a Promise.
- * Returns the sync-enhanced result up to that point, plus the pending promise
- * and its index so the caller can continue from there without re-running sync work.
- *
- * Enhancers with a stable `enhancerName` are skipped if already recorded on
- * the HAST root, and recorded after they run.
+ * Whether `enhancers` would hold anything back from the server render and the
+ * hydration of `root`: an enhancer the root hasn't recorded that isn't marked
+ * `enhancerSync`. It reads only the recorded names and the enhancers' flags, so the
+ * server and the browser agree on it.
  */
-function applyEnhancersUntilAsync(
-  source: HastRoot,
-  comments: SourceComments | undefined,
-  fileName: string,
-  enhancers: SourceEnhancers,
-): SyncEnhanceResult {
-  let current: HastRoot = source;
-  for (let i = 0; i < enhancers.length; i += 1) {
-    const enhancer = enhancers[i];
-    if (shouldSkipEnhancer(current, enhancer)) {
+function holdsBackDuringHydration(root: RecordedHastRoot, enhancers: SourceEnhancers): boolean {
+  const recorded = new Set(root.data?.appliedEnhancers);
+  for (const enhancer of enhancers) {
+    const name = enhancer.enhancerName;
+    if (name && recorded.has(name)) {
       continue;
     }
-    const result = enhancer(current, comments, fileName);
-    if (result instanceof Promise) {
-      return {
-        syncResult: current,
-        asyncStartIndex: i,
-        firstAsyncPromise: result.then((resolved) => {
-          recordEnhancerApplied(resolved, enhancer);
-          return resolved;
-        }),
-      };
+    if (!enhancer.enhancerSync) {
+      return true;
     }
-    current = result;
-    recordEnhancerApplied(current, enhancer);
+    if (name) {
+      recorded.add(name);
+    }
   }
-  return {
-    syncResult: current,
-    asyncStartIndex: enhancers.length,
-    firstAsyncPromise: null,
-  };
+  return false;
 }
 
 export interface UseSourceEnhancingProps {
@@ -139,6 +92,88 @@ export interface UseSourceEnhancingResult {
   isEnhancing: boolean;
 }
 
+interface AsyncWork {
+  firstAsyncPromise: Promise<HastRoot>;
+  asyncStartIndex: number;
+}
+
+interface EnhanceState {
+  enhancedSource: VariantSource | null;
+  asyncWork: AsyncWork | null;
+  /** An enhancer was held back from the server render and the hydration. */
+  deferred: boolean;
+}
+
+/**
+ * Computes the synchronous enhancement result and any pending async work.
+ * Enhancers are run in order; sync ones apply immediately, and the first
+ * async enhancer's promise is captured so it can be continued in an effect.
+ * Enhancers already recorded on the tree are skipped.
+ *
+ * While `hydrating` (the server render or the hydration), the run stops, without
+ * calling it, at the first enhancer that isn't marked `enhancerSync`: it and the
+ * ones after it wait for the render right after hydration.
+ *
+ * The source is decoded through the shared `decodeHastSource` cache, which
+ * amortizes decompression and `JSON.parse` across other consumers (`Pre`,
+ * `useFileNavigation`, `sourceLineCounts`). The variant `fallback` is forwarded
+ * so a compressed payload is decompressed with its DEFLATE dictionary and each
+ * frame's `data.fallback` is restored. The decoded tree is shared, and the
+ * pipeline mutates `root.data` (`recordEnhancerApplied`), so it is copied right
+ * before the first enhancer runs. When none runs, the source is returned as it is.
+ */
+function computeEnhanceState(
+  source: VariantSource | null | undefined,
+  comments: SourceComments | undefined,
+  fileName: string | undefined,
+  sourceEnhancers: SourceEnhancers | undefined,
+  fallback: FallbackNode[] | undefined,
+  hydrating: boolean,
+): EnhanceState {
+  if (!source || !sourceEnhancers || sourceEnhancers.length === 0) {
+    return { enhancedSource: source ?? null, asyncWork: null, deferred: false };
+  }
+  const decoded = decodeHastSource(source, fallback);
+  if (!decoded) {
+    return { enhancedSource: source, asyncWork: null, deferred: false };
+  }
+
+  const name = fileName || 'unknown';
+  let current: HastRoot = decoded;
+  // The tree the enhancers ran on so far, or `undefined` while none has.
+  let enhanced: HastRoot | undefined;
+  for (let i = 0; i < sourceEnhancers.length; i += 1) {
+    const enhancer = sourceEnhancers[i];
+    if (shouldSkipEnhancer(current, enhancer)) {
+      continue;
+    }
+    if (hydrating && !enhancer.enhancerSync) {
+      return { enhancedSource: enhanced ?? source, asyncWork: null, deferred: true };
+    }
+    if (!enhanced) {
+      current = structuredClone(current) as HastRoot;
+    }
+    const result = enhancer(current, comments, name);
+    if (result instanceof Promise) {
+      return {
+        enhancedSource: enhanced ?? source,
+        asyncWork: {
+          firstAsyncPromise: result.then((resolved) => {
+            recordEnhancerApplied(resolved, enhancer);
+            return resolved;
+          }),
+          asyncStartIndex: i,
+        },
+        deferred: false,
+      };
+    }
+    current = result;
+    recordEnhancerApplied(current, enhancer);
+    enhanced = current;
+  }
+  return { enhancedSource: enhanced ?? source, asyncWork: null, deferred: false };
+}
+
 /**
  * Hook that applies source enhancers to a single source file.
  *
@@ -146,9 +181,10 @@ export interface UseSourceEnhancingResult {
  * representation of code. They receive the parsed HAST root, any comments extracted
  * from the source code, and the filename for context.
  *
- * Enhancement runs asynchronously when the source or enhancers change.
- * The original source is returned immediately while enhancement runs in the background,
- * preventing layout shift since enhanced code should be visually similar.
+ * Enhancement runs when the source or enhancers change: synchronous enhancers
+ * apply during render, and asynchronous ones in the background, with the source
+ * enhanced so far shown meanwhile, preventing layout shift since enhanced code
+ * should be visually similar.
  *
  * @example
  * ```tsx
@@ -172,50 +208,17 @@ export interface UseSourceEnhancingResult {
  *
  * @remarks
  * - Only HAST sources can be enhanced. String sources are returned unchanged.
+ * - Enhancers already recorded on the source (`appliedEnhancers`, e.g. by the
+ *   server or at build time) are skipped. When all of them are, the source is
+ *   returned as it is.
+ * - While server rendering and hydrating, only enhancers marked `enhancerSync`
+ *   (such as `createEnhanceCodeEmphasis` enhancers) run. The others wait for the
+ *   render right after hydration, so an enhancer that can return a promise never
+ *   makes the hydrated markup differ from the server HTML. A component that holds
+ *   nothing back doesn't render again after hydration.
  * - Enhancers must return stable references to avoid infinite re-renders.
  * - Use `React.useMemo` for the enhancers array to prevent unnecessary re-runs.
  */
-interface AsyncWork {
-  firstAsyncPromise: Promise<HastRoot>;
-  asyncStartIndex: number;
-}
-
-interface EnhanceState {
-  enhancedSource: VariantSource | null;
-  asyncWork: AsyncWork | null;
-}
-
-/**
- * Computes the synchronous enhancement result and any pending async work.
- * Enhancers are run in order; sync ones apply immediately, and the first
- * async enhancer's promise is captured so it can be continued in an effect.
- */
-function computeEnhanceState(
-  source: VariantSource | null | undefined,
-  comments: SourceComments | undefined,
-  fileName: string | undefined,
-  sourceEnhancers: SourceEnhancers | undefined,
-  fallback: FallbackNode[] | undefined,
-): EnhanceState {
-  if (!source || !sourceEnhancers || sourceEnhancers.length === 0) {
-    return { enhancedSource: source ?? null, asyncWork: null };
-  }
-  const resolved = resolveHastRoot(source, fallback);
-  if (!resolved) {
-    return { enhancedSource: source ?? null, asyncWork: null };
-  }
-  const { syncResult, firstAsyncPromise, asyncStartIndex } = applyEnhancersUntilAsync(
-    resolved,
-    comments,
-    fileName || 'unknown',
-    sourceEnhancers,
-  );
-  return {
-    enhancedSource: syncResult,
-    asyncWork: firstAsyncPromise ? { firstAsyncPromise, asyncStartIndex } : null,
-  };
-}
-
 export function useSourceEnhancing({
   source,
   fileName,
@@ -229,8 +232,20 @@ export function useSourceEnhancing({
   const [prevComments, setPrevComments] = React.useState(comments);
   const [prevFileName, setPrevFileName] = React.useState(fileName);
 
+  // Hold back, while server rendering and hydrating, every enhancer the tree hasn't
+  // recorded that isn't marked `enhancerSync`. Only such a component tracks
+  // hydration, and so renders once more right after it.
+  const holdsBack = React.useMemo(() => {
+    if (!source || !sourceEnhancers || sourceEnhancers.length === 0) {
+      return false;
+    }
+    const decoded = decodeHastSource(source, fallback);
+    return decoded ? holdsBackDuringHydration(decoded, sourceEnhancers) : false;
+  }, [source, sourceEnhancers, fallback]);
+  const hydrating = !useIsHydrated(holdsBack);
+
   const [state, setState] = React.useState<EnhanceState>(() =>
-    computeEnhanceState(source, comments, fileName, sourceEnhancers, fallback),
+    computeEnhanceState(source, comments, fileName, sourceEnhancers, fallback, hydrating),
   );
 
   const hasChanged =
@@ -239,8 +254,12 @@ export function useSourceEnhancing({
     comments !== prevComments ||
     fileName !== prevFileName;
 
+  // The render right after hydration: run the enhancers held back until now
+  // (synchronously when they can, otherwise through the async path below).
+  const hydrationEnded = state.deferred && !hydrating;
+
   // When inputs change, apply sync enhancers immediately during render
-  if (hasChanged) {
+  if (hasChanged || hydrationEnded) {
     if (source !== prevSource) {
       setPrevSource(source);
     }
@@ -253,7 +272,7 @@ export function useSourceEnhancing({
     if (fileName !== prevFileName) {
       setPrevFileName(fileName);
     }
-    setState(computeEnhanceState(source, comments, fileName, sourceEnhancers, fallback));
+    setState(computeEnhanceState(source, comments, fileName, sourceEnhancers, fallback, hydrating));
   }
 
   // Continue from the first async enhancer without re-running sync ones
@@ -272,7 +291,11 @@ export function useSourceEnhancing({
     // timeout paths below — without it a rejected/hung enhancer wedges 'base' forever.
     const settleWithCurrent = () => {
       if (!cancelled) {
-        setState((previous) => ({ enhancedSource: previous.enhancedSource, asyncWork: null }));
+        setState((previous) => ({
+          enhancedSource: previous.enhancedSource,
+          asyncWork: null,
+          deferred: false,
+        }));
       }
     };
 
@@ -294,7 +317,7 @@ export function useSourceEnhancing({
           asyncStartIndex + 1,
         );
         if (!cancelled) {
-          setState({ enhancedSource: final, asyncWork: null });
+          setState({ enhancedSource: final, asyncWork: null, deferred: false });
         }
       } catch (error) {
         // A rejected async enhancer must not strand `asyncWork` non-null forever.
@@ -315,6 +338,6 @@ export function useSourceEnhancing({
 
   return {
     enhancedSource: state.enhancedSource,
-    isEnhancing: state.asyncWork !== null,
+    isEnhancing: state.asyncWork !== null || state.deferred,
   };
 }

@@ -701,8 +701,22 @@ Source enhancers allow you to modify the parsed HAST (Hypertext Abstract Syntax 
 
 Enhancers can be passed to either:
 
-- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on server or during hydration)
-- **`useCode`** hook via the `sourceEnhancers` option (runs on client after hydration)
+- **`CodeHighlighter`** component via the `sourceEnhancers` prop (runs on the server, when it loads the code; only the `enhancerSync` ones shape the loading fallback)
+- **`useCode`** hook via the `sourceEnhancers` option (runs on the client: during the server render and hydration when marked `enhancerSync`, otherwise right after hydration)
+
+An enhancer with an `enhancerName` records itself on the tree it enhances (`appliedEnhancers`), and later passes skip it, so an enhancer the server already ran never runs again on the client.
+
+While server rendering and hydrating, `useCode` runs only the enhancers marked `enhancerSync: true`. Every other enhancer the tree hasn't recorded runs right after hydration, so an enhancer that can return a promise, like one that loads on demand, never makes the hydrated markup differ from the server HTML.
+
+An enhancer may set `enhancerSync: true` when it never returns a promise, and produces the same output on the server and in the browser for the same input: it doesn't depend on browser-only state, timing or lazily loaded code. Options or state that are the same on both sides are fine. The emphasis enhancers `createEnhanceCodeEmphasis` returns set it, with their options, so their frames are in the server HTML. The state-driven enhancer in [Passing State to Enhancers](#passing-state-to-enhancers) could set it too.
+
+> [!NOTE]
+> When a custom synchronous enhancer runs depends on where it's passed:
+>
+> - **Given to `useCode` or a provider:** without `enhancerSync: true`, it runs right after hydration, so its output isn't in the server HTML and appears on the first render after hydration. With `enhancerSync: true`, it runs during the server render and the hydration, and its output is in the server HTML.
+> - **Given to `CodeHighlighter`'s `sourceEnhancers`:** the server loader runs it on the loaded code, marked or not. The loading fallback applies only `enhancerSync` enhancers, so an unmarked one doesn't window the fallback.
+>
+> Set `enhancerSync: true` on an enhancer that meets the criteria above.
 
 ### Enhancer Basic Usage
 
@@ -715,12 +729,12 @@ const addLineAnnotations: SourceEnhancer = (root, comments, fileName) => {
   return root;
 };
 
-// Pass to CodeHighlighter (server-side or during hydration)
+// Pass to CodeHighlighter (runs on the server)
 <CodeHighlighter sourceEnhancers={[addLineAnnotations]} Content={MyCodeContent}>
   {code}
 </CodeHighlighter>;
 
-// Or pass to useCode (client-side, after hydration)
+// Or pass to useCode (runs on the client, right after hydration)
 function MyCodeContent(props) {
   const enhancers = React.useMemo(() => [addLineAnnotations], []);
   const code = useCode(props, { sourceEnhancers: enhancers });
@@ -772,6 +786,28 @@ const asyncEnhancer: SourceEnhancer = async (root, comments, fileName) => {
   return addMetadataToHast(root, metadata);
 };
 ```
+
+### Lazy Enhancers
+
+To keep a heavy enhancer out of the initial bundle, build it with [`createLazySourceEnhancer`](../../pipeline/create-lazy-source-enhancer/page.mdx). It loads the enhancer on first use and caches it, returning a promise until then and running synchronously after:
+
+```tsx
+import { createLazySourceEnhancer } from '@fairgarden/docs/pipeline/createLazySourceEnhancer';
+
+// At module level, so every block shares one load.
+const annotateLazy = createLazySourceEnhancer(
+  'annotate',
+  async () => (await import('./annotate')).annotate,
+);
+const sourceEnhancers = [annotateLazy];
+
+function MyCodeContent(props) {
+  const code = useCode(props, { sourceEnhancers });
+  return <div>{code.selectedFile}</div>;
+}
+```
+
+The first argument is the loaded enhancer's `enhancerName`, so a tree it already ran on, at build time or on the server, skips it without loading it. `annotateLazy.preload()` loads it ahead of time, e.g. when a block becomes editable. Like any enhancer not marked `enhancerSync`, it runs right after hydration, never during it, whether the server or the browser has loaded it. The emphasis enhancer `CodeProviderLazy` applies by default is built with the helper.
 
 ### Chaining Enhancers
 
@@ -826,7 +862,7 @@ const serverEnhancer: SourceEnhancer = (root, comments, fileName) => {
 </CodeHighlighter>;
 
 // Client-time enhancer (applied via useCode options)
-// Runs on hydration, useful for dynamic behavior
+// Runs right after hydration (it isn't marked enhancerSync), useful for dynamic behavior
 const clientEnhancer: SourceEnhancer = (root, comments, fileName) => {
   return addPersonalizedAnnotations(root, userPreferences);
 };
@@ -837,6 +873,8 @@ function MyCodeContent(props) {
   return <div>{code.selectedFile}</div>;
 }
 ```
+
+To render the emphasis frames of inline code on the server, pass the emphasis enhancer to `CodeHighlighter`, per block or in your own wrapper component: `sourceEnhancers={[enhanceCodeEmphasis]}`, or `createEnhanceCodeEmphasis(options)` with the options your provider uses. The server records it, so the provider's emphasis enhancer skips the tree and, under `CodeProviderLazy`, never loads. Without it, the provider's emphasis enhancer frames the code on the client: during hydration when it's marked `enhancerSync` (the eager `CodeProvider`, or a `createEnhanceCodeEmphasis` enhancer), otherwise right after.
 
 **When to use build-time enhancers:**
 
